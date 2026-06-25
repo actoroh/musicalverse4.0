@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MusicalVerse — 공연 등록</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--purple:#534AB7;--purple-light:#EEEDFE;--teal:#0F6E56;--teal-light:#E1F5EE;
+  --red:#D94040;--red-light:#FCEBEB;--bg:#f7f7f5;--white:#fff;
+  --text:#1a1a1a;--text2:#555;--text3:#999;--border:#e0e0e0;--radius:10px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh}
+
+/* NAV */
+nav{background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100}
+.nav-logo{font-size:18px;font-weight:800;color:var(--purple);cursor:pointer}
+.nav-logo span{color:var(--text)}
+.nav-user{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2)}
+.nav-av{width:30px;height:30px;border-radius:50%;background:var(--purple-light);
+  color:var(--purple);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+/* LAYOUT */
+.wrap{max-width:900px;margin:0 auto;padding:32px 24px}
+.page-title{font-size:22px;font-weight:800;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--text3);margin-bottom:28px}
+
+/* STEP */
+.steps{display:flex;align-items:center;margin-bottom:32px}
+.step{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text3);position:relative;flex:1}
+.step:last-child{flex:0}
+.step-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+  background:var(--white);flex-shrink:0;transition:all .2s}
+.step.on .step-dot{border-color:var(--purple);background:var(--purple-light);color:var(--purple)}
+.step.done .step-dot{border-color:var(--teal);background:var(--teal-light);color:var(--teal)}
+.step.on{color:var(--purple);font-weight:700}
+.step.done{color:var(--teal)}
+.step-line{flex:1;height:1px;background:var(--border);margin:0 8px}
+.step.done .step-line{background:var(--teal)}
+
+/* CARD */
+.card{background:var(--white);border-radius:14px;padding:28px;margin-bottom:16px;border:1px solid var(--border)}
+.card-title{font-size:15px;font-weight:700;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+
+/* FORM */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.field{margin-bottom:0}
+.field+.field{margin-top:16px}
+.lbl{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px;display:block}
+.req{color:var(--red)}
+.inp{width:100%;padding:10px 13px;font-size:14px;border:1.5px solid var(--border);
+  border-radius:var(--radius);outline:none;background:var(--white);color:var(--text);transition:border-color .15s}
+.inp:focus{border-color:var(--purple)}
+textarea.inp{resize:vertical;min-height:90px;line-height:1.6}
+select.inp{appearance:auto;background:var(--white)}
+.hint{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* 장르 태그 */
+.tag-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.tag{padding:6px 14px;border-radius:20px;font-size:13px;border:1.5px solid var(--border);
+  cursor:pointer;color:var(--text2);background:var(--white);transition:all .15s;user-select:none}
+.tag.on{background:var(--purple-light);color:var(--purple);border-color:#AFA9EC;font-weight:600}
+
+/* 좌석 등급 */
+.grade-row{display:flex;align-items:center;gap:12px;padding:11px 14px;
+  border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px}
+.grade-dot{width:14px;height:14px;border-radius:4px;flex-shrink:0}
+.grade-name{font-size:14px;font-weight:600;flex:1}
+.grade-inp{width:120px;padding:7px 10px;font-size:14px;border:1.5px solid var(--border);
+  border-radius:8px;text-align:right;outline:none}
+.grade-inp:focus{border-color:var(--purple)}
+
+/* 업로드 */
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:28px;
+  text-align:center;cursor:pointer;color:var(--text3);transition:all .15s}
+.upload-zone:hover{border-color:var(--purple);background:var(--purple-light)}
+.upload-zone i{font-size:32px;display:block;margin-bottom:8px}
+
+/* 요약 */
+.summary{background:var(--purple-light);border-radius:12px;padding:20px 24px;margin-bottom:20px}
+.sum-title{font-size:17px;font-weight:800;color:var(--purple);margin-bottom:3px}
+.sum-sub{font-size:13px;color:var(--purple);opacity:.8;margin-bottom:14px}
+.sum-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;
+  border-bottom:1px solid rgba(83,74,183,.15)}
+.sum-row:last-child{border:none}
+.sum-lbl{color:var(--purple);opacity:.7}
+.sum-val{font-weight:600;color:#3C3489}
+
+/* 체크 */
+.chk-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;cursor:pointer;user-select:none}
+.chk{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px}
+.chk.on{background:var(--purple);border-color:var(--purple);color:#fff}
+.chk-txt{font-size:13px;color:var(--text2);line-height:1.5}
+
+/* 알림 */
+.alert{border-radius:var(--radius);padding:12px 16px;font-size:13px;margin-bottom:16px;display:none}
+.alert.on{display:flex;align-items:center;gap:8px}
+.alert.red{background:var(--red-light);color:var(--red)}
+.alert.green{background:var(--teal-light);color:var(--teal)}
+.alert.blue{background:var(--purple-light);color:var(--purple)}
+.notice{background:#FAEEDA;border-radius:var(--radius);padding:12px 16px;
+  font-size:13px;color:#854F0B;line-height:1.7;margin-bottom:16px}
+
+/* 버튼 */
+.btn-row{display:flex;gap:12px;margin-top:8px}
+.btn{padding:13px 28px;border-radius:var(--radius);font-size:14px;font-weight:700;cursor:pointer;border:none}
+.btn-main{background:var(--purple);color:#fff;flex:1}
+.btn-main:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:var(--white);border:1.5px solid var(--border);color:var(--text2)}
+
+/* 완료 */
+.done{text-align:center;padding:40px 0;display:none}
+.done-icon{width:72px;height:72px;border-radius:50%;background:var(--teal-light);
+  display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 16px}
+.done h2{font-size:22px;font-weight:800;margin-bottom:8px}
+.done p{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:24px}
+.result-box{border:1px solid var(--border);border-radius:12px;padding:18px;
+  text-align:left;margin-bottom:20px;max-width:480px;margin-left:auto;margin-right:auto}
+.res-row{display:flex;justify-content:space-between;font-size:13px;
+  padding:6px 0;border-bottom:1px solid var(--border)}
+.res-row:last-child{border:none}
+.res-lbl{color:var(--text3)}
+.res-val{font-weight:600}
+
+/* 로그인 필요 */
+.need-login{text-align:center;padding:60px 24px}
+.need-login h2{font-size:20px;font-weight:800;margin-bottom:8px}
+.need-login p{font-size:14px;color:var(--text2);margin-bottom:24px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><span>Musical</span>Verse</div>
+  <div class="nav-user" id="nav-user">
+    <span id="nav-name" style="color:var(--text3)">로그인이 필요합니다</span>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="alert" id="alert"></div>
+
+  <!-- 로그인 필요 화면 -->
+  <div class="need-login" id="need-login" style="display:none">
+    <div style="font-size:48px;margin-bottom:16px">🔒</div>
+    <h2>로그인이 필요합니다</h2>
+    <p>공연 등록은 로그인 후 이용할 수 있습니다</p>
+    <button class="btn btn-main" style="display:inline-block;width:auto"
+      onclick="location.href='auth.html'">로그인 / 회원가입</button>
+  </div>
+
+  <!-- 등록 폼 -->
+  <div id="register-wrap" style="display:none">
+    <div class="page-title">공연 등록</div>
+    <div class="page-sub">아마추어팀과 프로 공연팀 누구나 등록할 수 있습니다</div>
+
+    <!-- 스텝 표시 -->
+    <div class="steps" id="steps"></div>
+
+    <!-- 폼 내용 -->
+    <div id="form-content"></div>
+
+    <!-- 완료 화면 -->
+    <div class="done" id="done-screen">
+      <div class="done-icon">✓</div>
+      <h2>공연 등록 신청 완료!</h2>
+      <p>운영팀 검토 후 1–2 영업일 내에<br>승인 결과를 알려드립니다.</p>
+      <div class="result-box" id="result-box"></div>
+      <div class="btn-row" style="justify-content:center">
+        <button class="btn btn-ghost" onclick="location.href='index.html'">홈으로</button>
+        <button class="btn btn-main" style="flex:0;padding:13px 28px" onclick="resetForm()">새 공연 등록</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Supabase ──
+var SUPA_URL = 'https://qyrgfjshsczdpxaeznkc.supabase.co';
+var SUPA_KEY = 'sb_publishable_A6MmsqE9y-ymBKNKOwR2EA_PuLX5mLB';
+var sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+var step = 1;
+var user = null;
+var agreed = {c1:false, c2:false};
+var genres = [];
+var formData = {
+  title:'', date_start:'', date_end:'', time:'', venue:'',
+  genre:'', description:'', age_limit:'12세 이상', total_seats:'',
+  price_vip:'', price_general:'', price_student:'',
+  open_date:'', close_date:'', refund_policy:'공연 7일 전까지 100% 환불',
+  cast_info:'', team_name:'', duration:''
+};
+
+var STEP_LABELS = ['기본 정보','좌석/티켓','미디어','최종 확인'];
+var GENRES = ['창작 뮤지컬','라이선스 뮤지컬','소극장','가족','클래식','코미디','드라마'];
+
+// ── 초기화 ──
+sb.auth.getSession().then(function(r){
+  if(r.data && r.data.session){
+    user = r.data.session.user;
+    var meta = user.user_metadata||{};
+    formData.team_name = meta.name||'';
+    document.getElementById('nav-user').innerHTML =
+      '<div class="nav-av">'+(( meta.name||user.email)[0].toUpperCase())+'</div>'+
+      '<span>'+(meta.name||user.email.split('@')[0])+'</span>';
+    document.getElementById('register-wrap').style.display='block';
+    renderStep();
+  } else {
+    document.getElementById('need-login').style.display='block';
+  }
+});
+
+// ── 스텝 렌더 ──
+function renderStepBar(){
+  var html='';
+  STEP_LABELS.forEach(function(lbl,i){
+    var cl = i+1===step?'on': i+1<step?'done':'';
+    html+='<div class="step '+cl+'">'
+      +'<div class="step-dot">'+(i+1<step?'✓':(i+1))+'</div>'+lbl
+      +(i<3?'</div><div class="step-line"></div>':'</div>');
+  });
+  document.getElementById('steps').innerHTML=html;
+}
+
+function renderStep(){
+  renderStepBar();
+  var c = document.getElementById('form-content');
+  if(step===1) c.innerHTML = renderStep1();
+  else if(step===2) c.innerHTML = renderStep2();
+  else if(step===3) c.innerHTML = renderStep3();
+  else if(step===4) c.innerHTML = renderStep4();
+  bindTags();
+}
+
+// ── STEP 1 기본 정보 ──
+function renderStep1(){
+  return '<div class="card"><div class="card-title">공연 기본 정보</div>'
+    +'<div class="field"><label class="lbl">공연명 <span class="req">*</span></label>'
+    +'<input class="inp" id="f-title" placeholder="예: 명성황후 정기공연" value="'+esc(formData.title)+'"></div>'
+    +'<div class="grid2" style="margin-top:16px">'
+    +'<div class="field"><label class="lbl">공연 시작일 <span class="req">*</span></label>'
+    +'<input class="inp" id="f-date-s" type="date" value="'+esc(formData.date_start)+'"></div>'
+    +'<div class="field"><label class="lbl">공연 종료일</label>'
+    +'<input class="inp" id="f-date-e" type="date" value="'+esc(formData.date_end)+'"></div></div>'
+    +'<div class="grid2" style="margin-top:16px">'
+    +'<div class="field"><label class="lbl">공연 시간 <span class="req">*</span></label>'
+    +'<input class="inp" id="f-time" placeholder="예: 19:30" value="'+esc(formData.time)+'"></div>'
+    +'<div class="field"><label class="lbl">공연 시간 (분)</label>'
+    +'<input class="inp" id="f-duration" placeholder="예: 150" value="'+esc(formData.duration)+'"></div></div>'
+    +'<div class="field" style="margin-top:16px"><label class="lbl">공연 장소 <span class="req">*</span></label>'
+    +'<input class="inp" id="f-venue" placeholder="공연장 이름" value="'+esc(formData.venue)+'"></div>'
+    +'<div class="field" style="margin-top:16px"><label class="lbl">팀명</label>'
+    +'<input class="inp" id="f-team" placeholder="공연팀 이름" value="'+esc(formData.team_name)+'"></div>'
+    +'<div class="field" style="margin-top:16px"><label class="lbl">장르 <span class="req">*</span></label>'
+    +'<div class="tag-wrap" id="genre-tags">'
+    +GENRES.map(function(g){return '<div class="tag'+(genres.indexOf(g)>-1?' on':'')+'" data-genre="'+g+'">'+g+'</div>'}).join('')
+    +'</div></div>'
+    +'<div class="field" style="margin-top:16px"><label class="lbl">공연 소개</label>'
+    +'<textarea class="inp" id="f-desc" rows="4" placeholder="공연 줄거리, 특징, 관람 포인트">'+esc(formData.description)+'</textarea></div>'
+    +'<div class="grid2" style="margin-top:16px">'
+    +'<div class="field"><label class="lbl">관람 등급</label>'
+    +'<select class="inp" id="f-age"><option>전체 관람가</option><option>7세 이상</option>'
+    +'<option'+(formData.age_limit==='12세 이상'?' selected':'')+'">12세 이상</option>'
+    +'<option>15세 이상</option><option>18세 이상</option></select></div></div>'
+    +'</div>'
+    +'<div class="btn-row"><button class="btn btn-main" onclick="nextStep(1)">다음 — 좌석 / 티켓 설정 →</button></div>';
+}
+
+// ── STEP 2 좌석/티켓 ──
+function renderStep2(){
+  return '<div class="card"><div class="card-title">좌석 및 티켓 설정</div>'
+    +'<div class="field"><label class="lbl">총 좌석 수 <span class="req">*</span></label>'
+    +'<input class="inp" id="f-seats" type="number" placeholder="예: 300" value="'+esc(formData.total_seats)+'">'
+    +'<div class="hint">공연장 총 수용 인원 기준으로 입력하세요</div></div>'
+    +'<div class="field" style="margin-top:16px"><label class="lbl">좌석 등급 및 가격</label>'
+    +'<div class="grade-row"><div class="grade-dot" style="background:#EEEDFE;border:1px solid #AFA9EC"></div>'
+    +'<div class="grade-name">VIP석</div>'
+    +'<input class="grade-inp" id="f-vip" type="number" placeholder="0" value="'+esc(formData.price_vip)+'">'
+    +'<span style="font-size:13px;color:var(--text3)">원</span></div>'
+    +'<div class="grade-row"><div class="grade-dot" style="background:#E1F5EE;border:1px solid #5DCAA5"></div>'
+    +'<div class="grade-name">일반석</div>'
+    +'<input class="grade-inp" id="f-gen" type="number" placeholder="0" value="'+esc(formData.price_general)+'">'
+    +'<span style="font-size:13px;color:var(--text3)">원</span></div>'
+    +'<div class="grade-row"><div class="grade-dot" style="background:#E6F1FB;border:1px solid #85B7EB"></div>'
+    +'<div class="grade-name">학생석</div>'
+    +'<input class="grade-inp" id="f-stu" type="number" placeholder="0" value="'+esc(formData.price_student)+'">'
+    +'<span style="font-size:13px;color:var(--text3)">원</span></div></div>'
+    +'<div class="grid2" style="margin-top:16px">'
+    +'<div class="field"><label class="lbl">예매 오픈일 <span class="req">*</span></label>'
+    +'<input class="inp" id="f-open" type="date" value="'+esc(formData.open_date)+'">'
+    +'<div class="hint">설정일 오전 10시 자동 오픈</div></div>'
+    +'<div class="field"><label class="lbl">예매 마감일</label>'
+    +'<input class="inp" id="f-close" type="date" value="'+esc(formData.close_date)+'"></div></div>'
+    +'<div class="field" style="margin-top:16px"><label class="lbl">환불 정책</label>'
+    +'<select class="inp" id="f-refund">'
+    +'<option>공연 7일 전까지 100% 환불</option>'
+    +'<option>공연 3일 전까지 100% 환불</option>'
+    +'<option>공연 당일 환불 불가</option></select></div>'
+    +'</div>'
+    +'<div class="btn-row">'
+    +'<button class="btn btn-ghost" onclick="prevStep()">← 이전</button>'
+    +'<button class="btn btn-main" onclick="nextStep(2)">다음 — 미디어 등록 →</button></div>';
+}
+
+// ── STEP 3 미디어 ──
+function renderStep3(){
+  return '<div class="card"><div class="card-title">미디어 및 출연진</div>'
+    +'<div class="field"><label class="lbl">대표 포스터 <span class="req">*</span></label>'
+    +'<div class="upload-zone"><span style="font-size:32px;display:block;margin-bottom:8px">🎭</span>'
+    +'포스터 이미지 업로드<br><span style="font-size:12px">JPG, PNG · 최대 10MB · 권장 600×900px</span></div>'
+    +'<div class="hint" style="margin-top:6px">실제 파일 업로드는 Supabase Storage 연동 후 사용 가능합니다</div></div>'
+    +'<div class="field" style="margin-top:16px"><label class="lbl">홍보 영상 URL (선택)</label>'
+    +'<input class="inp" placeholder="YouTube 또는 Vimeo URL"></div>'
+    +'<div class="field" style="margin-top:16px"><label class="lbl">출연진 정보 (선택)</label>'
+    +'<textarea class="inp" id="f-cast" rows="3" placeholder="예: 김희정 (주연), 이준호 (연출)">'+esc(formData.cast_info)+'</textarea></div>'
+    +'</div>'
+    +'<div class="btn-row">'
+    +'<button class="btn btn-ghost" onclick="prevStep()">← 이전</button>'
+    +'<button class="btn btn-main" onclick="nextStep(3)">다음 — 최종 확인 →</button></div>';
+}
+
+// ── STEP 4 최종 확인 ──
+function renderStep4(){
+  var prices=[];
+  if(formData.price_vip) prices.push('VIP '+Number(formData.price_vip).toLocaleString()+'원');
+  if(formData.price_general) prices.push('일반 '+Number(formData.price_general).toLocaleString()+'원');
+  if(formData.price_student) prices.push('학생 '+Number(formData.price_student).toLocaleString()+'원');
+
+  return '<div class="summary">'
+    +'<div class="sum-title">'+esc(formData.title||'(공연명 미입력)')+'</div>'
+    +'<div class="sum-sub">'+esc(formData.team_name||'')+'</div>'
+    +[['일시', (formData.date_start||'미입력')+(formData.date_end?' – '+formData.date_end:'')+' '+( formData.time||'')],
+      ['장소', formData.venue||'미입력'],
+      ['장르', formData.genre||'미입력'],
+      ['관람 등급', formData.age_limit],
+      ['총 좌석', formData.total_seats?formData.total_seats+'석':'미입력'],
+      ['좌석 가격', prices.length?prices.join(' / '):'미입력'],
+      ['예매 오픈', formData.open_date||'미입력'],
+      ['환불 정책', formData.refund_policy]
+    ].map(function(r){return '<div class="sum-row"><span class="sum-lbl">'+r[0]+'</span><span class="sum-val">'+esc(r[1])+'</span></div>'}).join('')
+    +'</div>'
+    +'<div class="notice">등록 후 운영팀 검토(1–2 영업일)를 거쳐 공개됩니다.<br>수수료는 티켓 금액의 4%가 자동 정산됩니다.</div>'
+    +'<div class="card">'
+    +'<div class="chk-row" onclick="toggleChk(\'c1\')"><div class="chk" id="chk-c1">'+(agreed.c1?'✓':'')+'</div>'
+    +'<div class="chk-txt">[필수] 공연 등록 및 티켓 판매 서비스 이용 약관에 동의합니다</div></div>'
+    +'<div class="chk-row" onclick="toggleChk(\'c2\')"><div class="chk" id="chk-c2">'+(agreed.c2?'✓':'')+'</div>'
+    +'<div class="chk-txt">[필수] 환불 정책 및 수수료 정산 기준에 동의합니다</div></div>'
+    +'</div>'
+    +'<div class="btn-row">'
+    +'<button class="btn btn-ghost" onclick="prevStep()">← 이전</button>'
+    +'<button class="btn btn-main" id="btn-submit" onclick="doSubmit()">공연 등록 신청</button></div>';
+}
+
+// ── 태그 이벤트 ──
+function bindTags(){
+  document.querySelectorAll('[data-genre]').forEach(function(el){
+    el.addEventListener('click',function(){
+      var g=this.dataset.genre;
+      var idx=genres.indexOf(g);
+      if(idx>-1) genres.splice(idx,1);
+      else genres.push(g);
+      this.classList.toggle('on', genres.indexOf(g)>-1);
+    });
+  });
+}
+
+// ── 체크박스 ──
+function toggleChk(id){
+  agreed[id]=!agreed[id];
+  var el=document.getElementById('chk-'+id);
+  el.classList.toggle('on',agreed[id]);
+  el.textContent=agreed[id]?'✓':'';
+}
+
+// ── 데이터 저장 ──
+function saveStep1(){
+  formData.title=val('f-title');
+  formData.date_start=val('f-date-s');
+  formData.date_end=val('f-date-e');
+  formData.time=val('f-time');
+  formData.duration=val('f-duration');
+  formData.venue=val('f-venue');
+  formData.team_name=val('f-team');
+  formData.genre=genres.join(', ');
+  formData.description=val('f-desc');
+  formData.age_limit=document.getElementById('f-age')?document.getElementById('f-age').value:'';
+}
+function saveStep2(){
+  formData.total_seats=val('f-seats');
+  formData.price_vip=val('f-vip');
+  formData.price_general=val('f-gen');
+  formData.price_student=val('f-stu');
+  formData.open_date=val('f-open');
+  formData.close_date=val('f-close');
+  formData.refund_policy=document.getElementById('f-refund')?document.getElementById('f-refund').value:'';
+}
+function saveStep3(){
+  formData.cast_info=val('f-cast');
+}
+
+// ── 유효성 검사 ──
+function validateStep1(){
+  if(!formData.title){showAlert('공연명을 입력하세요','red');return false}
+  if(!formData.date_start){showAlert('공연 시작일을 입력하세요','red');return false}
+  if(!formData.time){showAlert('공연 시간을 입력하세요','red');return false}
+  if(!formData.venue){showAlert('공연 장소를 입력하세요','red');return false}
+  if(genres.length===0){showAlert('장르를 하나 이상 선택하세요','red');return false}
+  return true;
+}
+function validateStep2(){
+  if(!formData.total_seats){showAlert('총 좌석 수를 입력하세요','red');return false}
+  if(!formData.open_date){showAlert('예매 오픈일을 입력하세요','red');return false}
+  return true;
+}
+
+// ── 스텝 이동 ──
+function nextStep(cur){
+  hideAlert();
+  if(cur===1){saveStep1();if(!validateStep1()) return;}
+  if(cur===2){saveStep2();if(!validateStep2()) return;}
+  if(cur===3){saveStep3();}
+  step++;
+  renderStep();
+  window.scrollTo(0,0);
+}
+function prevStep(){
+  step--;
+  renderStep();
+  window.scrollTo(0,0);
+}
+
+// ── DB 저장 ──
+function doSubmit(){
+  if(!agreed.c1||!agreed.c2){showAlert('필수 약관에 모두 동의해 주세요','red');return}
+  var btn=document.getElementById('btn-submit');
+  btn.textContent='등록 중...'; btn.disabled=true;
+
+  var payload={
+    user_id: user.id,
+    title: formData.title,
+    date_start: formData.date_start,
+    date_end: formData.date_end||null,
+    time: formData.time,
+    venue: formData.venue,
+    genre: formData.genre,
+    description: formData.description,
+    age_limit: formData.age_limit,
+    total_seats: parseInt(formData.total_seats)||null,
+    price_vip: parseInt(formData.price_vip)||null,
+    price_general: parseInt(formData.price_general)||null,
+    price_student: parseInt(formData.price_student)||null,
+    open_date: formData.open_date,
+    close_date: formData.close_date||null,
+    refund_policy: formData.refund_policy,
+    cast_info: formData.cast_info||null,
+    team_name: formData.team_name||null,
+    status: 'pending'
+  };
+
+  sb.from('shows').insert([payload]).select().then(function(r){
+    btn.textContent='공연 등록 신청'; btn.disabled=false;
+    if(r.error){showAlert('등록 실패: '+r.error.message,'red');return;}
+    var id = r.data&&r.data[0]?r.data[0].id:'';
+    var appNum = 'MV-'+Date.now().toString().slice(-6);
+    document.getElementById('form-content').style.display='none';
+    document.getElementById('steps').style.display='none';
+    document.querySelector('.page-title').style.display='none';
+    document.querySelector('.page-sub').style.display='none';
+    document.getElementById('result-box').innerHTML=
+      [['공연명',formData.title],['신청 번호',appNum],
+       ['신청 일시',new Date().toLocaleDateString('ko-KR')],
+       ['예매 오픈 예정',formData.open_date],
+       ['현재 상태','검토 중']
+      ].map(function(r){
+        return '<div class="res-row"><span class="res-lbl">'+r[0]+'</span>'
+          +'<span class="res-val" style="'+(r[0]==='현재 상태'?'color:#854F0B':'')+'">'+r[1]+'</span></div>'
+      }).join('');
+    document.getElementById('done-screen').style.display='block';
+  });
+}
+
+// ── 초기화 ──
+function resetForm(){
+  step=1; genres=[]; agreed={c1:false,c2:false};
+  formData={title:'',date_start:'',date_end:'',time:'',venue:'',genre:'',
+    description:'',age_limit:'12세 이상',total_seats:'',price_vip:'',
+    price_general:'',price_student:'',open_date:'',close_date:'',
+    refund_policy:'공연 7일 전까지 100% 환불',cast_info:'',team_name:'',duration:''};
+  document.getElementById('done-screen').style.display='none';
+  document.getElementById('form-content').style.display='block';
+  document.getElementById('steps').style.display='flex';
+  document.querySelector('.page-title').style.display='block';
+  document.querySelector('.page-sub').style.display='block';
+  renderStep();
+}
+
+// ── 유틸 ──
+function val(id){var e=document.getElementById(id);return e?e.value.trim():'';}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showAlert(msg,type){
+  var a=document.getElementById('alert');
+  a.innerHTML='⚠ '+msg; a.className='alert on '+(type||'blue'); a.style.display='flex';
+  window.scrollTo(0,0);
+}
+function hideAlert(){var a=document.getElementById('alert');a.style.display='none';}
+</script>
+</body>
+</html>
