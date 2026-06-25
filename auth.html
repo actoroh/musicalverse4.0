@@ -4,603 +4,345 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MusicalVerse — 로그인</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --purple:#534AB7;--purple-light:#EEEDFE;--purple-dark:#3C3489;
-  --teal:#0F6E56;--teal-light:#E1F5EE;
-  --red:#D94040;--red-light:#FCEBEB;
-  --bg:#fff;--bg2:#f7f7f5;
-  --text:#1a1a1a;--text2:#555;--text3:#999;
-  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.18);
-  --radius:10px;--radius-lg:16px;
-}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#2D2680,#534AB7,#7F77DD);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-
-/* ── 카드 ── */
-.auth-card{background:#fff;border-radius:24px;width:100%;max-width:440px;box-shadow:0 24px 60px rgba(0,0,0,.25);overflow:hidden}
-.auth-header{padding:32px 32px 0;text-align:center}
-.logo{font-size:22px;font-weight:800;color:var(--purple);margin-bottom:6px}
-.logo span{color:var(--text)}
-.auth-tabs{display:flex;margin:24px 32px 0;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden}
-.atab{flex:1;padding:10px;text-align:center;font-size:14px;font-weight:600;cursor:pointer;background:transparent;border:none;color:var(--text3);transition:all .15s}
-.atab.on{background:var(--purple);color:#fff}
-.auth-body{padding:28px 32px 32px}
-
-/* ── 폼 ── */
-.field{margin-bottom:16px}
-.field-lbl{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
-.field-wrap{position:relative}
-.field input{width:100%;padding:12px 14px;font-size:14px;border:1.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);transition:border-color .15s;outline:none}
-.field input:focus{border-color:var(--purple)}
-.field input.err{border-color:var(--red)}
-.field input.ok{border-color:var(--teal)}
-.field-icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--text3);cursor:pointer}
-.field-err{font-size:11px;color:var(--red);margin-top:4px;display:none}
-.field-err.show{display:block}
-.field-hint{font-size:11px;color:var(--text3);margin-top:4px}
-
-/* 비밀번호 강도 */
-.pw-strength{margin-top:6px;display:none}
-.pw-strength.show{display:block}
-.pw-bars{display:flex;gap:3px;margin-bottom:4px}
-.pw-bar{flex:1;height:3px;border-radius:2px;background:var(--border2);transition:background .2s}
-.pw-bar.w{background:var(--red)}
-.pw-bar.m{background:#F5A623}
-.pw-bar.s{background:var(--teal)}
-.pw-label{font-size:11px;color:var(--text3)}
-
-/* 구분선 */
-.divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--text3);font-size:12px}
-.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
-
-/* 소셜 */
-.social-btns{display:flex;gap:10px;margin-bottom:20px}
-.social-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;background:#fff;color:var(--text2);transition:background .15s}
-.social-btn:hover{background:var(--bg2)}
-.social-btn i{font-size:18px}
-
-/* 체크박스 */
-.check-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;cursor:pointer}
-.chk{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px;transition:all .15s}
-.chk.on{background:var(--purple);border-color:var(--purple);color:#fff}
-.chk-text{font-size:12px;color:var(--text2);line-height:1.5}
-.chk-text a{color:var(--purple);text-decoration:none}
-
-/* 버튼 */
-.btn-main{width:100%;padding:14px;background:var(--purple);color:#fff;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:8px}
-.btn-main:hover{background:var(--purple-dark)}
-.btn-main:disabled{background:var(--text3);cursor:not-allowed}
-.btn-main .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
-.btn-main.loading .spinner{display:block}
-.btn-main.loading .btn-txt{display:none}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-.forgot-link{font-size:12px;color:var(--purple);cursor:pointer;font-weight:600}
-
-/* 알림 배너 */
-.alert{border-radius:var(--radius);padding:12px 14px;font-size:13px;margin-bottom:16px;display:none;align-items:flex-start;gap:8px}
-.alert.show{display:flex}
-.alert.success{background:var(--teal-light);color:var(--teal)}
-.alert.error{background:var(--red-light);color:var(--red)}
-.alert.info{background:var(--purple-light);color:var(--purple)}
-.alert i{font-size:17px;flex-shrink:0;margin-top:1px}
-
-/* 완료 화면 */
-.done-screen{padding:32px;text-align:center;display:none}
-.done-screen.show{display:block}
-.done-icon{width:72px;height:72px;border-radius:50%;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;font-size:32px}
-.done-icon.success{background:var(--teal-light);color:var(--teal)}
-.done-icon.mail{background:var(--purple-light);color:var(--purple)}
-.done-title{font-size:20px;font-weight:800;margin-bottom:8px}
-.done-desc{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:24px}
-.btn-ghost{width:100%;padding:12px;background:transparent;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer;color:var(--text2)}
-
-/* 유저 프로필 (로그인 완료) */
-.profile-screen{padding:32px;text-align:center;display:none}
-.profile-screen.show{display:block}
-.profile-av{width:80px;height:80px;border-radius:50%;background:var(--purple-light);color:var(--purple);font-size:28px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;border:3px solid var(--purple)}
-.profile-name{font-size:20px;font-weight:800;margin-bottom:4px}
-.profile-email{font-size:13px;color:var(--text3);margin-bottom:6px}
-.profile-role{display:inline-block;font-size:11px;padding:3px 10px;border-radius:10px;font-weight:700;margin-bottom:20px}
-.role-fan{background:var(--purple-light);color:var(--purple)}
-.role-team{background:var(--teal-light);color:var(--teal)}
-.role-admin{background:#FAEEDA;color:#854F0B}
-.profile-menu{text-align:left;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:16px}
-.pm-item{display:flex;align-items:center;gap:12px;padding:13px 16px;font-size:14px;color:var(--text);border-bottom:0.5px solid var(--border);cursor:pointer}
-.pm-item:last-child{border:none}
-.pm-item:hover{background:var(--bg2)}
-.pm-item i{font-size:18px;color:var(--text3);width:22px}
-.pm-arrow{margin-left:auto;color:var(--text3);font-size:16px}
-.btn-logout{width:100%;padding:12px;background:var(--red-light);border:none;border-radius:var(--radius);font-size:14px;font-weight:700;color:var(--red);cursor:pointer}
-
-/* Supabase 설정 안내 */
-.setup-banner{background:#FAEEDA;border-radius:var(--radius);padding:12px 14px;font-size:12px;color:#854F0B;margin-bottom:16px;line-height:1.7;display:none}
-.setup-banner.show{display:block}
-.setup-banner b{display:block;margin-bottom:4px}
-.setup-banner code{background:rgba(0,0,0,.08);padding:1px 5px;border-radius:4px;font-family:monospace}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:linear-gradient(135deg,#2D2680,#534AB7,#7F77DD);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:#fff;border-radius:20px;width:100%;max-width:420px;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);padding:32px}
+.logo{text-align:center;font-size:22px;font-weight:800;color:#534AB7;margin-bottom:4px}
+.logo span{color:#1a1a1a}
+.sub{text-align:center;font-size:13px;color:#999;margin-bottom:24px}
+.tabs{display:flex;border:1px solid #ddd;border-radius:8px;overflow:hidden;margin-bottom:24px}
+.tab{flex:1;padding:10px;text-align:center;font-size:14px;font-weight:600;
+  cursor:pointer;border:none;background:#fff;color:#999}
+.tab.on{background:#534AB7;color:#fff}
+.field{margin-bottom:14px}
+.lbl{font-size:12px;font-weight:700;color:#555;margin-bottom:5px}
+.inp{width:100%;padding:11px 13px;font-size:14px;border:1.5px solid #ddd;
+  border-radius:8px;outline:none;transition:border-color .15s}
+.inp:focus{border-color:#534AB7}
+select.inp{background:#fff;color:#1a1a1a}
+.err{font-size:11px;color:#D94040;margin-top:3px;display:none}
+.alert{border-radius:8px;padding:11px 13px;font-size:13px;margin-bottom:14px;display:none}
+.alert.on{display:block}
+.alert.red{background:#FCEBEB;color:#D94040}
+.alert.green{background:#E1F5EE;color:#0F6E56}
+.alert.blue{background:#EEEDFE;color:#534AB7}
+.chk-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;cursor:pointer;user-select:none}
+.chk{width:18px;height:18px;border-radius:4px;border:1.5px solid #ddd;
+  display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px}
+.chk.on{background:#534AB7;border-color:#534AB7;color:#fff}
+.chk-txt{font-size:12px;color:#555;line-height:1.5}
+.btn{width:100%;padding:13px;background:#534AB7;color:#fff;border:none;
+  border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
+.btn:disabled{background:#ccc;cursor:not-allowed}
+.btn-ghost{width:100%;padding:11px;background:#fff;border:1.5px solid #ddd;
+  border-radius:8px;font-size:14px;cursor:pointer;color:#555;margin-top:8px}
+.divider{display:flex;align-items:center;gap:10px;color:#ccc;font-size:12px;margin:16px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#eee}
+.forgot{font-size:12px;color:#534AB7;cursor:pointer;font-weight:600}
+/* 프로필 */
+.profile{display:none;text-align:center}
+.p-av{width:72px;height:72px;border-radius:50%;background:#EEEDFE;color:#534AB7;
+  font-size:26px;font-weight:800;display:flex;align-items:center;justify-content:center;
+  margin:0 auto 12px;border:3px solid #534AB7}
+.p-name{font-size:18px;font-weight:800;margin-bottom:3px}
+.p-email{font-size:13px;color:#999;margin-bottom:8px}
+.p-role{display:inline-block;font-size:11px;padding:3px 10px;border-radius:10px;
+  font-weight:700;margin-bottom:20px}
+.r-fan{background:#EEEDFE;color:#534AB7}
+.r-team{background:#E1F5EE;color:#0F6E56}
+.r-admin{background:#FAEEDA;color:#854F0B}
+.menu{border:1px solid #eee;border-radius:12px;overflow:hidden;margin-bottom:16px;text-align:left}
+.menu-item{display:flex;align-items:center;gap:10px;padding:13px 16px;
+  font-size:14px;border-bottom:0.5px solid #eee;cursor:pointer}
+.menu-item:last-child{border:none}
+.menu-item:hover{background:#f7f7f5}
+.btn-out{width:100%;padding:12px;background:#FCEBEB;border:none;border-radius:8px;
+  font-size:14px;font-weight:700;color:#D94040;cursor:pointer}
+/* 인증 대기 */
+.verify{display:none;text-align:center}
+.v-icon{width:64px;height:64px;border-radius:50%;background:#EEEDFE;color:#534AB7;
+  font-size:28px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
 </style>
 </head>
 <body>
+<div class="card">
+  <div class="logo"><span>Musical</span>Verse</div>
+  <div class="sub">뮤지컬 팬을 위한 올인원 플랫폼</div>
 
-<div class="auth-card" id="auth-card">
+  <div class="alert" id="alert"></div>
 
-  <!-- ── 설정 안내 배너 (Supabase 키 미입력 시) ── -->
-  <div class="setup-banner show" id="setup-banner">
-    <b>Supabase 연동 전 데모 모드로 실행 중입니다.</b>
-    실제 운영을 위해 아래 값을 코드에 입력하세요.<br>
-    <code>SUPABASE_URL</code> · <code>SUPABASE_ANON_KEY</code><br>
-    → supabase.com에서 무료 프로젝트 생성 후 Settings &gt; API에서 확인
+  <!-- 탭 -->
+  <div class="tabs" id="tabs">
+    <button class="tab on" onclick="showTab('login')">로그인</button>
+    <button class="tab" onclick="showTab('signup')">회원가입</button>
   </div>
 
-  <!-- ── 헤더 ── -->
-  <div class="auth-header">
-    <div class="logo"><span>Musical</span>Verse</div>
-    <div style="font-size:13px;color:var(--text3)">뮤지컬 팬을 위한 올인원 플랫폼</div>
-    <div class="auth-tabs">
-      <button class="atab on" id="tab-login" onclick="switchTab('login')">로그인</button>
-      <button class="atab" id="tab-signup" onclick="switchTab('signup')">회원가입</button>
+  <!-- 로그인 폼 -->
+  <div id="form-login">
+    <div class="field">
+      <div class="lbl">이메일</div>
+      <input class="inp" type="email" id="li-email" placeholder="이메일 입력">
     </div>
+    <div class="field">
+      <div class="lbl" style="display:flex;justify-content:space-between">
+        비밀번호 <span class="forgot" onclick="showForgot()">비밀번호 찾기</span>
+      </div>
+      <input class="inp" type="password" id="li-pw" placeholder="비밀번호 입력">
+    </div>
+    <button class="btn" id="btn-login" onclick="doLogin()">로그인</button>
   </div>
 
-  <!-- ── 알림 ── -->
-  <div style="padding:0 32px">
-    <div class="alert" id="alert"><i class="ti ti-info-circle"></i><span id="alert-msg"></span></div>
-  </div>
-
-  <!-- ══ 로그인 폼 ══ -->
-  <div class="auth-body" id="form-login">
-    <div class="social-btns">
-      <button class="social-btn" onclick="socialLogin('google')"><i class="ti ti-brand-google" style="color:#EA4335"></i>Google</button>
-      <button class="social-btn" onclick="socialLogin('kakao')"><i class="ti ti-message-circle" style="color:#FEE500"></i>카카오</button>
-    </div>
-    <div class="divider">또는 이메일로</div>
-
+  <!-- 회원가입 폼 -->
+  <div id="form-signup" style="display:none">
     <div class="field">
-      <div class="field-lbl">이메일</div>
-      <div class="field-wrap">
-        <input type="email" id="login-email" placeholder="example@email.com" oninput="clearErr('login-email')">
-        <i class="ti ti-mail field-icon"></i>
-      </div>
-      <div class="field-err" id="err-login-email"></div>
+      <div class="lbl">닉네임</div>
+      <input class="inp" type="text" id="su-name" placeholder="닉네임 입력">
     </div>
-
     <div class="field">
-      <div class="field-lbl">
-        비밀번호
-        <span class="forgot-link" onclick="showForgot()">비밀번호 찾기</span>
-      </div>
-      <div class="field-wrap">
-        <input type="password" id="login-pw" placeholder="비밀번호 입력" oninput="clearErr('login-pw')">
-        <i class="ti ti-eye field-icon" onclick="togglePw('login-pw',this)"></i>
-      </div>
-      <div class="field-err" id="err-login-pw"></div>
+      <div class="lbl">이메일</div>
+      <input class="inp" type="email" id="su-email" placeholder="이메일 입력">
     </div>
-
-    <div class="check-row" onclick="toggleChk('chk-remember')">
-      <div class="chk" id="chk-remember"></div>
-      <div class="chk-text">로그인 상태 유지</div>
-    </div>
-
-    <button class="btn-main" id="btn-login" onclick="doLogin()">
-      <div class="spinner"></div>
-      <span class="btn-txt">로그인</span>
-    </button>
-  </div>
-
-  <!-- ══ 회원가입 폼 ══ -->
-  <div class="auth-body" id="form-signup" style="display:none">
-    <div class="social-btns">
-      <button class="social-btn" onclick="socialLogin('google')"><i class="ti ti-brand-google" style="color:#EA4335"></i>Google</button>
-      <button class="social-btn" onclick="socialLogin('kakao')"><i class="ti ti-message-circle" style="color:#FEE500"></i>카카오</button>
-    </div>
-    <div class="divider">또는 이메일로</div>
-
     <div class="field">
-      <div class="field-lbl">닉네임</div>
-      <div class="field-wrap">
-        <input type="text" id="signup-name" placeholder="사용할 닉네임 입력" oninput="clearErr('signup-name')">
-        <i class="ti ti-user field-icon"></i>
-      </div>
-      <div class="field-err" id="err-signup-name"></div>
+      <div class="lbl">비밀번호 (8자 이상)</div>
+      <input class="inp" type="password" id="su-pw" placeholder="비밀번호 입력">
     </div>
-
     <div class="field">
-      <div class="field-lbl">이메일</div>
-      <div class="field-wrap">
-        <input type="email" id="signup-email" placeholder="example@email.com" oninput="validateEmail()">
-        <i class="ti ti-mail field-icon" id="email-icon"></i>
-      </div>
-      <div class="field-err" id="err-signup-email"></div>
+      <div class="lbl">비밀번호 확인</div>
+      <input class="inp" type="password" id="su-pw2" placeholder="비밀번호 재입력">
     </div>
-
     <div class="field">
-      <div class="field-lbl">비밀번호</div>
-      <div class="field-wrap">
-        <input type="password" id="signup-pw" placeholder="8자 이상 입력" oninput="checkPwStrength()">
-        <i class="ti ti-eye field-icon" onclick="togglePw('signup-pw',this)"></i>
-      </div>
-      <div class="pw-strength" id="pw-strength">
-        <div class="pw-bars"><div class="pw-bar" id="bar1"></div><div class="pw-bar" id="bar2"></div><div class="pw-bar" id="bar3"></div><div class="pw-bar" id="bar4"></div></div>
-        <div class="pw-label" id="pw-lbl">비밀번호를 입력하세요</div>
-      </div>
-      <div class="field-err" id="err-signup-pw"></div>
-    </div>
-
-    <div class="field">
-      <div class="field-lbl">비밀번호 확인</div>
-      <div class="field-wrap">
-        <input type="password" id="signup-pw2" placeholder="비밀번호 재입력" oninput="checkPwMatch()">
-        <i class="ti ti-eye field-icon" onclick="togglePw('signup-pw2',this)"></i>
-      </div>
-      <div class="field-err" id="err-signup-pw2"></div>
-    </div>
-
-    <div class="field">
-      <div class="field-lbl">회원 유형</div>
-      <select id="signup-role" style="width:100%;padding:11px 14px;font-size:14px;border:1.5px solid var(--border2);border-radius:var(--radius);background:#fff;color:var(--text);outline:none">
+      <div class="lbl">회원 유형</div>
+      <select class="inp" id="su-role">
         <option value="fan">일반 팬</option>
         <option value="team">아마추어 공연팀</option>
         <option value="actor">프로 배우</option>
       </select>
-      <div class="field-hint">공연팀/배우는 가입 후 인증 절차가 있습니다</div>
     </div>
-
-    <div class="check-row" onclick="toggleChk('chk-terms')">
+    <div class="chk-row" onclick="toggleChk('chk-terms')">
       <div class="chk" id="chk-terms"></div>
-      <div class="chk-text">[필수] <a href="#">이용약관</a> 및 <a href="#">개인정보처리방침</a>에 동의합니다</div>
+      <div class="chk-txt">[필수] 이용약관 및 개인정보처리방침에 동의합니다</div>
     </div>
-    <div class="check-row" onclick="toggleChk('chk-marketing')">
-      <div class="chk" id="chk-marketing"></div>
-      <div class="chk-text">[선택] 공연 소식 및 마케팅 알림 수신에 동의합니다</div>
-    </div>
-
-    <button class="btn-main" id="btn-signup" onclick="doSignup()">
-      <div class="spinner"></div>
-      <span class="btn-txt">회원가입</span>
-    </button>
+    <button class="btn" id="btn-signup" onclick="doSignup()">회원가입</button>
   </div>
 
-  <!-- ══ 이메일 인증 안내 화면 ══ -->
-  <div class="done-screen" id="screen-verify">
-    <div class="done-icon mail"><i class="ti ti-mail-opened"></i></div>
-    <div class="done-title">이메일을 확인하세요</div>
-    <div class="done-desc" id="verify-email-desc">입력하신 이메일로 인증 링크를 보냈습니다.<br>링크를 클릭하면 가입이 완료됩니다.</div>
-    <button class="btn-main" style="margin-bottom:10px" onclick="resendVerify()">
-      <div class="spinner"></div>
-      <span class="btn-txt"><i class="ti ti-refresh"></i> 인증 메일 재발송</span>
-    </button>
-    <button class="btn-ghost" onclick="switchTab('login')">로그인으로 돌아가기</button>
+  <!-- 이메일 인증 대기 -->
+  <div class="verify" id="screen-verify">
+    <div class="v-icon">✉️</div>
+    <div style="font-size:18px;font-weight:800;margin-bottom:8px">이메일을 확인하세요</div>
+    <div style="font-size:13px;color:#666;line-height:1.6;margin-bottom:20px" id="verify-msg"></div>
+    <button class="btn-ghost" onclick="showTab('login')">로그인으로 돌아가기</button>
   </div>
 
-  <!-- ══ 비밀번호 찾기 화면 ══ -->
-  <div class="done-screen" id="screen-forgot">
-    <div class="done-icon mail" style="background:#FAEEDA;color:#854F0B"><i class="ti ti-lock-open"></i></div>
-    <div class="done-title">비밀번호 재설정</div>
-    <div class="done-desc">가입한 이메일을 입력하면<br>비밀번호 재설정 링크를 보내드립니다.</div>
-    <div class="field" style="text-align:left;margin-bottom:14px">
-      <input type="email" id="forgot-email" placeholder="이메일 입력" style="width:100%;padding:12px 14px;font-size:14px;border:1.5px solid var(--border2);border-radius:var(--radius);outline:none">
+  <!-- 비밀번호 찾기 -->
+  <div id="screen-forgot" style="display:none">
+    <div style="font-size:16px;font-weight:800;margin-bottom:8px">비밀번호 재설정</div>
+    <div style="font-size:13px;color:#666;margin-bottom:14px">가입한 이메일로 재설정 링크를 보내드립니다</div>
+    <div class="field">
+      <input class="inp" type="email" id="fg-email" placeholder="이메일 입력">
     </div>
-    <button class="btn-main" style="margin-bottom:10px" onclick="doForgot()">
-      <div class="spinner"></div>
-      <span class="btn-txt">재설정 링크 발송</span>
-    </button>
+    <button class="btn" onclick="doForgot()">재설정 링크 발송</button>
     <button class="btn-ghost" onclick="hideForgot()">← 로그인으로</button>
   </div>
 
-  <!-- ══ 로그인 완료 / 프로필 화면 ══ -->
-  <div class="profile-screen" id="screen-profile">
-    <div class="profile-av" id="prof-av">김</div>
-    <div class="profile-name" id="prof-name">김민준</div>
-    <div class="profile-email" id="prof-email">user@example.com</div>
-    <div class="profile-role role-fan" id="prof-role">일반 팬</div>
-    <div class="profile-menu">
-      <div class="pm-item"><i class="ti ti-ticket"></i>내 예약 내역<i class="ti ti-chevron-right pm-arrow"></i></div>
-      <div class="pm-item"><i class="ti ti-star"></i>팔로우 중인 아티스트<i class="ti ti-chevron-right pm-arrow"></i></div>
-      <div class="pm-item" id="pm-admin" style="display:none"><i class="ti ti-dashboard" style="color:#854F0B"></i><span style="color:#854F0B;font-weight:700">관리자 대시보드</span><i class="ti ti-chevron-right pm-arrow"></i></div>
-      <div class="pm-item" id="pm-team" style="display:none"><i class="ti ti-building-stadium" style="color:var(--teal)"></i><span style="color:var(--teal);font-weight:700">내 공연 관리</span><i class="ti ti-chevron-right pm-arrow"></i></div>
-      <div class="pm-item"><i class="ti ti-settings"></i>계정 설정<i class="ti ti-chevron-right pm-arrow"></i></div>
+  <!-- 프로필 (로그인 완료) -->
+  <div class="profile" id="screen-profile">
+    <div class="p-av" id="p-av"></div>
+    <div class="p-name" id="p-name"></div>
+    <div class="p-email" id="p-email"></div>
+    <div class="p-role" id="p-role"></div>
+    <div class="menu">
+      <div class="menu-item">🎫 내 예약 내역</div>
+      <div class="menu-item">⭐ 팔로우 중인 아티스트</div>
+      <div class="menu-item" id="mi-admin" style="display:none;color:#854F0B;font-weight:700">🛠 관리자 대시보드</div>
+      <div class="menu-item" id="mi-team" style="display:none;color:#0F6E56;font-weight:700">🎭 내 공연 관리</div>
+      <div class="menu-item">⚙️ 계정 설정</div>
     </div>
-    <button class="btn-logout" onclick="doLogout()"><i class="ti ti-logout"></i> 로그아웃</button>
+    <button class="btn-out" onclick="doLogout()">로그아웃</button>
   </div>
-
 </div>
 
 <script>
-// ══════════════════════════════════
-//  Supabase 설정
-//  supabase.com → 프로젝트 생성 →
-//  Settings > API에서 값 복사
-// ══════════════════════════════════
-var SUPABASE_URL  = 'https://jnitbmtfjylcbyrpipbf.supabase.co';
-var SUPABASE_KEY  = 'sb_publishable_A6MmsqE9y-ymBKNKOwR2EA_PuLX5mLB';
-var DEMO_MODE = false;
+// ── Supabase 초기화 ──
+var SUPABASE_URL = 'https://qyrgfjshsczdpxaeznkc.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_A6MmsqE9y-ymBKNKOwR2EA_PuLX5mLB';
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-var sb = null;
-if(!DEMO_MODE){
-  sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-}
-
-// ── 상태 ──
-var checks = {chk_remember:false, chk_terms:false, chk_marketing:false};
-var currentUser = null;
-var verifyEmail = '';
+var termsChecked = false;
 
 // ── 탭 전환 ──
-function switchTab(t){
-  document.getElementById('form-login').style.display   = t==='login'  ? 'block' : 'none';
-  document.getElementById('form-signup').style.display  = t==='signup' ? 'block' : 'none';
-  document.getElementById('screen-verify').classList.remove('show');
-  document.getElementById('screen-forgot').classList.remove('show');
-  document.getElementById('tab-login').classList.toggle('on',  t==='login');
-  document.getElementById('tab-signup').classList.toggle('on', t==='signup');
-  hideAlert();
-}
-
-// ── 유틸 ──
-function showAlert(msg,type){
-  var a=document.getElementById('alert');
-  a.className='alert '+type+' show';
-  document.getElementById('alert-msg').textContent=msg;
-}
-function hideAlert(){document.getElementById('alert').className='alert'}
-function setLoading(btnId,v){
-  var b=document.getElementById(btnId);
-  b.classList.toggle('loading',v);
-  b.disabled=v;
-}
-function showErr(fieldId,msg){
-  var i=document.getElementById(fieldId);
-  var e=document.getElementById('err-'+fieldId);
-  if(i) i.classList.add('err');
-  if(e){e.textContent=msg;e.classList.add('show')}
-}
-function clearErr(fieldId){
-  var i=document.getElementById(fieldId);
-  var e=document.getElementById('err-'+fieldId);
-  if(i) i.classList.remove('err');
-  if(e) e.classList.remove('show');
-}
-function togglePw(id,icon){
-  var inp=document.getElementById(id);
-  if(inp.type==='password'){inp.type='text';icon.className='ti ti-eye-off field-icon'}
-  else{inp.type='password';icon.className='ti ti-eye field-icon'}
-}
-function toggleChk(id){
-  var el=document.getElementById(id);
-  var key=id.replace('-','_');
-  checks[key]=!checks[key];
-  el.classList.toggle('on',checks[key]);
-  el.textContent=checks[key]?'✓':'';
-}
-
-// ── 이메일 유효성 ──
-function validateEmail(){
-  var v=document.getElementById('signup-email').value;
-  var icon=document.getElementById('email-icon');
-  var valid=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-  clearErr('signup-email');
-  if(v&&valid){icon.className='ti ti-circle-check field-icon';icon.style.color='var(--teal)'}
-  else{icon.className='ti ti-mail field-icon';icon.style.color=''}
-}
-
-// ── 비밀번호 강도 ──
-function checkPwStrength(){
-  var pw=document.getElementById('signup-pw').value;
-  var str=document.getElementById('pw-strength');
-  if(!pw){str.classList.remove('show');return}
-  str.classList.add('show');
-  var score=0;
-  if(pw.length>=8) score++;
-  if(/[A-Z]/.test(pw)||/[a-z]/.test(pw)) score++;
-  if(/[0-9]/.test(pw)) score++;
-  if(/[^A-Za-z0-9]/.test(pw)) score++;
-  var labels=['','취약','보통','강함','매우 강함'];
-  var cls=['','w','w','m','s'];
-  ['bar1','bar2','bar3','bar4'].forEach(function(id,i){
-    var b=document.getElementById(id);
-    b.className='pw-bar'+(i<score?' '+cls[score]:'');
+function showTab(t) {
+  document.getElementById('form-login').style.display   = t==='login'  ? 'block':'none';
+  document.getElementById('form-signup').style.display  = t==='signup' ? 'block':'none';
+  document.getElementById('screen-verify').style.display = 'none';
+  document.getElementById('screen-forgot').style.display = 'none';
+  document.getElementById('tabs').style.display = 'flex';
+  document.querySelectorAll('.tab').forEach(function(tb,i){
+    tb.classList.toggle('on', (i===0&&t==='login')||(i===1&&t==='signup'));
   });
-  document.getElementById('pw-lbl').textContent='비밀번호 강도: '+labels[score];
-}
-
-// ── 비밀번호 일치 ──
-function checkPwMatch(){
-  var pw=document.getElementById('signup-pw').value;
-  var pw2=document.getElementById('signup-pw2').value;
-  clearErr('signup-pw2');
-  if(pw2&&pw!==pw2) showErr('signup-pw2','비밀번호가 일치하지 않습니다');
-  else if(pw2&&pw===pw2) document.getElementById('signup-pw2').classList.add('ok');
-}
-
-// ══ 로그인 ══
-function doLogin(){
-  var email=document.getElementById('login-email').value.trim();
-  var pw=document.getElementById('login-pw').value;
-  var valid=true;
   hideAlert();
-  if(!email){showErr('login-email','이메일을 입력하세요');valid=false}
-  if(!pw){showErr('login-pw','비밀번호를 입력하세요');valid=false}
-  if(!valid) return;
+}
 
-  setLoading('btn-login',true);
+// ── 알림 ──
+function showAlert(msg, type) {
+  var a = document.getElementById('alert');
+  a.textContent = msg;
+  a.className = 'alert on ' + (type||'blue');
+  a.style.display = 'block';
+}
+function hideAlert() {
+  var a = document.getElementById('alert');
+  a.style.display = 'none';
+  a.className = 'alert';
+}
 
-  if(DEMO_MODE){
-    setTimeout(function(){
-      setLoading('btn-login',false);
-      // 데모: admin@musicalverse.com → 관리자
-      var isAdmin = email.includes('admin');
-      var isTeam  = email.includes('team');
-      var role = isAdmin?'admin':isTeam?'team':'fan';
-      showProfile({name:email.split('@')[0], email:email, role:role});
-    },1200);
-    return;
-  }
+// ── 체크박스 ──
+function toggleChk(id) {
+  var el = document.getElementById(id);
+  termsChecked = !termsChecked;
+  el.classList.toggle('on', termsChecked);
+  el.textContent = termsChecked ? '✓' : '';
+}
 
-  sb.auth.signInWithPassword({email:email,password:pw}).then(function(res){
-    setLoading('btn-login',false);
-    if(res.error){showAlert(translateError(res.error.message),'error');return}
-    loadProfile(res.data.user);
+// ── 로그인 ──
+function doLogin() {
+  var email = document.getElementById('li-email').value.trim();
+  var pw    = document.getElementById('li-pw').value;
+  if(!email || !pw) { showAlert('이메일과 비밀번호를 입력하세요', 'red'); return; }
+  var btn = document.getElementById('btn-login');
+  btn.textContent = '로그인 중...'; btn.disabled = true;
+
+  sb.auth.signInWithPassword({email:email, password:pw}).then(function(res) {
+    btn.textContent = '로그인'; btn.disabled = false;
+    if(res.error) { showAlert(errMsg(res.error.message), 'red'); return; }
+    showProfile(res.data.user);
   });
 }
 
-// ══ 회원가입 ══
-function doSignup(){
-  var name=document.getElementById('signup-name').value.trim();
-  var email=document.getElementById('signup-email').value.trim();
-  var pw=document.getElementById('signup-pw').value;
-  var pw2=document.getElementById('signup-pw2').value;
-  var role=document.getElementById('signup-role').value;
-  var valid=true;
-  hideAlert();
+// ── 회원가입 ──
+function doSignup() {
+  var name  = document.getElementById('su-name').value.trim();
+  var email = document.getElementById('su-email').value.trim();
+  var pw    = document.getElementById('su-pw').value;
+  var pw2   = document.getElementById('su-pw2').value;
+  var role  = document.getElementById('su-role').value;
 
-  if(!name){showErr('signup-name','닉네임을 입력하세요');valid=false}
-  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showErr('signup-email','올바른 이메일을 입력하세요');valid=false}
-  if(!pw||pw.length<8){showErr('signup-pw','8자 이상 입력하세요');valid=false}
-  if(pw!==pw2){showErr('signup-pw2','비밀번호가 일치하지 않습니다');valid=false}
-  if(!checks.chk_terms){showAlert('이용약관에 동의해 주세요','error');valid=false}
-  if(!valid) return;
+  if(!name)  { showAlert('닉네임을 입력하세요', 'red'); return; }
+  if(!email) { showAlert('이메일을 입력하세요', 'red'); return; }
+  if(pw.length < 8) { showAlert('비밀번호는 8자 이상이어야 합니다', 'red'); return; }
+  if(pw !== pw2) { showAlert('비밀번호가 일치하지 않습니다', 'red'); return; }
+  if(!termsChecked) { showAlert('이용약관에 동의해 주세요', 'red'); return; }
 
-  setLoading('btn-signup',true);
-
-  if(DEMO_MODE){
-    setTimeout(function(){
-      setLoading('btn-signup',false);
-      verifyEmail=email;
-      document.getElementById('form-signup').style.display='none';
-      document.getElementById('verify-email-desc').innerHTML=
-        '<b>'+email+'</b>로 인증 링크를 보냈습니다.<br>링크를 클릭하면 가입이 완료됩니다.<br><br><span style="font-size:12px;color:var(--text3)">데모 모드: 실제 메일은 발송되지 않습니다.</span>';
-      document.getElementById('screen-verify').classList.add('show');
-    },1200);
-    return;
-  }
+  var btn = document.getElementById('btn-signup');
+  btn.textContent = '가입 중...'; btn.disabled = true;
 
   sb.auth.signUp({
-    email:email, password:pw,
-    options:{data:{name:name, role:role}}
-  }).then(function(res){
-    setLoading('btn-signup',false);
-    if(res.error){showAlert(translateError(res.error.message),'error');return}
-    verifyEmail=email;
-    document.getElementById('form-signup').style.display='none';
-    document.getElementById('verify-email-desc').innerHTML='<b>'+email+'</b>로 인증 링크를 보냈습니다.<br>링크를 클릭하면 가입이 완료됩니다.';
-    document.getElementById('screen-verify').classList.add('show');
+    email: email,
+    password: pw,
+    options: { data: { name: name, role: role } }
+  }).then(function(res) {
+    btn.textContent = '회원가입'; btn.disabled = false;
+    if(res.error) { showAlert(errMsg(res.error.message), 'red'); return; }
+
+    var user = res.data.user;
+    // 이메일 인증 없이 바로 세션 있으면 프로필로
+    if(res.data.session) {
+      showProfile(user);
+    } else {
+      // 이메일 인증 필요
+      document.getElementById('form-signup').style.display = 'none';
+      document.getElementById('tabs').style.display = 'none';
+      document.getElementById('verify-msg').innerHTML =
+        '<b>' + email + '</b>로 인증 링크를 보냈습니다.<br>메일함을 확인해 주세요.';
+      document.getElementById('screen-verify').style.display = 'block';
+    }
   });
 }
 
-// ══ 소셜 로그인 ══
-function socialLogin(provider){
-  if(DEMO_MODE){
-    showAlert(provider+' 로그인은 Supabase 연동 후 사용 가능합니다','info');
-    return;
-  }
-  sb.auth.signInWithOAuth({provider:provider, options:{redirectTo:window.location.href}});
+// ── 비밀번호 찾기 ──
+function showForgot() {
+  document.getElementById('form-login').style.display = 'none';
+  document.getElementById('tabs').style.display = 'none';
+  document.getElementById('screen-forgot').style.display = 'block';
 }
-
-// ══ 비밀번호 찾기 ══
-function showForgot(){
-  document.getElementById('form-login').style.display='none';
-  document.getElementById('screen-forgot').classList.add('show');
+function hideForgot() {
+  document.getElementById('screen-forgot').style.display = 'none';
+  document.getElementById('tabs').style.display = 'flex';
+  document.getElementById('form-login').style.display = 'block';
 }
-function hideForgot(){
-  document.getElementById('screen-forgot').classList.remove('show');
-  document.getElementById('form-login').style.display='block';
-}
-function doForgot(){
-  var email=document.getElementById('forgot-email').value.trim();
-  if(!email){showAlert('이메일을 입력하세요','error');return}
-  if(DEMO_MODE){
-    showAlert('데모 모드: 실제 메일은 발송되지 않습니다','info');
-    return;
-  }
-  sb.auth.resetPasswordForEmail(email).then(function(res){
-    if(res.error){showAlert(translateError(res.error.message),'error');return}
-    showAlert('재설정 링크를 발송했습니다. 이메일을 확인하세요','success');
+function doForgot() {
+  var email = document.getElementById('fg-email').value.trim();
+  if(!email) { showAlert('이메일을 입력하세요', 'red'); return; }
+  sb.auth.resetPasswordForEmail(email).then(function(res) {
+    if(res.error) { showAlert(errMsg(res.error.message), 'red'); return; }
+    showAlert('재설정 링크를 발송했습니다. 이메일을 확인하세요', 'green');
   });
 }
 
-// ══ 재발송 ══
-function resendVerify(){
-  if(DEMO_MODE){showAlert('데모 모드: 실제 메일은 발송되지 않습니다','info');return}
-  if(!verifyEmail) return;
-  sb.auth.resend({type:'signup',email:verifyEmail}).then(function(res){
-    if(res.error) showAlert(translateError(res.error.message),'error');
-    else showAlert('인증 메일을 재발송했습니다','success');
-  });
-}
-
-// ══ 프로필 표시 ══
-function showProfile(user){
-  document.getElementById('auth-header') && (document.querySelector('.auth-header').style.display='none');
-  document.querySelector('.auth-header').style.display='none';
-  document.getElementById('form-login').style.display='none';
-  document.getElementById('form-signup').style.display='none';
-  document.getElementById('screen-verify').classList.remove('show');
-  document.getElementById('screen-forgot').classList.remove('show');
-  document.getElementById('setup-banner').classList.remove('show');
-
-  var av=document.getElementById('prof-av');
-  var nm=document.getElementById('prof-name');
-  var em=document.getElementById('prof-email');
-  var rl=document.getElementById('prof-role');
-
-  var initial=(user.name||user.email||'U')[0].toUpperCase();
-  av.textContent=initial;
-  nm.textContent=user.name||user.email.split('@')[0];
-  em.textContent=user.email;
-
-  var roleMap={fan:{lbl:'일반 팬',cls:'role-fan'},team:{lbl:'공연팀',cls:'role-team'},actor:{lbl:'프로 배우',cls:'role-team'},admin:{lbl:'관리자',cls:'role-admin'}};
-  var rm=roleMap[user.role]||roleMap.fan;
-  rl.textContent=rm.lbl;
-  rl.className='profile-role '+rm.cls;
-
-  if(user.role==='admin') document.getElementById('pm-admin').style.display='flex';
-  if(user.role==='team'||user.role==='actor') document.getElementById('pm-team').style.display='flex';
-
-  document.getElementById('screen-profile').classList.add('show');
-}
-
-function loadProfile(user){
-  if(!user) return;
-  var meta=user.user_metadata||{};
-  showProfile({name:meta.name||user.email.split('@')[0], email:user.email, role:meta.role||'fan'});
-}
-
-// ══ 로그아웃 ══
-function doLogout(){
-  if(!DEMO_MODE && sb) sb.auth.signOut();
-  currentUser=null;
-  document.getElementById('screen-profile').classList.remove('show');
-  document.querySelector('.auth-header').style.display='block';
-  document.getElementById('setup-banner').classList.add('show');
-  switchTab('login');
-}
-
-// ══ 에러 메시지 한글화 ══
-function translateError(msg){
-  var map={
-    'Invalid login credentials':'이메일 또는 비밀번호가 올바르지 않습니다',
-    'Email not confirmed':'이메일 인증을 완료해 주세요',
-    'User already registered':'이미 가입된 이메일입니다',
-    'Password should be at least 6 characters':'비밀번호는 6자 이상이어야 합니다',
-    'Unable to validate email address':'올바른 이메일 주소를 입력하세요',
-    'Email rate limit exceeded':'잠시 후 다시 시도해 주세요',
+// ── 프로필 표시 ──
+function showProfile(user) {
+  var meta = user.user_metadata || {};
+  var name = meta.name || user.email.split('@')[0];
+  var role = meta.role || 'fan';
+  var roleMap = {
+    fan:   { lbl:'일반 팬',    cls:'r-fan' },
+    team:  { lbl:'공연팀',     cls:'r-team' },
+    actor: { lbl:'프로 배우',  cls:'r-team' },
+    admin: { lbl:'관리자',     cls:'r-admin' }
   };
-  return map[msg]||msg;
+  var rm = roleMap[role] || roleMap.fan;
+
+  document.getElementById('p-av').textContent   = name[0].toUpperCase();
+  document.getElementById('p-name').textContent = name;
+  document.getElementById('p-email').textContent = user.email;
+  document.getElementById('p-role').textContent  = rm.lbl;
+  document.getElementById('p-role').className    = 'p-role ' + rm.cls;
+
+  document.getElementById('mi-admin').style.display = role==='admin' ? 'flex':'none';
+  document.getElementById('mi-team').style.display  = (role==='team'||role==='actor') ? 'flex':'none';
+
+  // 폼 전부 숨기고 프로필 표시
+  document.getElementById('form-login').style.display  = 'none';
+  document.getElementById('form-signup').style.display = 'none';
+  document.getElementById('tabs').style.display        = 'none';
+  document.getElementById('screen-verify').style.display = 'none';
+  document.getElementById('screen-forgot').style.display = 'none';
+  document.getElementById('screen-profile').style.display = 'block';
+  hideAlert();
 }
 
-// ══ 세션 복원 ══
-if(!DEMO_MODE && sb){
-  sb.auth.getSession().then(function(res){
-    if(res.data&&res.data.session) loadProfile(res.data.session.user);
-  });
-  sb.auth.onAuthStateChange(function(event,session){
-    if(event==='SIGNED_IN'&&session) loadProfile(session.user);
-    if(event==='SIGNED_OUT') doLogout();
+// ── 로그아웃 ──
+function doLogout() {
+  sb.auth.signOut().then(function() {
+    document.getElementById('screen-profile').style.display = 'none';
+    document.getElementById('tabs').style.display = 'flex';
+    showTab('login');
   });
 }
+
+// ── 에러 한글화 ──
+function errMsg(msg) {
+  var map = {
+    'Invalid login credentials': '이메일 또는 비밀번호가 올바르지 않습니다',
+    'Email not confirmed': '이메일 인증을 완료해 주세요',
+    'User already registered': '이미 가입된 이메일입니다',
+    'Password should be at least 6 characters': '비밀번호는 6자 이상이어야 합니다',
+    'Unable to validate email address: invalid format': '올바른 이메일 형식을 입력하세요',
+    'Email rate limit exceeded': '잠시 후 다시 시도해 주세요',
+  };
+  return map[msg] || msg;
+}
+
+// ── 세션 복원 (페이지 새로고침 시) ──
+sb.auth.getSession().then(function(res) {
+  if(res.data && res.data.session) {
+    showProfile(res.data.session.user);
+  }
+});
 </script>
 </body>
 </html>
