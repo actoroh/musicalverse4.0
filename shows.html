@@ -217,18 +217,18 @@ sb.auth.getSession().then(function(r){
 });
 
 // ── DB에서 공연 불러오기 ──
-function loadShows(){
-  sb.from('shows').select('*').order('created_at',{ascending:false}).then(function(r){
-    if(r.error){
-      document.getElementById('show-list').innerHTML=
-        '<div class="empty"><div class="empty-icon">⚠️</div>'
-        +'<div class="empty-title">불러오기 실패</div>'
-        +'<div class="empty-sub">'+r.error.message+'</div></div>';
-      return;
-    }
-    allShows = r.data||[];
+async function loadShows(){
+  try {
+    var res = await sb.from('shows').select('id,title,team_name,venue,date_start,date_end,time,genre,price_vip,price_general,price_student,poster_url,status,description,age_limit,refund_policy,cast_info,total_seats,open_date,created_at').order('created_at',{ascending:false});
+    if(res.error) throw new Error(res.error.message);
+    allShows = (res.data||[]).map(function(s){return Object.assign({},s);});
     filterShows();
-  });
+  } catch(e){
+    document.getElementById('show-list').innerHTML=
+      '<div class="empty"><div class="empty-icon">⚠️</div>'
+      +'<div class="empty-title">불러오기 실패</div>'
+      +'<div class="empty-sub">'+e.message+'</div></div>';
+  }
 }
 
 // ── 필터 ──
@@ -317,6 +317,12 @@ function renderShows(){
 }
 
 // ── 모달 ──
+function goBook(){
+  if(!currentShow) return;
+  document.getElementById('modal-bg').classList.remove('on');
+  location.href='booking.html?id='+currentShow.id;
+}
+
 function openModal(i){
   currentShow = filtered[i];
   var s = currentShow;
@@ -364,8 +370,9 @@ function closeModal(e){
 }
 
 function goBook(){
+  if(!currentShow) return;
   document.getElementById('modal-bg').classList.remove('on');
-  location.href='index.html';
+  location.href='booking.html?id='+currentShow.id;
 }
 
 // ── 유틸 ──
