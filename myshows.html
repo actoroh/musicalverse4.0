@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MusicalVerse — 내 공연 관리</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--purple:#534AB7;--purple-light:#EEEDFE;--purple-dark:#3C3489;
+  --teal:#0F6E56;--teal-light:#E1F5EE;
+  --amber:#854F0B;--amber-light:#FAEEDA;
+  --red:#D94040;--red-light:#FCEBEB;
+  --bg:#f7f7f5;--white:#fff;--text:#1a1a1a;--text2:#555;--text3:#999;
+  --border:#e0e0e0;--radius:10px;--radius-lg:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);min-height:100vh}
+nav{background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100}
+.nav-logo{font-size:18px;font-weight:800;color:var(--purple);cursor:pointer}
+.nav-logo span{color:var(--text)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-av{width:30px;height:30px;border-radius:50%;background:var(--purple-light);
+  color:var(--purple);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.nav-btn{padding:7px 16px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer}
+
+.wrap{max-width:800px;margin:0 auto;padding:28px 20px}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page-title{font-size:22px;font-weight:800}
+.page-sub{font-size:13px;color:var(--text3);margin-top:3px}
+
+/* 통계 */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.stat{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);
+  padding:12px;text-align:center}
+.stat-num{font-size:20px;font-weight:800;color:var(--purple)}
+.stat-lbl{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* 공연 카드 */
+.show-card{background:var(--white);border:1px solid var(--border);
+  border-radius:var(--radius-lg);margin-bottom:12px;overflow:hidden}
+.sc-top{display:flex;gap:14px;padding:16px}
+.sc-poster{width:72px;height:72px;border-radius:10px;flex-shrink:0;
+  background:var(--purple-light);display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden}
+.sc-poster img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+.sc-info{flex:1}
+.sc-title{font-size:15px;font-weight:700;margin-bottom:3px}
+.sc-meta{font-size:12px;color:var(--text3);margin-bottom:6px}
+.sc-tags{display:flex;gap:6px;flex-wrap:wrap}
+.sc-tag{font-size:11px;padding:2px 8px;border-radius:8px;background:var(--bg);color:var(--text2)}
+.sc-status{flex-shrink:0;text-align:right}
+.badge{display:inline-block;font-size:11px;padding:4px 10px;border-radius:8px;font-weight:700}
+.b-pending{background:var(--amber-light);color:var(--amber)}
+.b-approved{background:var(--teal-light);color:var(--teal)}
+.b-rejected{background:var(--red-light);color:var(--red)}
+.sc-bottom{border-top:1px solid var(--border);padding:10px 16px;
+  display:flex;align-items:center;justify-content:space-between;background:var(--bg)}
+.sc-price{font-size:13px;font-weight:700;color:var(--purple)}
+.sc-actions{display:flex;gap:8px}
+.btn-sm{padding:7px 14px;border-radius:var(--radius);font-size:12px;font-weight:600;
+  cursor:pointer;border:none}
+.btn-edit{background:var(--purple-light);color:var(--purple)}
+.btn-del{background:var(--red-light);color:var(--red)}
+.btn-view{background:var(--teal-light);color:var(--teal)}
+
+/* 등록 버튼 */
+.btn-new{padding:10px 20px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius-lg);font-size:14px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;gap:6px}
+
+/* 빈 상태 */
+.empty{text-align:center;padding:60px 20px}
+.empty-icon{font-size:52px;margin-bottom:14px}
+.empty-title{font-size:16px;font-weight:700;color:var(--text2);margin-bottom:6px}
+.empty-sub{font-size:13px;color:var(--text3);margin-bottom:20px}
+.btn-main{padding:12px 28px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius-lg);font-size:14px;font-weight:700;cursor:pointer}
+
+/* 로딩 */
+.loading{text-align:center;padding:60px;color:var(--text3)}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--purple);
+  border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 알림 */
+.alert{border-radius:var(--radius);padding:11px 14px;font-size:13px;margin-bottom:14px;display:none}
+.alert.on{display:block}
+.alert.green{background:var(--teal-light);color:var(--teal)}
+.alert.red{background:var(--red-light);color:var(--red)}
+
+/* 수정 모달 */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;
+  display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.modal-bg.on{display:flex}
+.modal{background:var(--white);border-radius:20px;width:100%;max-width:560px;
+  padding:28px;margin:auto}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:20px;padding-bottom:14px;
+  border-bottom:1px solid var(--border)}
+.field{margin-bottom:14px}
+.lbl{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px;display:block}
+.inp{width:100%;padding:10px 13px;font-size:14px;border:1.5px solid var(--border);
+  border-radius:var(--radius);outline:none;background:var(--white);color:var(--text);transition:border-color .15s}
+.inp:focus{border-color:var(--purple)}
+textarea.inp{resize:vertical;min-height:80px;line-height:1.6}
+select.inp{appearance:auto;background:var(--white)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-btns{display:flex;gap:10px;margin-top:20px}
+.btn-save{flex:1;padding:13px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius-lg);font-size:14px;font-weight:700;cursor:pointer}
+.btn-cancel-modal{padding:13px 20px;border:1.5px solid var(--border);border-radius:var(--radius-lg);
+  background:var(--white);cursor:pointer;color:var(--text2);font-weight:600}
+
+/* 로그인 필요 */
+.need-login{text-align:center;padding:80px 20px}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo" onclick="location.href='index.html'"><span>Musical</span>Verse</div>
+  <div class="nav-right" id="nav-right">
+    <button class="nav-btn" onclick="location.href='index.html'">로그인</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="alert" id="alert"></div>
+
+  <!-- 로그인 필요 -->
+  <div class="need-login" id="need-login" style="display:none">
+    <div style="font-size:52px;margin-bottom:16px">🔒</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:8px">로그인이 필요합니다</div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:20px">공연 관리는 로그인 후 이용할 수 있습니다</div>
+    <button class="btn-main" onclick="location.href='index.html'">로그인 / 회원가입</button>
+  </div>
+
+  <!-- 메인 -->
+  <div id="main" style="display:none">
+    <div class="page-header">
+      <div>
+        <div class="page-title">내 공연 관리</div>
+        <div class="page-sub" id="page-sub">등록한 공연을 관리하세요</div>
+      </div>
+      <button class="btn-new" onclick="location.href='show_register.html'">
+        ➕ 새 공연 등록
+      </button>
+    </div>
+
+    <!-- 통계 -->
+    <div class="stats">
+      <div class="stat"><div class="stat-num" id="st-total">0</div><div class="stat-lbl">전체</div></div>
+      <div class="stat"><div class="stat-num" id="st-pending" style="color:var(--amber)">0</div><div class="stat-lbl">검토 중</div></div>
+      <div class="stat"><div class="stat-num" id="st-approved" style="color:var(--teal)">0</div><div class="stat-lbl">승인</div></div>
+      <div class="stat"><div class="stat-num" id="st-rejected" style="color:var(--red)">0</div><div class="stat-lbl">반려</div></div>
+    </div>
+
+    <!-- 공연 목록 -->
+    <div id="show-list">
+      <div class="loading"><div class="spinner"></div>공연 목록을 불러오는 중</div>
+    </div>
+  </div>
+</div>
+
+<!-- 수정 모달 -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this) closeModal()">
+  <div class="modal">
+    <div class="modal-title">공연 정보 수정</div>
+    <input type="hidden" id="edit-id">
+    <div class="field"><label class="lbl">공연명</label><input class="inp" id="e-title"></div>
+    <div class="grid2">
+      <div class="field"><label class="lbl">시작일</label><input class="inp" id="e-ds" type="date"></div>
+      <div class="field"><label class="lbl">종료일</label><input class="inp" id="e-de" type="date"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label class="lbl">공연 시간</label><input class="inp" id="e-time" placeholder="예: 19:30"></div>
+      <div class="field"><label class="lbl">총 좌석 수</label><input class="inp" id="e-seats" type="number"></div>
+    </div>
+    <div class="field"><label class="lbl">공연 장소</label><input class="inp" id="e-venue"></div>
+    <div class="field"><label class="lbl">팀명</label><input class="inp" id="e-team"></div>
+    <div class="field"><label class="lbl">장르</label><input class="inp" id="e-genre" placeholder="예: 창작 뮤지컬, 가족"></div>
+    <div class="grid2">
+      <div class="field"><label class="lbl">VIP석 가격</label><input class="inp" id="e-vip" type="number"></div>
+      <div class="field"><label class="lbl">일반석 가격</label><input class="inp" id="e-gen" type="number"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label class="lbl">학생석 가격</label><input class="inp" id="e-stu" type="number"></div>
+      <div class="field"><label class="lbl">관람 등급</label>
+        <select class="inp" id="e-age">
+          <option>전체 관람가</option><option>7세 이상</option>
+          <option>12세 이상</option><option>15세 이상</option><option>18세 이상</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label class="lbl">공연 소개</label><textarea class="inp" id="e-desc" rows="3"></textarea></div>
+    <div class="field"><label class="lbl">출연진</label><textarea class="inp" id="e-cast" rows="2"></textarea></div>
+    <div class="field"><label class="lbl">환불 정책</label>
+      <select class="inp" id="e-refund">
+        <option>공연 7일 전까지 100% 환불</option>
+        <option>공연 3일 전까지 100% 환불</option>
+        <option>공연 당일 환불 불가</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel-modal" onclick="closeModal()">취소</button>
+      <button class="btn-save" onclick="doSave()">저장하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var SUPA_URL='https://qyrgfjshsczdpxaeznkc.supabase.co';
+var SUPA_KEY='sb_publishable_A6MmsqE9y-ymBKNKOwR2EA_PuLX5mLB';
+var sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+var user=null;
+var myShows=[];
+var EMOJIS=['🎭','🎶','🎵','🎤','🎪','🌟'];
+
+// ── 초기화 ──
+sb.auth.getSession().then(function(r){
+  if(!r.data||!r.data.session){
+    document.getElementById('need-login').style.display='block';
+    return;
+  }
+  user=r.data.session.user;
+  var meta=user.user_metadata||{};
+  var name=meta.name||user.email.split('@')[0];
+  document.getElementById('nav-right').innerHTML=
+    '<div class="nav-av">'+name[0].toUpperCase()+'</div>'
+    +'<span style="font-size:13px;color:#555">'+name+'</span>';
+  document.getElementById('main').style.display='block';
+  loadMyShows();
+});
+
+// ── 내 공연 불러오기 ──
+async function loadMyShows(){
+  try{
+    var res=await sb.from('shows').select('*')
+      .eq('user_id',user.id)
+      .order('created_at',{ascending:false});
+    if(res.error) throw new Error(res.error.message);
+    myShows=(res.data||[]).map(function(s){return Object.assign({},s);});
+    updateStats();
+    renderShows();
+  } catch(e){
+    document.getElementById('show-list').innerHTML=
+      '<div class="empty"><div class="empty-icon">⚠️</div>'
+      +'<div class="empty-title">불러오기 실패</div>'
+      +'<div class="empty-sub">'+e.message+'</div></div>';
+  }
+}
+
+// ── 통계 ──
+function updateStats(){
+  var total=myShows.length;
+  var pending=myShows.filter(function(s){return s.status==='pending'}).length;
+  var approved=myShows.filter(function(s){return s.status==='approved'}).length;
+  var rejected=myShows.filter(function(s){return s.status==='rejected'}).length;
+  document.getElementById('st-total').textContent=total;
+  document.getElementById('st-pending').textContent=pending;
+  document.getElementById('st-approved').textContent=approved;
+  document.getElementById('st-rejected').textContent=rejected;
+  document.getElementById('page-sub').textContent=
+    '총 '+total+'개의 공연을 등록하셨습니다';
+}
+
+// ── 렌더 ──
+function renderShows(){
+  if(!myShows.length){
+    document.getElementById('show-list').innerHTML=
+      '<div class="empty">'
+      +'<div class="empty-icon">🎭</div>'
+      +'<div class="empty-title">등록한 공연이 없습니다</div>'
+      +'<div class="empty-sub">첫 번째 공연을 등록해 보세요</div>'
+      +'<button class="btn-main" onclick="location.href=\'show_register.html\'">공연 등록하기</button>'
+      +'</div>';
+    return;
+  }
+  document.getElementById('show-list').innerHTML=myShows.map(function(s,i){
+    var emoji=EMOJIS[i%EMOJIS.length];
+    var statusMap={
+      pending:'<span class="badge b-pending">검토 중</span>',
+      approved:'<span class="badge b-approved">승인</span>',
+      rejected:'<span class="badge b-rejected">반려</span>'
+    };
+    var badge=statusMap[s.status]||statusMap.pending;
+    var posterHtml=s.poster_url
+      ?'<div class="sc-poster"><img src="'+s.poster_url+'" alt="포스터"></div>'
+      :'<div class="sc-poster">'+emoji+'</div>';
+    var minPrice=Math.min(s.price_general||999999,s.price_vip||999999,s.price_student||999999);
+    var priceStr=minPrice===999999?'무료':minPrice.toLocaleString()+'원~';
+    var dateStr=(s.date_start||'일정 미정')+(s.date_end?' – '+s.date_end:'');
+    var tags=[];
+    if(s.genre) tags=s.genre.split(',').map(function(g){return g.trim()}).filter(Boolean);
+
+    return '<div class="show-card">'
+      +'<div class="sc-top">'
+      +posterHtml
+      +'<div class="sc-info">'
+      +'<div class="sc-title">'+esc(s.title)+'</div>'
+      +'<div class="sc-meta">📍 '+esc(s.venue||'장소 미정')+' · '+esc(dateStr)+'</div>'
+      +'<div class="sc-tags">'+tags.map(function(t){return '<span class="sc-tag">'+esc(t)+'</span>'}).join('')+'</div>'
+      +'</div>'
+      +'<div class="sc-status">'+badge
+      +(s.status==='rejected'?'<div style="font-size:11px;color:var(--red);margin-top:4px;max-width:80px">반려 사유 확인 후 재등록하세요</div>':'')
+      +'</div>'
+      +'</div>'
+      +'<div class="sc-bottom">'
+      +'<div class="sc-price">'+priceStr+'</div>'
+      +'<div class="sc-actions">'
+      +'<button class="btn-sm btn-view" onclick="location.href=\'booking.html?id='+s.id+'\'">미리보기</button>'
+      +'<button class="btn-sm btn-edit" onclick="openEdit(\''+s.id+'\')">수정</button>'
+      +'<button class="btn-sm btn-del" onclick="doDelete(\''+s.id+'\')">삭제</button>'
+      +'</div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// ── 수정 모달 열기 ──
+function openEdit(id){
+  var s=myShows.find(function(s){return s.id===id});
+  if(!s) return;
+  document.getElementById('edit-id').value=s.id;
+  document.getElementById('e-title').value=s.title||'';
+  document.getElementById('e-ds').value=s.date_start||'';
+  document.getElementById('e-de').value=s.date_end||'';
+  document.getElementById('e-time').value=s.time||'';
+  document.getElementById('e-seats').value=s.total_seats||'';
+  document.getElementById('e-venue').value=s.venue||'';
+  document.getElementById('e-team').value=s.team_name||'';
+  document.getElementById('e-genre').value=s.genre||'';
+  document.getElementById('e-vip').value=s.price_vip||'';
+  document.getElementById('e-gen').value=s.price_general||'';
+  document.getElementById('e-stu').value=s.price_student||'';
+  document.getElementById('e-desc').value=s.description||'';
+  document.getElementById('e-cast').value=s.cast_info||'';
+  var ageEl=document.getElementById('e-age');
+  for(var i=0;i<ageEl.options.length;i++){
+    if(ageEl.options[i].value===(s.age_limit||'전체 관람가')) ageEl.selectedIndex=i;
+  }
+  var refEl=document.getElementById('e-refund');
+  for(var j=0;j<refEl.options.length;j++){
+    if(refEl.options[j].value===(s.refund_policy||'')) refEl.selectedIndex=j;
+  }
+  document.getElementById('modal-bg').classList.add('on');
+}
+
+// ── 저장 ──
+function doSave(){
+  var id=document.getElementById('edit-id').value;
+  var payload={
+    title:document.getElementById('e-title').value.trim(),
+    date_start:document.getElementById('e-ds').value||null,
+    date_end:document.getElementById('e-de').value||null,
+    time:document.getElementById('e-time').value.trim(),
+    total_seats:parseInt(document.getElementById('e-seats').value)||null,
+    venue:document.getElementById('e-venue').value.trim(),
+    team_name:document.getElementById('e-team').value.trim(),
+    genre:document.getElementById('e-genre').value.trim(),
+    price_vip:parseInt(document.getElementById('e-vip').value)||null,
+    price_general:parseInt(document.getElementById('e-gen').value)||null,
+    price_student:parseInt(document.getElementById('e-stu').value)||null,
+    description:document.getElementById('e-desc').value.trim(),
+    cast_info:document.getElementById('e-cast').value.trim(),
+    age_limit:document.getElementById('e-age').value,
+    refund_policy:document.getElementById('e-refund').value,
+    status:'pending' // 수정 후 재검토
+  };
+  if(!payload.title){showAl('공연명을 입력하세요','red');return;}
+  var btn=document.querySelector('.btn-save');
+  btn.textContent='저장 중...'; btn.disabled=true;
+  sb.from('shows').update(payload).eq('id',id).eq('user_id',user.id).then(function(r){
+    btn.textContent='저장하기'; btn.disabled=false;
+    if(r.error){showAl('저장 실패: '+r.error.message,'red');return;}
+    closeModal();
+    showAl('수정되었습니다. 운영팀 재검토 후 승인됩니다','green');
+    loadMyShows();
+  });
+}
+
+// ── 삭제 ──
+function doDelete(id){
+  var s=myShows.find(function(s){return s.id===id});
+  if(!s) return;
+  if(!confirm('"'+s.title+'" 공연을 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.')) return;
+  sb.from('shows').delete().eq('id',id).eq('user_id',user.id).then(function(r){
+    if(r.error){showAl('삭제 실패: '+r.error.message,'red');return;}
+    showAl('공연이 삭제되었습니다','green');
+    loadMyShows();
+  });
+}
+
+function closeModal(){document.getElementById('modal-bg').classList.remove('on');}
+function showAl(msg,type){
+  var a=document.getElementById('alert');
+  a.textContent=msg;a.className='alert on '+(type||'green');
+  setTimeout(function(){a.className='alert'},4000);
+}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
