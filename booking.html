@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MusicalVerse — 공연 예약</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--purple:#534AB7;--purple-light:#EEEDFE;--purple-dark:#3C3489;
+  --teal:#0F6E56;--teal-light:#E1F5EE;--teal-mid:#1D9E75;
+  --amber:#854F0B;--amber-light:#FAEEDA;
+  --red:#D94040;--red-light:#FCEBEB;
+  --bg:#f7f7f5;--white:#fff;--text:#1a1a1a;--text2:#555;--text3:#999;
+  --border:#e0e0e0;--radius:10px;--radius-lg:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);min-height:100vh}
+nav{background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100}
+.nav-logo{font-size:18px;font-weight:800;color:var(--purple);cursor:pointer}
+.nav-logo span{color:var(--text)}
+.nav-back{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--text2);
+  cursor:pointer;background:none;border:none}
+.wrap{max-width:960px;margin:0 auto;padding:24px}
+
+/* 스텝 */
+.step-nav{display:flex;align-items:center;margin-bottom:28px}
+.sn{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text3);flex:1}
+.sn:last-child{flex:0}
+.sn-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+  background:var(--white);flex-shrink:0}
+.sn.on{color:var(--purple);font-weight:700}
+.sn.on .sn-dot{border-color:var(--purple);background:var(--purple-light);color:var(--purple)}
+.sn.done{color:var(--teal)}
+.sn.done .sn-dot{border-color:var(--teal);background:var(--teal-light);color:var(--teal)}
+.sn-line{flex:1;height:1px;background:var(--border);margin:0 8px}
+.sn.done+.sn-line{background:var(--teal)}
+
+/* 레이아웃 */
+.layout{display:grid;grid-template-columns:1fr 340px;gap:24px}
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:700;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+
+/* 공연 헤더 */
+.show-header{background:linear-gradient(135deg,var(--purple-dark),var(--purple));
+  border-radius:var(--radius-lg);padding:20px 24px;color:#fff;margin-bottom:20px;display:flex;gap:16px}
+.sh-poster{width:80px;height:80px;border-radius:10px;object-fit:cover;flex-shrink:0;
+  background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:32px}
+.sh-info .sh-title{font-size:20px;font-weight:800;margin-bottom:4px}
+.sh-info .sh-meta{font-size:13px;opacity:.8;margin-bottom:8px}
+.sh-tags{display:flex;gap:6px;flex-wrap:wrap}
+.sh-tag{font-size:11px;padding:3px 9px;border-radius:8px;background:rgba(255,255,255,.2);font-weight:600}
+
+/* 좌석 */
+.stage{background:var(--purple);color:#fff;text-align:center;padding:8px;
+  border-radius:6px;font-size:12px;font-weight:600;margin-bottom:16px;letter-spacing:.08em}
+.legend{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2)}
+.leg-dot{width:14px;height:14px;border-radius:3px}
+.seat-wrap{overflow-x:auto;padding-bottom:8px}
+.seat-area{display:flex;flex-direction:column;gap:5px;align-items:center;min-width:320px}
+.s-row{display:flex;align-items:center;gap:4px}
+.s-lbl{width:20px;font-size:10px;color:var(--text3);text-align:right;flex-shrink:0}
+.seat{width:26px;height:26px;border-radius:5px;border:none;font-size:9px;font-weight:600;
+  cursor:pointer;transition:transform .1s,opacity .1s;flex-shrink:0}
+.seat:hover:not(:disabled){opacity:.8;transform:scale(1.1)}
+.s-vip{background:var(--purple-light);color:var(--purple)}
+.s-r{background:var(--teal-light);color:var(--teal)}
+.s-s{background:#E6F1FB;color:#185FA5}
+.s-taken{background:var(--bg);color:var(--text3);cursor:not-allowed;border:1px solid var(--border)}
+.s-sel{background:var(--purple)!important;color:#fff!important;transform:scale(1.1)}
+.s-gap{width:10px;flex-shrink:0}
+
+/* 선택 요약 */
+.sel-summary{border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-top:14px}
+.ss-label{font-size:12px;color:var(--text3);margin-bottom:6px}
+.ss-seats{font-size:14px;font-weight:600;color:var(--text);min-height:20px}
+.ss-price{font-size:18px;font-weight:800;color:var(--purple);margin-top:6px}
+
+/* 결제 수단 */
+.pay-opts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.pay-opt{border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 8px;
+  cursor:pointer;text-align:center;transition:all .15s}
+.pay-opt:hover{border-color:var(--purple)}
+.pay-opt.on{border-color:var(--purple);background:var(--purple-light)}
+.pay-opt .po-icon{font-size:22px;display:block;margin-bottom:5px}
+.pay-opt .po-name{font-size:12px;font-weight:600;color:var(--text2)}
+.pay-opt.on .po-name{color:var(--purple)}
+
+/* 주문 요약 카드 */
+.order-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:20px;position:sticky;top:76px}
+.oc-title{font-size:15px;font-weight:700;margin-bottom:14px}
+.oc-show{display:flex;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.oc-poster{width:44px;height:44px;border-radius:8px;background:var(--purple-light);
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.oc-sname{font-size:13px;font-weight:700}
+.oc-smeta{font-size:11px;color:var(--text3);margin-top:2px}
+.oc-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)}
+.oc-row:last-of-type{border:none}
+.oc-total{display:flex;justify-content:space-between;font-size:16px;font-weight:800;
+  padding:12px 0 0;border-top:2px solid var(--text)}
+.oc-total span:last-child{color:var(--purple)}
+.btn-book{width:100%;padding:14px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius-lg);font-size:15px;font-weight:700;cursor:pointer;margin-top:14px}
+.btn-book:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost{width:100%;padding:11px;background:var(--white);border:1.5px solid var(--border);
+  border-radius:var(--radius-lg);font-size:13px;cursor:pointer;color:var(--text2);margin-top:8px}
+
+/* 완료 */
+.done{text-align:center;padding:48px 24px;max-width:520px;margin:0 auto}
+.done-icon{width:80px;height:80px;border-radius:50%;background:var(--teal-light);
+  display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 20px}
+.done h2{font-size:24px;font-weight:800;margin-bottom:8px}
+.done p{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:24px}
+.ticket-box{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:20px;text-align:left;margin-bottom:20px}
+.tb-show{font-size:16px;font-weight:800;margin-bottom:12px;color:var(--purple-dark)}
+.tb-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)}
+.tb-row:last-child{border:none}
+.tb-lbl{color:var(--text3)}
+.tb-val{font-weight:600}
+.barcode{background:var(--bg);border-radius:var(--radius);padding:12px;margin-top:12px;
+  text-align:center;font-size:12px;color:var(--text3);letter-spacing:.18em;font-family:monospace}
+
+/* 알림 */
+.alert{border-radius:var(--radius);padding:11px 14px;font-size:13px;margin-bottom:14px;display:none}
+.alert.on{display:block}
+.alert.red{background:var(--red-light);color:var(--red)}
+.alert.green{background:var(--teal-light);color:var(--teal)}
+
+/* 로딩 */
+.loading{text-align:center;padding:60px;color:var(--text3)}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--purple);
+  border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<nav>
+  <button class="nav-back" onclick="location.href='shows.html'">← 공연 목록</button>
+  <div class="nav-logo" onclick="location.href='index.html'"><span>Musical</span>Verse</div>
+  <div id="nav-user" style="font-size:13px;color:var(--text3)"></div>
+</nav>
+
+<div class="wrap">
+  <div class="alert" id="alert"></div>
+
+  <!-- 로딩 -->
+  <div class="loading" id="loading"><div class="spinner"></div>공연 정보를 불러오는 중입니다</div>
+
+  <!-- 메인 콘텐츠 -->
+  <div id="main-content" style="display:none">
+
+    <!-- 스텝 -->
+    <div class="step-nav" id="step-nav"></div>
+
+    <!-- STEP 1: 좌석 선택 -->
+    <div id="step1">
+      <div class="show-header" id="show-header"></div>
+      <div class="layout">
+        <div>
+          <div class="card">
+            <div class="card-title">좌석 선택 (최대 4석)</div>
+            <div class="stage">STAGE</div>
+            <div class="legend">
+              <div class="leg"><div class="leg-dot" style="background:var(--purple-light);border:1px solid #AFA9EC"></div>VIP</div>
+              <div class="leg"><div class="leg-dot" style="background:var(--teal-light);border:1px solid #5DCAA5"></div>일반</div>
+              <div class="leg"><div class="leg-dot" style="background:#E6F1FB;border:1px solid #85B7EB"></div>학생</div>
+              <div class="leg"><div class="leg-dot" style="background:var(--bg);border:1px solid var(--border)"></div>매진</div>
+              <div class="leg"><div class="leg-dot" style="background:var(--purple)"></div>선택</div>
+            </div>
+            <div class="seat-wrap">
+              <div class="seat-area" id="seat-area"></div>
+            </div>
+            <div class="sel-summary">
+              <div class="ss-label">선택한 좌석</div>
+              <div class="ss-seats" id="ss-seats" style="color:var(--text3)">좌석을 선택해 주세요</div>
+              <div class="ss-price" id="ss-price" style="display:none"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">공연 정보</div>
+            <div id="show-detail"></div>
+          </div>
+        </div>
+        <div>
+          <div class="order-card">
+            <div class="oc-title">예약 요약</div>
+            <div class="oc-show">
+              <div class="oc-poster" id="oc-poster">🎭</div>
+              <div>
+                <div class="oc-sname" id="oc-sname">-</div>
+                <div class="oc-smeta" id="oc-smeta">-</div>
+              </div>
+            </div>
+            <div class="oc-row"><span style="color:var(--text3)">선택 좌석</span><span id="oc-seats" style="font-weight:600">-</span></div>
+            <div class="oc-row"><span style="color:var(--text3)">티켓 금액</span><span id="oc-ticket">-</span></div>
+            <div class="oc-row"><span style="color:var(--text3)">예매 수수료</span><span>2,000원</span></div>
+            <div class="oc-total"><span>최종 결제</span><span id="oc-total">-</span></div>
+            <button class="btn-book" id="btn-next1" disabled onclick="goStep(2)">다음 — 결제하기</button>
+            <button class="btn-ghost" onclick="location.href='shows.html'">공연 목록으로</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: 결제 -->
+    <div id="step2" style="display:none">
+      <div class="layout">
+        <div>
+          <div class="card">
+            <div class="card-title">결제 수단 선택</div>
+            <div class="pay-opts">
+              <div class="pay-opt on" onclick="selPay(this)">
+                <span class="po-icon">💛</span><div class="po-name">카카오페이</div>
+              </div>
+              <div class="pay-opt" onclick="selPay(this)">
+                <span class="po-icon">💳</span><div class="po-name">신용/체크카드</div>
+              </div>
+              <div class="pay-opt" onclick="selPay(this)">
+                <span class="po-icon">💙</span><div class="po-name">토스페이</div>
+              </div>
+            </div>
+            <div style="background:var(--bg);border-radius:var(--radius);padding:14px;font-size:13px;color:var(--text2);line-height:1.7">
+              실제 결제 연동은 PortOne(아임포트) 추가 후 사용 가능합니다.<br>
+              지금은 예약 정보가 DB에 저장됩니다.
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">쿠폰 / 할인</div>
+            <div style="display:flex;gap:8px">
+              <input style="flex:1;padding:10px 13px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);outline:none" placeholder="쿠폰 코드 입력">
+              <button style="padding:10px 16px;background:var(--purple);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer">적용</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="order-card">
+            <div class="oc-title">최종 결제 확인</div>
+            <div class="oc-show">
+              <div class="oc-poster" id="oc-poster2">🎭</div>
+              <div>
+                <div class="oc-sname" id="oc-sname2">-</div>
+                <div class="oc-smeta" id="oc-smeta2">-</div>
+              </div>
+            </div>
+            <div class="oc-row"><span style="color:var(--text3)">좌석</span><span id="oc-seats2" style="font-weight:600">-</span></div>
+            <div class="oc-row"><span style="color:var(--text3)">티켓 금액</span><span id="oc-ticket2">-</span></div>
+            <div class="oc-row"><span style="color:var(--text3)">예매 수수료</span><span>2,000원</span></div>
+            <div class="oc-total"><span>최종 결제</span><span id="oc-total2" style="color:var(--purple)">-</span></div>
+            <button class="btn-book" onclick="doBooking()">결제 완료 → 예약 확정</button>
+            <button class="btn-ghost" onclick="goStep(1)">← 좌석 다시 선택</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: 완료 -->
+    <div id="step3" style="display:none">
+      <div class="done">
+        <div class="done-icon">✓</div>
+        <h2>예약이 완료되었습니다!</h2>
+        <p>마이페이지에서 언제든지 티켓을 확인하실 수 있습니다.<br>공연 당일 QR코드로 입장해 주세요.</p>
+        <div class="ticket-box" id="ticket-box"></div>
+        <button class="btn-book" style="max-width:300px;margin:0 auto" onclick="location.href='shows.html'">다른 공연 둘러보기</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var SUPA_URL='https://qyrgfjshsczdpxaeznkc.supabase.co';
+var SUPA_KEY='sb_publishable_A6MmsqE9y-ymBKNKOwR2EA_PuLX5mLB';
+var sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+
+var show=null, user=null, step=1;
+var selSeats={};
+var PRICES={vip:0,r:0,s:0};
+var payMethod='카카오페이';
+
+// 좌석 레이아웃 (실제 서비스에서는 DB에서 관리)
+var LAYOUT=[
+  {type:'vip',row:'A',seats:[1,2,3,0,4,5,6],taken:[3]},
+  {type:'vip',row:'B',seats:[1,2,3,0,4,5,6],taken:[1,5]},
+  {type:'r',row:'C',seats:[1,2,3,4,0,5,6,7,8],taken:[2,6]},
+  {type:'r',row:'D',seats:[1,2,3,4,0,5,6,7,8],taken:[4,7]},
+  {type:'r',row:'E',seats:[1,2,3,4,0,5,6,7,8],taken:[1,8]},
+  {type:'s',row:'F',seats:[1,2,3,4,5,0,6,7,8,9,10],taken:[3,9]},
+  {type:'s',row:'G',seats:[1,2,3,4,5,0,6,7,8,9,10],taken:[2,5,10]},
+];
+
+// ── 초기화 ──
+var showId = new URLSearchParams(location.search).get('id');
+
+sb.auth.getSession().then(function(r){
+  if(r.data&&r.data.session){
+    user=r.data.session.user;
+    var meta=user.user_metadata||{};
+    var name=meta.name||user.email.split('@')[0];
+    document.getElementById('nav-user').textContent=name;
+  }
+  if(!showId){
+    // ID 없으면 테스트용 첫 번째 공연 불러오기
+    sb.from('shows').select('*').eq('status','approved').limit(1).then(function(r){
+      if(r.error||!r.data||!r.data.length){
+        // 승인된 공연 없으면 전체에서 첫 번째
+        sb.from('shows').select('*').limit(1).then(function(r2){
+          if(r2.error||!r2.data||!r2.data.length){
+            document.getElementById('loading').innerHTML=
+              '<div style="text-align:center;padding:60px">'
+              +'<div style="font-size:48px;margin-bottom:16px">🎭</div>'
+              +'<div style="font-size:16px;font-weight:700;margin-bottom:8px">등록된 공연이 없습니다</div>'
+              +'<button onclick="location.href=\'shows.html\'" style="padding:11px 24px;background:#534AB7;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px">공연 목록으로</button>'
+              +'</div>';
+            return;
+          }
+          show=Object.assign({},r2.data[0]);
+          initShow();
+        });
+        return;
+      }
+      show=Object.assign({},r.data[0]);
+      initShow();
+    });
+  } else {
+    sb.from('shows').select('*').eq('id',showId).single().then(function(r){
+      if(r.error||!r.data){
+        document.getElementById('loading').innerHTML=
+          '<div style="text-align:center;padding:60px">'
+          +'<div style="font-size:48px;margin-bottom:16px">⚠️</div>'
+          +'<div style="font-size:16px;font-weight:700;margin-bottom:8px">공연을 찾을 수 없습니다</div>'
+          +'<button onclick="location.href=\'shows.html\'" style="padding:11px 24px;background:#534AB7;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px">공연 목록으로</button>'
+          +'</div>';
+        return;
+      }
+      show=Object.assign({},r.data);
+      initShow();
+    });
+  }
+});
+
+function initShow(){
+  PRICES.vip=show.price_vip||30000;
+  PRICES.r=show.price_general||20000;
+  PRICES.s=show.price_student||10000;
+  document.getElementById('loading').style.display='none';
+  document.getElementById('main-content').style.display='block';
+  renderAll();
+}
+
+// ── 렌더 ──
+function renderAll(){
+  renderStepNav();
+  renderShowHeader();
+  renderShowDetail();
+  renderSeats();
+  updateOrderCard();
+}
+
+function renderStepNav(){
+  var labels=['좌석 선택','결제','예약 완료'];
+  var html='';
+  labels.forEach(function(l,i){
+    var cl=i+1===step?'on':i+1<step?'done':'';
+    html+='<div class="sn '+cl+'"><div class="sn-dot">'+(i+1<step?'✓':(i+1))+'</div>'+l+'</div>'
+      +(i<2?'<div class="sn-line"></div>':'');
+  });
+  document.getElementById('step-nav').innerHTML=html;
+}
+
+function renderShowHeader(){
+  var s=show;
+  var img=s.poster_url?'<img src="'+s.poster_url+'" style="width:80px;height:80px;border-radius:10px;object-fit:cover">':'<div class="sh-poster">🎭</div>';
+  document.getElementById('show-header').innerHTML=
+    img+'<div class="sh-info">'
+    +'<div class="sh-title">'+esc(s.title)+'</div>'
+    +'<div class="sh-meta">'+(s.date_start||'')+(s.date_end?' – '+s.date_end:'')+' '+( s.time||'')+'</div>'
+    +'<div class="sh-meta">📍 '+esc(s.venue||'')+'</div>'
+    +'<div class="sh-tags">'
+    +(s.genre?s.genre.split(',').map(function(g){return '<span class="sh-tag">'+g.trim()+'</span>'}).join(''):'')
+    +'<span class="sh-tag">'+esc(s.age_limit||'전체 관람가')+'</span>'
+    +'</div></div>';
+  // 주문카드
+  document.getElementById('oc-sname').textContent=s.title;
+  document.getElementById('oc-smeta').textContent=(s.date_start||'')+' '+( s.time||'');
+  document.getElementById('oc-sname2').textContent=s.title;
+  document.getElementById('oc-smeta2').textContent=(s.date_start||'')+' '+( s.time||'');
+  if(s.poster_url){
+    document.getElementById('oc-poster').innerHTML='<img src="'+s.poster_url+'" style="width:44px;height:44px;border-radius:8px;object-fit:cover">';
+    document.getElementById('oc-poster2').innerHTML='<img src="'+s.poster_url+'" style="width:44px;height:44px;border-radius:8px;object-fit:cover">';
+  }
+}
+
+function renderShowDetail(){
+  var s=show;
+  var rows=[
+    ['공연일',( s.date_start||'미정')+(s.date_end?' – '+s.date_end:'')],
+    ['공연 시간',s.time||'미정'],
+    ['장소',s.venue||'미정'],
+    ['관람 등급',s.age_limit||'전체 관람가'],
+    ['총 좌석',s.total_seats?s.total_seats+'석':'미정'],
+    ['환불 정책',s.refund_policy||''],
+    ['출연진',s.cast_info||''],
+  ];
+  var html=rows.filter(function(r){return r[1]}).map(function(r){
+    return '<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">'
+      +'<span style="color:var(--text3);min-width:80px;flex-shrink:0">'+r[0]+'</span>'
+      +'<span style="font-weight:500">'+esc(r[1])+'</span></div>'
+  }).join('');
+  if(s.description) html+='<div style="font-size:13px;color:var(--text2);line-height:1.7;margin-top:12px">'+esc(s.description)+'</div>';
+  document.getElementById('show-detail').innerHTML=html;
+}
+
+function renderSeats(){
+  var html='';
+  LAYOUT.forEach(function(r){
+    html+='<div class="s-row"><div class="s-lbl">'+r.row+'</div>';
+    r.seats.forEach(function(s){
+      if(!s){html+='<div class="s-gap"></div>';return;}
+      var key=r.row+s,taken=r.taken.indexOf(s)>-1,sel=!!selSeats[key];
+      var cl='seat '+(taken?'s-taken':sel?'s-sel':r.type==='vip'?'s-vip':r.type==='r'?'s-r':'s-s');
+      html+='<button class="'+cl+'" '+(taken?'disabled':'')+
+        ' data-key="'+key+'" data-type="'+r.type+'" data-row="'+r.row+'" data-num="'+s+'">'+s+'</button>';
+    });
+    html+='</div>';
+  });
+  document.getElementById('seat-area').innerHTML=html;
+  document.querySelectorAll('[data-key]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var k=this.dataset.key,t=this.dataset.type,ro=this.dataset.row,n=parseInt(this.dataset.num);
+      if(selSeats[k]) delete selSeats[k];
+      else if(Object.keys(selSeats).length<4) selSeats[k]={type:t,row:ro,num:n};
+      updateSeatUI();
+      updateOrderCard();
+    });
+  });
+}
+
+function updateSeatUI(){
+  var keys=Object.keys(selSeats);
+  document.querySelectorAll('[data-key]').forEach(function(btn){
+    var k=btn.dataset.key,t=btn.dataset.type;
+    if(!btn.disabled){
+      btn.className='seat '+(selSeats[k]?'s-sel':t==='vip'?'s-vip':t==='r'?'s-r':'s-s');
+    }
+  });
+  var keys=Object.keys(selSeats);
+  var total=keys.reduce(function(a,k){return a+PRICES[selSeats[k].type]},0);
+  var ssSeats=document.getElementById('ss-seats');
+  var ssPrice=document.getElementById('ss-price');
+  if(keys.length){
+    ssSeats.textContent=keys.map(function(k){var s=selSeats[k];return s.row+s.num+'('+s.type.toUpperCase()+')'}).join(', ');
+    ssSeats.style.color='var(--text)';
+    ssPrice.style.display='block';
+    ssPrice.textContent='합계 '+total.toLocaleString()+'원';
+  } else {
+    ssSeats.textContent='좌석을 선택해 주세요';
+    ssSeats.style.color='var(--text3)';
+    ssPrice.style.display='none';
+  }
+  document.getElementById('btn-next1').disabled=keys.length===0;
+}
+
+function updateOrderCard(){
+  var keys=Object.keys(selSeats);
+  var total=keys.reduce(function(a,k){return a+PRICES[selSeats[k].type]},0);
+  var labels=keys.length?keys.map(function(k){var s=selSeats[k];return s.row+s.num}).join(', '):'-';
+  document.getElementById('oc-seats').textContent=labels;
+  document.getElementById('oc-ticket').textContent=keys.length?total.toLocaleString()+'원':'-';
+  document.getElementById('oc-total').textContent=keys.length?(total+2000).toLocaleString()+'원':'-';
+  document.getElementById('oc-seats2').textContent=labels;
+  document.getElementById('oc-ticket2').textContent=keys.length?total.toLocaleString()+'원':'-';
+  document.getElementById('oc-total2').textContent=keys.length?(total+2000).toLocaleString()+'원':'-';
+}
+
+// ── 결제 수단 선택 ──
+function selPay(el){
+  document.querySelectorAll('.pay-opt').forEach(function(o){o.classList.remove('on')});
+  el.classList.add('on');
+  payMethod=el.querySelector('.po-name').textContent;
+}
+
+// ── 스텝 이동 ──
+function goStep(n){
+  step=n;
+  document.getElementById('step1').style.display=n===1?'block':'none';
+  document.getElementById('step2').style.display=n===2?'block':'none';
+  document.getElementById('step3').style.display=n===3?'block':'none';
+  renderStepNav();
+  window.scrollTo(0,0);
+}
+
+// ── 예약 DB 저장 ──
+function doBooking(){
+  if(!user){showAl('로그인이 필요합니다','red');return;}
+  var keys=Object.keys(selSeats);
+  if(!keys.length){showAl('좌석을 선택해 주세요','red');return;}
+  var total=keys.reduce(function(a,k){return a+PRICES[selSeats[k].type]},0);
+  var bookingNum='MV-'+Date.now().toString().slice(-8);
+  var payload={
+    user_id:user.id,
+    show_id:show.id,
+    seats:selSeats,
+    total_price:total+2000,
+    status:'confirmed',
+    payment_method:payMethod,
+    booking_number:bookingNum
+  };
+  var btn=event.target;
+  btn.textContent='처리 중...'; btn.disabled=true;
+  sb.from('bookings').insert([payload]).then(function(r){
+    btn.textContent='결제 완료 → 예약 확정'; btn.disabled=false;
+    if(r.error){showAl('예약 실패: '+r.error.message,'red');return;}
+    // 완료 화면
+    var seatLabels=keys.map(function(k){var s=selSeats[k];return s.row+s.num+'('+s.type.toUpperCase()+')'}).join(', ');
+    document.getElementById('ticket-box').innerHTML=
+      '<div class="tb-show">'+esc(show.title)+'</div>'
+      +[['예약 번호',bookingNum],
+        ['일시',(show.date_start||'')+(show.time?' '+show.time:'')],
+        ['장소',show.venue||''],
+        ['좌석',seatLabels],
+        ['결제 수단',payMethod],
+        ['결제 금액',(total+2000).toLocaleString()+'원']
+      ].map(function(r){
+        return '<div class="tb-row"><span class="tb-lbl">'+r[0]+'</span>'
+          +'<span class="tb-val" style="'+(r[0]==='결제 금액'?'color:var(--purple)':'')+'">'+esc(r[1])+'</span></div>'
+      }).join('')
+      +'<div class="barcode">'+bookingNum+'</div>';
+    goStep(3);
+  });
+}
+
+// ── 유틸 ──
+function showAl(msg,type){
+  var a=document.getElementById('alert');
+  a.textContent=msg;a.className='alert on '+(type||'green');
+  setTimeout(function(){a.className='alert'},4000);
+}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
