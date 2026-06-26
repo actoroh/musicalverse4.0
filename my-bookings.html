@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MusicalVerse — 내 예약 내역</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--purple:#534AB7;--purple-light:#EEEDFE;--purple-dark:#3C3489;
+  --teal:#0F6E56;--teal-light:#E1F5EE;
+  --amber:#854F0B;--amber-light:#FAEEDA;
+  --red:#D94040;--red-light:#FCEBEB;
+  --bg:#f7f7f5;--white:#fff;--text:#1a1a1a;--text2:#555;--text3:#999;
+  --border:#e0e0e0;--radius:10px;--radius-lg:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);min-height:100vh}
+nav{background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100}
+.nav-logo{font-size:18px;font-weight:800;color:var(--purple);cursor:pointer}
+.nav-logo span{color:var(--text)}
+.nav-right{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2)}
+.nav-av{width:30px;height:30px;border-radius:50%;background:var(--purple-light);
+  color:var(--purple);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer}
+
+.wrap{max-width:720px;margin:0 auto;padding:28px 20px}
+.page-title{font-size:22px;font-weight:800;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--text3);margin-bottom:24px}
+
+/* 탭 */
+.tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;margin-bottom:20px;background:var(--white)}
+.tab{flex:1;padding:10px;text-align:center;font-size:14px;font-weight:600;
+  cursor:pointer;border:none;background:transparent;color:var(--text3)}
+.tab.on{background:var(--purple);color:#fff}
+
+/* 예약 카드 */
+.booking-card{background:var(--white);border:1px solid var(--border);
+  border-radius:var(--radius-lg);margin-bottom:14px;overflow:hidden;transition:box-shadow .2s}
+.booking-card:hover{box-shadow:0 4px 16px rgba(83,74,183,.1)}
+.bc-top{display:flex;gap:14px;padding:16px}
+.bc-poster{width:64px;height:64px;border-radius:10px;object-fit:cover;flex-shrink:0;
+  background:var(--purple-light);display:flex;align-items:center;justify-content:center;font-size:24px}
+.bc-poster img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+.bc-info{flex:1}
+.bc-title{font-size:15px;font-weight:700;margin-bottom:3px}
+.bc-meta{font-size:12px;color:var(--text3);margin-bottom:6px}
+.bc-seats{font-size:13px;color:var(--text2)}
+.bc-status{flex-shrink:0}
+.badge{display:inline-block;font-size:11px;padding:4px 10px;border-radius:8px;font-weight:700}
+.b-confirmed{background:var(--teal-light);color:var(--teal)}
+.b-cancelled{background:var(--red-light);color:var(--red)}
+.b-pending{background:var(--amber-light);color:var(--amber)}
+
+.bc-bottom{border-top:1px solid var(--border);padding:12px 16px;
+  display:flex;align-items:center;justify-content:space-between;background:var(--bg)}
+.bc-price{font-size:15px;font-weight:800;color:var(--purple)}
+.bc-num{font-size:11px;color:var(--text3);font-family:monospace}
+.bc-actions{display:flex;gap:8px}
+.btn-sm{padding:7px 14px;border-radius:var(--radius);font-size:12px;font-weight:600;
+  cursor:pointer;border:none}
+.btn-ticket{background:var(--purple-light);color:var(--purple)}
+.btn-cancel{background:var(--red-light);color:var(--red)}
+.btn-review{background:var(--teal-light);color:var(--teal)}
+
+/* 빈 상태 */
+.empty{text-align:center;padding:60px 20px}
+.empty-icon{font-size:52px;margin-bottom:14px}
+.empty-title{font-size:16px;font-weight:700;color:var(--text2);margin-bottom:6px}
+.empty-sub{font-size:13px;color:var(--text3);margin-bottom:20px}
+.btn-main{padding:12px 28px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius-lg);font-size:14px;font-weight:700;cursor:pointer}
+
+/* 로딩 */
+.loading{text-align:center;padding:60px;color:var(--text3)}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--purple);
+  border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 티켓 모달 */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;
+  display:none;align-items:center;justify-content:center;padding:20px}
+.modal-bg.on{display:flex}
+.modal{background:var(--white);border-radius:20px;width:100%;max-width:400px;padding:28px}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:16px;color:var(--purple-dark)}
+.ticket-vis{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:16px}
+.tv-show{font-size:15px;font-weight:800;margin-bottom:12px}
+.tv-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border)}
+.tv-row:last-of-type{border:none}
+.tv-lbl{color:var(--text3)}
+.tv-val{font-weight:600}
+.barcode{background:var(--bg);border-radius:var(--radius);padding:12px;
+  text-align:center;font-size:11px;color:var(--text3);letter-spacing:.18em;
+  font-family:monospace;margin-top:10px}
+.btn-close{width:100%;padding:12px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius-lg);font-size:14px;font-weight:700;cursor:pointer}
+
+/* 통계 */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px;text-align:center}
+.stat-num{font-size:22px;font-weight:800;color:var(--purple)}
+.stat-lbl{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* 로그인 필요 */
+.need-login{text-align:center;padding:80px 20px}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo" onclick="location.href='index.html'"><span>Musical</span>Verse</div>
+  <div class="nav-right" id="nav-right">
+    <button onclick="location.href='index.html'" style="padding:7px 16px;background:var(--purple);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer">로그인</button>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- 로그인 필요 -->
+  <div class="need-login" id="need-login" style="display:none">
+    <div style="font-size:52px;margin-bottom:16px">🔒</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:8px">로그인이 필요합니다</div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:20px">예약 내역은 로그인 후 확인할 수 있습니다</div>
+    <button class="btn-main" onclick="location.href='index.html'">로그인 / 회원가입</button>
+  </div>
+
+  <!-- 메인 콘텐츠 -->
+  <div id="main" style="display:none">
+    <div class="page-title">내 예약 내역</div>
+    <div class="page-sub" id="page-sub">예약한 공연을 확인하세요</div>
+
+    <!-- 통계 -->
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num" id="st-total">0</div><div class="stat-lbl">전체 예약</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-confirmed">0</div><div class="stat-lbl">확정</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-amount">0</div><div class="stat-lbl">총 결제액(원)</div></div>
+    </div>
+
+    <!-- 탭 -->
+    <div class="tabs">
+      <button class="tab on" onclick="filterTab('all',this)">전체</button>
+      <button class="tab" onclick="filterTab('confirmed',this)">확정</button>
+      <button class="tab" onclick="filterTab('cancelled',this)">취소</button>
+    </div>
+
+    <!-- 목록 -->
+    <div id="booking-list">
+      <div class="loading"><div class="spinner"></div>예약 내역을 불러오는 중</div>
+    </div>
+  </div>
+</div>
+
+<!-- 티켓 모달 -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this) closeModal()">
+  <div class="modal">
+    <div class="modal-title">내 티켓</div>
+    <div class="ticket-vis" id="ticket-vis"></div>
+    <button class="btn-close" onclick="closeModal()">닫기</button>
+  </div>
+</div>
+
+<script>
+var SUPA_URL='https://qyrgfjshsczdpxaeznkc.supabase.co';
+var SUPA_KEY='sb_publishable_A6MmsqE9y-ymBKNKOwR2EA_PuLX5mLB';
+var sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+
+var user=null;
+var allBookings=[];
+var currentTab='all';
+var EMOJIS=['🎭','🎶','🎵','🎤','🎪','🌟'];
+
+// ── 초기화 ──
+sb.auth.getSession().then(function(r){
+  if(!r.data||!r.data.session){
+    document.getElementById('need-login').style.display='block';
+    return;
+  }
+  user=r.data.session.user;
+  var meta=user.user_metadata||{};
+  var name=meta.name||user.email.split('@')[0];
+  document.getElementById('nav-right').innerHTML=
+    '<div class="nav-av">'+name[0].toUpperCase()+'</div>'
+    +'<span>'+name+'</span>';
+  document.getElementById('main').style.display='block';
+  loadBookings();
+});
+
+// ── 예약 불러오기 ──
+async function loadBookings(){
+  try{
+    // bookings + shows 조인
+    var res = await sb.from('bookings')
+      .select('*, shows(title,venue,date_start,time,poster_url,genre)')
+      .eq('user_id', user.id)
+      .order('created_at',{ascending:false});
+    if(res.error) throw new Error(res.error.message);
+    allBookings=(res.data||[]).map(function(b){return Object.assign({},b);});
+    updateStats();
+    renderBookings();
+  } catch(e){
+    document.getElementById('booking-list').innerHTML=
+      '<div class="empty"><div class="empty-icon">⚠️</div>'
+      +'<div class="empty-title">불러오기 실패</div>'
+      +'<div class="empty-sub">'+e.message+'</div></div>';
+  }
+}
+
+// ── 통계 ──
+function updateStats(){
+  var total=allBookings.length;
+  var confirmed=allBookings.filter(function(b){return b.status==='confirmed'}).length;
+  var amount=allBookings.filter(function(b){return b.status==='confirmed'})
+    .reduce(function(a,b){return a+(b.total_price||0)},0);
+  document.getElementById('st-total').textContent=total;
+  document.getElementById('st-confirmed').textContent=confirmed;
+  document.getElementById('st-amount').textContent=amount.toLocaleString();
+  document.getElementById('page-sub').textContent=
+    '총 '+total+'건의 예약 내역이 있습니다';
+}
+
+// ── 탭 필터 ──
+function filterTab(tab,el){
+  currentTab=tab;
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on')});
+  el.classList.add('on');
+  renderBookings();
+}
+
+// ── 렌더 ──
+function renderBookings(){
+  var list=allBookings.filter(function(b){
+    if(currentTab==='all') return true;
+    return b.status===currentTab;
+  });
+
+  if(!list.length){
+    var msg=currentTab==='all'?'아직 예약한 공연이 없습니다':
+      currentTab==='confirmed'?'확정된 예약이 없습니다':'취소된 예약이 없습니다';
+    document.getElementById('booking-list').innerHTML=
+      '<div class="empty">'
+      +'<div class="empty-icon">🎭</div>'
+      +'<div class="empty-title">'+msg+'</div>'
+      +'<div class="empty-sub">공연을 찾아 예약해 보세요</div>'
+      +'<button class="btn-main" onclick="location.href=\'shows.html\'">공연 둘러보기</button>'
+      +'</div>';
+    return;
+  }
+
+  document.getElementById('booking-list').innerHTML=list.map(function(b,i){
+    var s=b.shows||{};
+    var emoji=EMOJIS[i%EMOJIS.length];
+    var statusMap={
+      confirmed:'<span class="badge b-confirmed">확정</span>',
+      cancelled:'<span class="badge b-cancelled">취소</span>',
+      pending:'<span class="badge b-pending">대기</span>'
+    };
+    var badge=statusMap[b.status]||statusMap.confirmed;
+
+    // 좌석 파싱
+    var seatStr='';
+    try{
+      var seats=typeof b.seats==='string'?JSON.parse(b.seats):b.seats;
+      if(seats&&typeof seats==='object'){
+        seatStr=Object.keys(seats).map(function(k){
+          var seat=seats[k];
+          return seat.row+seat.num+'('+seat.type.toUpperCase()+')';
+        }).join(', ');
+      }
+    } catch(e){}
+
+    var posterHtml=s.poster_url
+      ?'<div class="bc-poster"><img src="'+s.poster_url+'" alt="포스터"></div>'
+      :'<div class="bc-poster">'+emoji+'</div>';
+
+    var dateStr=(s.date_start||'')+(s.time?' '+s.time:'');
+    var isCancelled=b.status==='cancelled';
+
+    return '<div class="booking-card">'
+      +'<div class="bc-top">'
+      +posterHtml
+      +'<div class="bc-info">'
+      +'<div class="bc-title">'+esc(s.title||'공연명 없음')+'</div>'
+      +'<div class="bc-meta">📍 '+esc(s.venue||'')+(dateStr?' · '+dateStr:'')+'</div>'
+      +(seatStr?'<div class="bc-seats">좌석: '+esc(seatStr)+'</div>':'')
+      +'</div>'
+      +'<div class="bc-status">'+badge+'</div>'
+      +'</div>'
+      +'<div class="bc-bottom">'
+      +'<div>'
+      +'<div class="bc-price">'+(b.total_price?(b.total_price).toLocaleString()+'원':'무료')+'</div>'
+      +'<div class="bc-num">'+(b.booking_number||'')+'</div>'
+      +'</div>'
+      +'<div class="bc-actions">'
+      +(isCancelled?'':'<button class="btn-sm btn-ticket" onclick="showTicket(\''+b.id+'\')">티켓 보기</button>')
+      +(isCancelled?'':'<button class="btn-sm btn-cancel" onclick="cancelBooking(\''+b.id+'\')">예약 취소</button>')
+      +(isCancelled?'<button class="btn-sm btn-review" onclick="location.href=\'shows.html\'">재예약</button>':'')
+      +'</div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// ── 티켓 보기 ──
+function showTicket(id){
+  var b=allBookings.find(function(b){return b.id===id});
+  if(!b) return;
+  var s=b.shows||{};
+  var seatStr='';
+  try{
+    var seats=typeof b.seats==='string'?JSON.parse(b.seats):b.seats;
+    if(seats&&typeof seats==='object'){
+      seatStr=Object.keys(seats).map(function(k){
+        var seat=seats[k];
+        return seat.row+seat.num+'('+seat.type.toUpperCase()+')';
+      }).join(', ');
+    }
+  } catch(e){}
+
+  document.getElementById('ticket-vis').innerHTML=
+    '<div class="tv-show">'+esc(s.title||'공연')+'</div>'
+    +[['예약 번호',b.booking_number||''],
+      ['일시',(s.date_start||'')+(s.time?' '+s.time:'')],
+      ['장소',s.venue||''],
+      ['좌석',seatStr||''],
+      ['결제 수단',b.payment_method||''],
+      ['결제 금액',b.total_price?b.total_price.toLocaleString()+'원':'무료']
+    ].filter(function(r){return r[1]}).map(function(r){
+      return '<div class="tv-row"><span class="tv-lbl">'+r[0]+'</span>'
+        +'<span class="tv-val" style="'+(r[0]==='결제 금액'?'color:var(--purple)':'')+'">'+esc(r[1])+'</span></div>'
+    }).join('')
+    +'<div class="barcode">'+(b.booking_number||'MV-TICKET')+'</div>';
+
+  document.getElementById('modal-bg').classList.add('on');
+}
+
+// ── 예약 취소 ──
+function cancelBooking(id){
+  if(!confirm('예약을 취소하시겠습니까?')) return;
+  sb.from('bookings').update({status:'cancelled'}).eq('id',id).then(function(r){
+    if(r.error){alert('취소 실패: '+r.error.message);return;}
+    var b=allBookings.find(function(b){return b.id===id});
+    if(b) b.status='cancelled';
+    updateStats();
+    renderBookings();
+  });
+}
+
+function closeModal(){
+  document.getElementById('modal-bg').classList.remove('on');
+}
+
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
