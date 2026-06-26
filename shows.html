@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MusicalVerse — 공연 둘러보기</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--purple:#534AB7;--purple-light:#EEEDFE;--teal:#0F6E56;--teal-light:#E1F5EE;
+  --amber:#854F0B;--amber-light:#FAEEDA;--red:#D94040;
+  --bg:#f7f7f5;--white:#fff;--text:#1a1a1a;--text2:#555;--text3:#999;
+  --border:#e0e0e0;--radius:10px;--radius-lg:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);min-height:100vh}
+
+/* NAV */
+nav{background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100}
+.nav-logo{font-size:18px;font-weight:800;color:var(--purple);cursor:pointer}
+.nav-logo span{color:var(--text)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-av{width:30px;height:30px;border-radius:50%;background:var(--purple-light);
+  color:var(--purple);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.nav-btn{padding:7px 16px;border-radius:var(--radius);font-size:13px;font-weight:600;
+  cursor:pointer;border:none;background:var(--purple);color:#fff}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#2D2680,#534AB7,#7F77DD);
+  padding:48px 32px;color:#fff;text-align:center}
+.hero h1{font-size:28px;font-weight:800;margin-bottom:8px}
+.hero p{font-size:15px;opacity:.8;margin-bottom:24px}
+.search-wrap{max-width:480px;margin:0 auto;display:flex;gap:8px}
+.search-inp{flex:1;padding:12px 16px;font-size:14px;border:none;border-radius:var(--radius-lg);
+  outline:none;color:var(--text)}
+.search-btn{padding:12px 20px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);
+  color:#fff;border-radius:var(--radius-lg);font-size:14px;font-weight:600;cursor:pointer}
+
+/* FILTER */
+.filter-bar{background:var(--white);border-bottom:1px solid var(--border);padding:12px 32px;
+  display:flex;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none}
+.filter-bar::-webkit-scrollbar{display:none}
+.fpill{padding:6px 14px;border-radius:20px;font-size:13px;border:1px solid var(--border);
+  cursor:pointer;white-space:nowrap;background:var(--white);color:var(--text2);font-weight:500}
+.fpill.on{background:var(--purple);color:#fff;border-color:var(--purple);font-weight:600}
+.filter-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 4px}
+
+/* MAIN */
+.main{max-width:1100px;margin:0 auto;padding:32px 24px}
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.sec-title{font-size:20px;font-weight:800}
+.sec-count{font-size:13px;color:var(--text3);margin-top:3px}
+.sort-sel{font-size:13px;padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--white);cursor:pointer;outline:none}
+
+/* GRID */
+.show-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.show-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
+  overflow:hidden;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.show-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(83,74,183,.15)}
+.sc-img{height:180px;display:flex;align-items:center;justify-content:center;
+  font-size:48px;position:relative;overflow:hidden;background:#f0efe9}
+.sc-img img{width:100%;height:100%;object-fit:cover}
+.sc-img .no-img{font-size:48px}
+.sc-badge{position:absolute;top:10px;left:10px;font-size:10px;padding:3px 8px;
+  border-radius:8px;font-weight:700}
+.b-pro{background:var(--purple-light);color:var(--purple)}
+.b-ama{background:var(--teal-light);color:var(--teal)}
+.b-pending{background:var(--amber-light);color:var(--amber)}
+.sc-status{position:absolute;top:10px;right:10px;font-size:10px;padding:3px 8px;
+  border-radius:8px;font-weight:700;background:rgba(0,0,0,.5);color:#fff}
+.sc-body{padding:14px}
+.sc-name{font-size:14px;font-weight:700;margin-bottom:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-team{font-size:12px;color:var(--text3);margin-bottom:6px}
+.sc-venue{font-size:12px;color:var(--text2);margin-bottom:8px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-footer{display:flex;align-items:center;justify-content:space-between}
+.sc-price{font-size:13px;font-weight:700;color:var(--purple)}
+.sc-date{font-size:11px;color:var(--text3)}
+
+/* 빈 상태 */
+.empty{text-align:center;padding:60px 24px;color:var(--text3)}
+.empty-icon{font-size:48px;margin-bottom:14px}
+.empty-title{font-size:16px;font-weight:700;color:var(--text2);margin-bottom:6px}
+.empty-sub{font-size:13px}
+
+/* 로딩 */
+.loading{text-align:center;padding:60px;color:var(--text3)}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--purple);
+  border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 상세 모달 */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;
+  display:none;align-items:center;justify-content:center;padding:20px}
+.modal-bg.on{display:flex}
+.modal{background:var(--white);border-radius:20px;width:100%;max-width:560px;
+  max-height:90vh;overflow-y:auto}
+.modal-img{height:220px;display:flex;align-items:center;justify-content:center;
+  font-size:64px;background:#f0efe9;border-radius:20px 20px 0 0;overflow:hidden}
+.modal-img img{width:100%;height:100%;object-fit:cover}
+.modal-body{padding:24px}
+.modal-title{font-size:22px;font-weight:800;margin-bottom:4px}
+.modal-team{font-size:14px;color:var(--text3);margin-bottom:16px}
+.modal-row{display:flex;gap:8px;font-size:14px;padding:8px 0;border-bottom:1px solid var(--border)}
+.modal-row:last-of-type{border:none}
+.modal-lbl{color:var(--text3);min-width:80px;flex-shrink:0}
+.modal-val{font-weight:500;color:var(--text)}
+.modal-desc{font-size:14px;color:var(--text2);line-height:1.7;margin:14px 0}
+.price-pills{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px}
+.price-pill{padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600}
+.pp-vip{background:var(--purple-light);color:var(--purple)}
+.pp-gen{background:var(--teal-light);color:var(--teal)}
+.pp-stu{background:#E6F1FB;color:#185FA5}
+.modal-btns{display:flex;gap:10px;margin-top:16px}
+.btn-book{flex:1;padding:14px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius-lg);font-size:15px;font-weight:700;cursor:pointer}
+.btn-close{padding:14px 20px;border:1.5px solid var(--border);border-radius:var(--radius-lg);
+  background:var(--white);cursor:pointer;color:var(--text2);font-weight:600}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo" onclick="location.href='index.html'"><span>Musical</span>Verse</div>
+  <div class="nav-right" id="nav-right">
+    <button class="nav-btn" onclick="location.href='index.html'">로그인</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>공연 둘러보기</h1>
+  <p>전국 프로·아마추어 공연을 한눈에</p>
+  <div class="search-wrap">
+    <input class="search-inp" id="search-inp" placeholder="공연명, 팀명, 장소 검색..." oninput="filterShows()">
+    <button class="search-btn" onclick="filterShows()">검색</button>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <div class="fpill on" data-filter="all" onclick="setFilter('all',this)">전체</div>
+  <div class="filter-sep"></div>
+  <div class="fpill" data-filter="창작 뮤지컬" onclick="setFilter('창작 뮤지컬',this)">창작 뮤지컬</div>
+  <div class="fpill" data-filter="라이선스 뮤지컬" onclick="setFilter('라이선스 뮤지컬',this)">라이선스</div>
+  <div class="fpill" data-filter="소극장" onclick="setFilter('소극장',this)">소극장</div>
+  <div class="fpill" data-filter="가족" onclick="setFilter('가족',this)">가족</div>
+  <div class="fpill" data-filter="클래식" onclick="setFilter('클래식',this)">클래식</div>
+  <div class="filter-sep"></div>
+  <div class="fpill" data-filter="서울" onclick="setFilter('서울',this)">서울</div>
+  <div class="fpill" data-filter="부산" onclick="setFilter('부산',this)">부산</div>
+  <div class="fpill" data-filter="대구" onclick="setFilter('대구',this)">대구</div>
+</div>
+
+<div class="main">
+  <div class="sec-header">
+    <div>
+      <div class="sec-title">공연 목록</div>
+      <div class="sec-count" id="sec-count">불러오는 중...</div>
+    </div>
+    <select class="sort-sel" onchange="sortShows(this.value)">
+      <option value="newest">최신순</option>
+      <option value="date">공연일순</option>
+      <option value="price">가격낮은순</option>
+    </select>
+  </div>
+
+  <div id="show-list">
+    <div class="loading">
+      <div class="spinner"></div>
+      공연 목록을 불러오는 중입니다
+    </div>
+  </div>
+</div>
+
+<!-- 상세 모달 -->
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-img" id="modal-img"></div>
+    <div class="modal-body">
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-team" id="modal-team"></div>
+      <div id="modal-rows"></div>
+      <div class="modal-desc" id="modal-desc"></div>
+      <div class="price-pills" id="modal-prices"></div>
+      <div class="modal-btns">
+        <button class="btn-book" onclick="goBook()">예매하기</button>
+        <button class="btn-close" onclick="document.getElementById('modal-bg').classList.remove('on')">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var SUPA_URL = 'https://qyrgfjshsczdpxaeznkc.supabase.co';
+var SUPA_KEY = 'sb_publishable_A6MmsqE9y-ymBKNKOwR2EA_PuLX5mLB';
+var sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+var allShows = [];
+var filtered = [];
+var activeFilter = 'all';
+var searchKw = '';
+var currentShow = null;
+var EMOJIS = ['🎭','🎶','🎵','🎤','🎪','🌟','🎀','🎬'];
+
+// ── 초기화 ──
+sb.auth.getSession().then(function(r){
+  if(r.data && r.data.session){
+    var meta = r.data.session.user.user_metadata||{};
+    var name = meta.name||r.data.session.user.email.split('@')[0];
+    document.getElementById('nav-right').innerHTML =
+      '<div class="nav-av" onclick="location.href=\'index.html\'">'
+      +name[0].toUpperCase()+'</div>'
+      +'<button class="nav-btn" onclick="location.href=\'show_register.html\'">공연 등록</button>';
+  }
+});
+
+// ── DB에서 공연 불러오기 ──
+function loadShows(){
+  sb.from('shows').select('*').order('created_at',{ascending:false}).then(function(r){
+    if(r.error){
+      document.getElementById('show-list').innerHTML=
+        '<div class="empty"><div class="empty-icon">⚠️</div>'
+        +'<div class="empty-title">불러오기 실패</div>'
+        +'<div class="empty-sub">'+r.error.message+'</div></div>';
+      return;
+    }
+    allShows = r.data||[];
+    filterShows();
+  });
+}
+
+// ── 필터 ──
+function setFilter(f, el){
+  activeFilter = f;
+  document.querySelectorAll('.fpill').forEach(function(p){p.classList.remove('on')});
+  el.classList.add('on');
+  filterShows();
+}
+
+function filterShows(){
+  var kw = document.getElementById('search-inp').value.trim().toLowerCase();
+  searchKw = kw;
+  filtered = allShows.filter(function(s){
+    var matchFilter = activeFilter==='all'
+      || (s.genre&&s.genre.indexOf(activeFilter)>-1)
+      || (s.venue&&s.venue.indexOf(activeFilter)>-1);
+    var matchSearch = !kw
+      || (s.title&&s.title.toLowerCase().indexOf(kw)>-1)
+      || (s.team_name&&s.team_name.toLowerCase().indexOf(kw)>-1)
+      || (s.venue&&s.venue.toLowerCase().indexOf(kw)>-1);
+    return matchFilter && matchSearch;
+  });
+  renderShows();
+}
+
+// ── 정렬 ──
+function sortShows(by){
+  filtered.sort(function(a,b){
+    if(by==='date') return (a.date_start||'').localeCompare(b.date_start||'');
+    if(by==='price'){
+      var pa=Math.min(a.price_general||9999999,a.price_vip||9999999,a.price_student||9999999);
+      var pb=Math.min(b.price_general||9999999,b.price_vip||9999999,b.price_student||9999999);
+      return pa-pb;
+    }
+    return new Date(b.created_at)-new Date(a.created_at);
+  });
+  renderShows();
+}
+
+// ── 렌더 ──
+function renderShows(){
+  var count = document.getElementById('sec-count');
+  count.textContent = filtered.length+'개 공연';
+
+  if(filtered.length===0){
+    document.getElementById('show-list').innerHTML=
+      '<div class="empty">'
+      +'<div class="empty-icon">🎭</div>'
+      +'<div class="empty-title">공연이 없습니다</div>'
+      +'<div class="empty-sub">'+(searchKw?'"'+searchKw+'" 검색 결과가 없습니다':'등록된 공연이 없습니다')+'</div>'
+      +'</div>';
+    return;
+  }
+
+  var html='<div class="show-grid">';
+  filtered.forEach(function(s,i){
+    var emoji = EMOJIS[i%EMOJIS.length];
+    var imgHtml = s.poster_url
+      ? '<img src="'+s.poster_url+'" alt="'+esc(s.title)+'" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'block\'">'
+        +'<span class="no-img" style="display:none">'+emoji+'</span>'
+      : '<span class="no-img">'+emoji+'</span>';
+    var minPrice = Math.min(
+      s.price_general||999999999,
+      s.price_vip||999999999,
+      s.price_student||999999999
+    );
+    var priceStr = minPrice===999999999 ? '무료' : minPrice.toLocaleString()+'원~';
+    var statusBadge = s.status==='pending'
+      ? '<span class="sc-status">검토 중</span>' : '';
+    html+='<div class="show-card" onclick="openModal('+i+')">'
+      +'<div class="sc-img">'+imgHtml
+      +'<span class="sc-badge b-ama">아마추어</span>'+statusBadge
+      +'</div>'
+      +'<div class="sc-body">'
+      +'<div class="sc-name">'+esc(s.title)+'</div>'
+      +'<div class="sc-team">'+esc(s.team_name||'')+'</div>'
+      +'<div class="sc-venue">📍 '+esc(s.venue||'장소 미정')+'</div>'
+      +'<div class="sc-footer">'
+      +'<div class="sc-price">'+priceStr+'</div>'
+      +'<div class="sc-date">'+formatDate(s.date_start)+'</div>'
+      +'</div></div></div>';
+  });
+  html+='</div>';
+  document.getElementById('show-list').innerHTML=html;
+}
+
+// ── 모달 ──
+function openModal(i){
+  currentShow = filtered[i];
+  var s = currentShow;
+  var emoji = EMOJIS[i%EMOJIS.length];
+
+  // 이미지
+  var imgEl = document.getElementById('modal-img');
+  if(s.poster_url){
+    imgEl.innerHTML='<img src="'+s.poster_url+'" alt="포스터" style="width:100%;height:100%;object-fit:cover">';
+  } else {
+    imgEl.innerHTML='<span style="font-size:64px">'+emoji+'</span>';
+  }
+
+  document.getElementById('modal-title').textContent=s.title||'';
+  document.getElementById('modal-team').textContent=(s.team_name||'')+(s.genre?' · '+s.genre:'');
+  document.getElementById('modal-desc').textContent=s.description||'공연 소개가 없습니다.';
+
+  // 정보 rows
+  var rows=[
+    ['일시', (s.date_start||'미정')+(s.date_end?' – '+s.date_end:'')+' '+(s.time||'')],
+    ['장소', s.venue||'미정'],
+    ['관람 등급', s.age_limit||'전체 관람가'],
+    ['총 좌석', s.total_seats?s.total_seats+'석':'미정'],
+    ['예매 오픈', s.open_date||'미정'],
+    ['환불', s.refund_policy||'']
+  ];
+  document.getElementById('modal-rows').innerHTML=rows.filter(function(r){return r[1]}).map(function(r){
+    return '<div class="modal-row"><span class="modal-lbl">'+r[0]+'</span><span class="modal-val">'+esc(r[1])+'</span></div>'
+  }).join('');
+
+  // 가격
+  var pills='';
+  if(s.price_vip) pills+='<div class="price-pill pp-vip">VIP '+s.price_vip.toLocaleString()+'원</div>';
+  if(s.price_general) pills+='<div class="price-pill pp-gen">일반 '+s.price_general.toLocaleString()+'원</div>';
+  if(s.price_student) pills+='<div class="price-pill pp-stu">학생 '+s.price_student.toLocaleString()+'원</div>';
+  if(!pills) pills='<div class="price-pill pp-gen">무료</div>';
+  document.getElementById('modal-prices').innerHTML=pills;
+
+  document.getElementById('modal-bg').classList.add('on');
+}
+
+function closeModal(e){
+  if(e.target===document.getElementById('modal-bg'))
+    document.getElementById('modal-bg').classList.remove('on');
+}
+
+function goBook(){
+  document.getElementById('modal-bg').classList.remove('on');
+  location.href='index.html';
+}
+
+// ── 유틸 ──
+function formatDate(d){
+  if(!d) return '일정 미정';
+  var parts=d.split('-');
+  return parts[1]+'월 '+parts[2]+'일';
+}
+function esc(s){
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+loadShows();
+</script>
+</body>
+</html>
