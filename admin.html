@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MusicalVerse — 관리자</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--purple:#534AB7;--purple-light:#EEEDFE;--teal:#0F6E56;--teal-light:#E1F5EE;
+  --amber:#854F0B;--amber-light:#FAEEDA;--red:#D94040;--red-light:#FCEBEB;
+  --bg:#f7f7f5;--white:#fff;--text:#1a1a1a;--text2:#555;--text3:#999;
+  --border:#e0e0e0;--radius:10px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
+
+/* 접근 차단 */
+.blocked{display:none;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;text-align:center;padding:40px}
+.blocked-icon{font-size:56px;margin-bottom:16px}
+.blocked h2{font-size:22px;font-weight:800;margin-bottom:8px}
+.blocked p{font-size:14px;color:var(--text2);margin-bottom:24px}
+.btn-back{padding:12px 28px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius);font-size:14px;font-weight:700;cursor:pointer}
+
+/* 레이아웃 */
+.layout{display:flex;flex:1}
+.sidebar{width:200px;background:var(--white);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0}
+.sb-logo{padding:16px;border-bottom:1px solid var(--border)}
+.sb-logo .logo{font-size:16px;font-weight:800;color:var(--purple)}
+.sb-logo .logo span{color:var(--text)}
+.sb-logo .sub{font-size:11px;color:var(--text3);margin-top:2px}
+.sb-nav{flex:1;padding:8px 0;overflow-y:auto}
+.sb-section{font-size:10px;color:var(--text3);padding:10px 14px 4px;
+  text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.sb-item{display:flex;align-items:center;gap:8px;padding:9px 14px;font-size:13px;
+  color:var(--text2);cursor:pointer;border-left:3px solid transparent}
+.sb-item:hover{background:var(--bg);color:var(--text)}
+.sb-item.on{color:var(--purple);background:var(--purple-light);border-left-color:var(--purple);font-weight:700}
+.sb-item .badge{background:var(--red);color:#fff;font-size:9px;padding:1px 6px;
+  border-radius:8px;margin-left:auto}
+.sb-bottom{padding:12px 14px;border-top:1px solid var(--border)}
+.sb-user{display:flex;align-items:center;gap:8px}
+.sb-av{width:28px;height:28px;border-radius:50%;background:var(--amber-light);
+  color:var(--amber);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.sb-uname{font-size:12px;font-weight:600}
+.sb-urole{font-size:10px;color:var(--text3)}
+.sb-logout{font-size:11px;color:var(--red);cursor:pointer;margin-left:auto;background:none;border:none}
+
+/* 메인 */
+.main{margin-left:200px;flex:1;padding:24px;overflow-y:auto}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page-title{font-size:20px;font-weight:800}
+.page-date{font-size:12px;color:var(--text3)}
+.pg{display:none}.pg.on{display:block}
+
+/* 메트릭 */
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.metric-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.mc-label{font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.mc-val{font-size:24px;font-weight:800;color:var(--text)}
+.mc-sub{font-size:11px;margin-top:4px}
+.mc-up{color:var(--teal)}.mc-pend{color:var(--amber)}
+
+/* 테이블 */
+.table-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
+.table-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.table-title{font-size:14px;font-weight:700}
+.table-head{display:flex;padding:8px 16px;background:var(--bg);border-bottom:1px solid var(--border)}
+.th{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
+.table-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);transition:background .15s}
+.table-row:last-child{border:none}
+.table-row:hover{background:var(--bg)}
+.td{font-size:13px;color:var(--text)}
+.td-sub{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* 컬럼 너비 */
+.c-title{flex:2.5}.c-team{flex:1.5}.c-date{flex:1}.c-status{flex:1;text-align:center}.c-action{flex:1.2;text-align:right}
+
+/* 배지 */
+.badge{display:inline-block;font-size:10px;padding:3px 9px;border-radius:8px;font-weight:700}
+.b-pending{background:var(--amber-light);color:var(--amber)}
+.b-approved{background:var(--teal-light);color:var(--teal)}
+.b-rejected{background:var(--red-light);color:var(--red)}
+.b-live{background:var(--purple-light);color:var(--purple)}
+
+/* 액션 버튼 */
+.act-btn{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid;cursor:pointer;background:transparent;margin-left:4px;font-weight:600}
+.act-approve{border-color:var(--teal);color:var(--teal)}
+.act-approve:hover{background:var(--teal-light)}
+.act-reject{border-color:var(--red);color:var(--red)}
+.act-reject:hover{background:var(--red-light)}
+.act-detail{border-color:var(--border);color:var(--text2)}
+.act-detail:hover{background:var(--bg)}
+
+/* 알림 */
+.alert{border-radius:var(--radius);padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
+.alert.on{display:block}
+.alert.green{background:var(--teal-light);color:var(--teal)}
+.alert.red{background:var(--red-light);color:var(--red)}
+
+/* 로딩 */
+.loading{text-align:center;padding:40px;color:var(--text3)}
+.spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--purple);
+  border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 통계 바 */
+.stat-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.stat-label{font-size:13px;color:var(--text2);min-width:80px}
+.stat-bar{flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.stat-fill{height:100%;border-radius:4px;background:var(--purple);transition:width .6s}
+.stat-val{font-size:12px;color:var(--text3);min-width:40px;text-align:right}
+
+/* 빈 상태 */
+.empty{text-align:center;padding:40px;color:var(--text3);font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- 접근 차단 화면 -->
+<div class="blocked" id="blocked">
+  <div class="blocked-icon">🔒</div>
+  <h2>접근 권한이 없습니다</h2>
+  <p>관리자 계정으로 로그인해야 접근할 수 있습니다</p>
+  <button class="btn-back" onclick="location.href='index.html'">로그인 페이지로</button>
+</div>
+
+<!-- 대시보드 -->
+<div class="layout" id="dashboard" style="display:none">
+
+  <!-- 사이드바 -->
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="logo"><span>Musical</span>Verse</div>
+      <div class="sub">관리자 대시보드</div>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-section">메인</div>
+      <div class="sb-item on" onclick="goPage('overview',this)">📊 개요</div>
+      <div class="sb-item" onclick="goPage('shows',this)">🎭 공연 관리
+        <span class="badge" id="pending-badge">0</span>
+      </div>
+      <div class="sb-item" onclick="goPage('users',this)">👥 회원 관리</div>
+      <div class="sb-section">운영</div>
+      <div class="sb-item" onclick="goPage('stats',this)">📈 통계</div>
+      <div class="sb-item" onclick="location.href='shows.html'">🌐 공연 목록 보기</div>
+    </div>
+    <div class="sb-bottom">
+      <div class="sb-user">
+        <div class="sb-av" id="sb-av">A</div>
+        <div><div class="sb-uname" id="sb-name">관리자</div><div class="sb-urole">슈퍼 관리자</div></div>
+        <button class="sb-logout" onclick="doLogout()">로그아웃</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 메인 콘텐츠 -->
+  <div class="main">
+    <div class="alert" id="alert"></div>
+
+    <!-- 개요 -->
+    <div class="pg on" id="pg-overview">
+      <div class="page-header">
+        <div class="page-title">개요</div>
+        <div class="page-date" id="today-date"></div>
+      </div>
+      <div class="metric-grid">
+        <div class="metric-card">
+          <div class="mc-label">등록 공연</div>
+          <div class="mc-val" id="m-total">-</div>
+          <div class="mc-sub mc-pend" id="m-pending-sub">검토 중 -건</div>
+        </div>
+        <div class="metric-card">
+          <div class="mc-label">승인 완료</div>
+          <div class="mc-val" id="m-approved">-</div>
+          <div class="mc-sub mc-up">공개 중인 공연</div>
+        </div>
+        <div class="metric-card">
+          <div class="mc-label">검토 대기</div>
+          <div class="mc-val" id="m-pending">-</div>
+          <div class="mc-sub mc-pend">빠른 처리 필요</div>
+        </div>
+        <div class="metric-card">
+          <div class="mc-label">반려</div>
+          <div class="mc-val" id="m-rejected">-</div>
+          <div class="mc-sub" style="color:var(--text3)">반려된 공연</div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">최근 등록 신청</div>
+          <div style="font-size:12px;color:var(--purple);cursor:pointer" onclick="goPage('shows',document.querySelectorAll('.sb-item')[1])">전체 보기 →</div>
+        </div>
+        <div class="table-head">
+          <div class="th c-title">공연명</div>
+          <div class="th c-team">팀명</div>
+          <div class="th c-date">신청일</div>
+          <div class="th c-status">상태</div>
+          <div class="th c-action">처리</div>
+        </div>
+        <div id="overview-list">
+          <div class="loading"><div class="spinner"></div>불러오는 중</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 공연 관리 -->
+    <div class="pg" id="pg-shows">
+      <div class="page-header">
+        <div class="page-title">공연 관리</div>
+        <div style="display:flex;gap:8px">
+          <select id="status-filter" onchange="loadShows()" style="font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--white);cursor:pointer;outline:none">
+            <option value="">전체</option>
+            <option value="pending">검토 중</option>
+            <option value="approved">승인</option>
+            <option value="rejected">반려</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-head">
+          <div class="th c-title">공연명</div>
+          <div class="th c-team">팀명</div>
+          <div class="th c-date">공연일</div>
+          <div class="th c-status">상태</div>
+          <div class="th c-action">처리</div>
+        </div>
+        <div id="shows-list">
+          <div class="loading"><div class="spinner"></div>불러오는 중</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 회원 관리 -->
+    <div class="pg" id="pg-users">
+      <div class="page-header">
+        <div class="page-title">회원 관리</div>
+      </div>
+      <div class="table-card">
+        <div class="table-head">
+          <div class="th" style="flex:2">이메일</div>
+          <div class="th" style="flex:1">닉네임</div>
+          <div class="th" style="flex:1">유형</div>
+          <div class="th" style="flex:1">가입일</div>
+        </div>
+        <div id="users-list">
+          <div class="loading"><div class="spinner"></div>불러오는 중</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 통계 -->
+    <div class="pg" id="pg-stats">
+      <div class="page-header">
+        <div class="page-title">통계</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="table-card">
+          <div class="table-header"><div class="table-title">장르별 공연 수</div></div>
+          <div style="padding:16px" id="stats-genre"></div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><div class="table-title">상태별 현황</div></div>
+          <div style="padding:16px" id="stats-status"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var SUPA_URL='https://qyrgfjshsczdpxaeznkc.supabase.co';
+var SUPA_KEY='sb_publishable_A6MmsqE9y-ymBKNKOwR2EA_PuLX5mLB';
+var sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+var adminUser=null;
+var allShows=[];
+
+// ── 초기화 ──
+sb.auth.getSession().then(function(r){
+  if(!r.data||!r.data.session){showBlocked();return;}
+  var user=r.data.session.user;
+  var meta=user.user_metadata||{};
+  if(meta.role!=='admin'){showBlocked();return;}
+  adminUser=user;
+  var name=meta.name||user.email.split('@')[0];
+  document.getElementById('sb-av').textContent=name[0].toUpperCase();
+  document.getElementById('sb-name').textContent=name;
+  document.getElementById('today-date').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('dashboard').style.display='flex';
+  loadOverview();
+});
+
+function showBlocked(){document.getElementById('blocked').style.display='flex';}
+
+// ── 페이지 전환 ──
+function goPage(id,el){
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on')});
+  document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('on')});
+  document.getElementById('pg-'+id).classList.add('on');
+  if(el) el.classList.add('on');
+  if(id==='shows') loadShows();
+  if(id==='users') loadUsers();
+  if(id==='stats') loadStats();
+}
+
+// ── 알림 ──
+function showAl(msg,type){
+  var a=document.getElementById('alert');
+  a.textContent=msg;a.className='alert on '+(type||'green');
+  setTimeout(function(){a.className='alert'},3000);
+}
+
+// ── 개요 로드 ──
+function loadOverview(){
+  sb.from('shows').select('*').order('created_at',{ascending:false}).then(function(r){
+    if(r.error){return;}
+    allShows=r.data||[];
+    var total=allShows.length;
+    var pending=allShows.filter(function(s){return s.status==='pending'}).length;
+    var approved=allShows.filter(function(s){return s.status==='approved'}).length;
+    var rejected=allShows.filter(function(s){return s.status==='rejected'}).length;
+    document.getElementById('m-total').textContent=total;
+    document.getElementById('m-pending').textContent=pending;
+    document.getElementById('m-approved').textContent=approved;
+    document.getElementById('m-rejected').textContent=rejected;
+    document.getElementById('m-pending-sub').textContent='검토 중 '+pending+'건';
+    document.getElementById('pending-badge').textContent=pending;
+    renderOverviewList(allShows.slice(0,6));
+  });
+}
+
+function renderOverviewList(shows){
+  if(!shows.length){
+    document.getElementById('overview-list').innerHTML='<div class="empty">등록된 공연이 없습니다</div>';
+    return;
+  }
+  document.getElementById('overview-list').innerHTML=shows.map(function(s){
+    return renderRow(s,'overview');
+  }).join('');
+}
+
+// ── 공연 관리 ──
+function loadShows(){
+  var filter=document.getElementById('status-filter')?document.getElementById('status-filter').value:'';
+  var query=sb.from('shows').select('*').order('created_at',{ascending:false});
+  if(filter) query=query.eq('status',filter);
+  query.then(function(r){
+    if(r.error){return;}
+    var shows=r.data||[];
+    if(!shows.length){
+      document.getElementById('shows-list').innerHTML='<div class="empty">공연이 없습니다</div>';
+      return;
+    }
+    document.getElementById('shows-list').innerHTML=shows.map(function(s){
+      return renderRow(s,'shows');
+    }).join('');
+  });
+}
+
+function renderRow(s,ctx){
+  var statusBadge={
+    pending:'<span class="badge b-pending">검토 중</span>',
+    approved:'<span class="badge b-approved">승인</span>',
+    rejected:'<span class="badge b-rejected">반려</span>'
+  }[s.status]||'<span class="badge b-pending">검토 중</span>';
+
+  var actions='';
+  if(s.status==='pending'){
+    actions='<button class="act-btn act-approve" onclick="updateStatus(\''+s.id+'\',\'approved\',\''+ctx+'\')">승인</button>'
+      +'<button class="act-btn act-reject" onclick="updateStatus(\''+s.id+'\',\'rejected\',\''+ctx+'\')">반려</button>';
+  } else {
+    actions='<button class="act-btn act-detail" onclick="updateStatus(\''+s.id+'\',\'pending\',\''+ctx+'\')">재검토</button>';
+  }
+
+  var dateStr=s.date_start?s.date_start.slice(5).replace('-','/'):'미정';
+  return '<div class="table-row" id="row-'+s.id+'">'
+    +'<div class="td c-title"><div>'+esc(s.title)+'</div><div class="td-sub">'+esc(s.venue||'')+'</div></div>'
+    +'<div class="td c-team">'+esc(s.team_name||'-')+'</div>'
+    +'<div class="td c-date">'+dateStr+'</div>'
+    +'<div class="td c-status">'+statusBadge+'</div>'
+    +'<div class="td c-action">'+actions+'</div>'
+    +'</div>';
+}
+
+// ── 승인/반려 처리 ──
+function updateStatus(id,status,ctx){
+  sb.from('shows').update({status:status}).eq('id',id).then(function(r){
+    if(r.error){showAl('처리 실패: '+r.error.message,'red');return;}
+    var msg={approved:'승인 완료되었습니다',rejected:'반려 처리되었습니다',pending:'검토 중으로 변경되었습니다'}[status];
+    showAl(msg,'green');
+    loadOverview();
+    if(ctx==='shows') loadShows();
+  });
+}
+
+// ── 회원 관리 ──
+function loadUsers(){
+  // Supabase auth.users는 service_role 키 필요 — shows 테이블 작성자 기반으로 표시
+  sb.from('shows').select('user_id, team_name, created_at').order('created_at',{ascending:false}).then(function(r){
+    if(r.error||!r.data.length){
+      document.getElementById('users-list').innerHTML='<div class="empty">데이터가 없습니다<br><span style="font-size:12px">회원 전체 목록은 Supabase 대시보드 Authentication > Users에서 확인하세요</span></div>';
+      return;
+    }
+    // 중복 제거
+    var seen={};
+    var unique=r.data.filter(function(u){if(seen[u.user_id]) return false;seen[u.user_id]=true;return true;});
+    document.getElementById('users-list').innerHTML=unique.map(function(u){
+      return '<div class="table-row">'
+        +'<div class="td" style="flex:2">'+esc(u.user_id.slice(0,8))+'...</div>'
+        +'<div class="td" style="flex:1">'+esc(u.team_name||'-')+'</div>'
+        +'<div class="td" style="flex:1"><span class="badge b-live">공연팀</span></div>'
+        +'<div class="td" style="flex:1">'+new Date(u.created_at).toLocaleDateString('ko-KR')+'</div>'
+        +'</div>';
+    }).join('');
+  });
+}
+
+// ── 통계 ──
+function loadStats(){
+  sb.from('shows').select('genre,status').then(function(r){
+    if(r.error||!r.data.length){return;}
+    var shows=r.data;
+    var total=shows.length;
+
+    // 장르별
+    var genreMap={};
+    shows.forEach(function(s){
+      var gs=(s.genre||'기타').split(',');
+      gs.forEach(function(g){
+        g=g.trim();
+        if(g) genreMap[g]=(genreMap[g]||0)+1;
+      });
+    });
+    var genreHtml='';
+    Object.keys(genreMap).sort(function(a,b){return genreMap[b]-genreMap[a]}).forEach(function(g){
+      var pct=Math.round(genreMap[g]/total*100);
+      genreHtml+='<div class="stat-row">'
+        +'<div class="stat-label">'+g+'</div>'
+        +'<div class="stat-bar"><div class="stat-fill" style="width:'+pct+'%"></div></div>'
+        +'<div class="stat-val">'+genreMap[g]+'건</div></div>';
+    });
+    document.getElementById('stats-genre').innerHTML=genreHtml||'<div class="empty">데이터 없음</div>';
+
+    // 상태별
+    var statusMap={pending:0,approved:0,rejected:0};
+    shows.forEach(function(s){if(statusMap[s.status]!==undefined) statusMap[s.status]++;});
+    var statusLabels={pending:'검토 중',approved:'승인',rejected:'반려'};
+    var statusColors={pending:var_amber,approved:'var(--teal)',rejected:'var(--red)'};
+    var statusHtml='';
+    Object.keys(statusMap).forEach(function(k){
+      var pct=total?Math.round(statusMap[k]/total*100):0;
+      statusHtml+='<div class="stat-row">'
+        +'<div class="stat-label">'+statusLabels[k]+'</div>'
+        +'<div class="stat-bar"><div class="stat-fill" style="width:'+pct+'%;background:'+(k==='approved'?'var(--teal)':k==='rejected'?'var(--red)':'var(--amber)')+'"></div></div>'
+        +'<div class="stat-val">'+statusMap[k]+'건 ('+pct+'%)</div></div>';
+    });
+    document.getElementById('stats-status').innerHTML=statusHtml;
+  });
+}
+
+// ── 로그아웃 ──
+function doLogout(){
+  sb.auth.signOut().then(function(){location.href='index.html';});
+}
+
+// ── 유틸 ──
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+var var_amber='var(--amber)';
+</script>
+</body>
+</html>
