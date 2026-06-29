@@ -302,6 +302,38 @@ select.inp{appearance:auto;background:var(--white)}
 <div class="modal-bg" id="reg-modal" onclick="if(event.target===this) closeRegister()">
   <div class="modal">
     <div class="modal-title">아티스트 프로필 등록</div>
+    <!-- 프로필 사진 업로드 -->
+    <div class="field">
+      <label class="lbl">프로필 사진</label>
+      <div style="display:flex;gap:14px;align-items:center">
+        <div id="r-preview" style="width:72px;height:72px;border-radius:50%;background:#EEEDFE;
+          display:flex;align-items:center;justify-content:center;font-size:28px;
+          overflow:hidden;flex-shrink:0;border:2px solid #ddd">🎭</div>
+        <div style="flex:1">
+          <label style="display:inline-block;padding:8px 16px;background:#EEEDFE;color:#534AB7;
+            border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid #AFA9EC">
+            📷 사진 선택
+            <input type="file" id="r-photo" accept="image/*" style="display:none" onchange="previewPhoto(this)">
+          </label>
+          <div style="font-size:11px;color:#999;margin-top:6px">JPG, PNG · 최대 5MB</div>
+        </div>
+      </div>
+    </div>
+    <!-- 커버 사진 업로드 -->
+    <div class="field">
+      <label class="lbl">커버 사진 (선택)</label>
+      <div id="r-cover-preview" style="width:100%;height:80px;border-radius:10px;
+        background:linear-gradient(135deg,#534AB7,#7F77DD);
+        overflow:hidden;margin-bottom:8px;position:relative">
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+          font-size:13px;color:rgba(255,255,255,.7)">커버 미리보기</div>
+      </div>
+      <label style="display:inline-block;padding:7px 14px;background:#f7f7f5;color:#555;
+        border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #ddd">
+        🖼 커버 사진 선택
+        <input type="file" id="r-cover" accept="image/*" style="display:none" onchange="previewCover(this)">
+      </label>
+    </div>
     <div class="field"><label class="lbl">이름 *</label><input class="inp" id="r-name" placeholder="본명 또는 예명"></div>
     <div class="field"><label class="lbl">구분 *</label>
       <select class="inp" id="r-role">
@@ -665,6 +697,41 @@ function doPost(){
   });
 }
 
+// ── 사진 미리보기 ──
+function previewPhoto(input){
+  if(!input.files[0]) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var prev=document.getElementById('r-preview');
+    prev.innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover">';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+function previewCover(input){
+  if(!input.files[0]) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var prev=document.getElementById('r-cover-preview');
+    prev.style.backgroundImage='url('+e.target.result+')';
+    prev.style.backgroundSize='cover';
+    prev.style.backgroundPosition='center';
+    prev.innerHTML='';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+// ── 이미지 업로드 ──
+async function uploadImage(file, folder){
+  if(!file) return null;
+  var ext=file.name.split('.').pop();
+  var path=folder+'/'+user.id+'_'+Date.now()+'.'+ext;
+  var res=await sb.storage.from('artist-images').upload(path,file,{
+    cacheControl:'3600',upsert:false,contentType:file.type
+  });
+  if(res.error){showAl('이미지 업로드 실패: '+res.error.message,'red');return null;}
+  return sb.storage.from('artist-images').getPublicUrl(path).data.publicUrl;
+}
+
 // ── 아티스트 등록 ──
 function openRegister(){
   if(!user){showAl('로그인이 필요합니다','red');return;}
@@ -672,7 +739,7 @@ function openRegister(){
 }
 function closeRegister(){document.getElementById('reg-modal').classList.remove('on');}
 
-function doRegister(){
+async function doRegister(){
   var name=document.getElementById('r-name').value.trim();
   var role=document.getElementById('r-role').value;
   var specialty=document.getElementById('r-specialty').value.trim();
@@ -684,10 +751,19 @@ function doRegister(){
   if(!user){showAl('로그인이 필요합니다','red');return;}
   var btn=document.querySelector('#reg-modal .btn-save');
   btn.textContent='등록 중...';btn.disabled=true;
+
+  // 이미지 업로드
+  var photoFile=document.getElementById('r-photo').files[0];
+  var coverFile=document.getElementById('r-cover').files[0];
+  var profileUrl=await uploadImage(photoFile,'profiles');
+  var coverUrl=await uploadImage(coverFile,'covers');
+
   sb.from('artists').insert([{
     user_id:user.id,name:name,role:role,specialty:specialty||null,
     agency:agency||null,debut_year:debut||null,
-    sns_instagram:insta||null,bio:bio||null,follower_count:0,is_verified:false
+    sns_instagram:insta||null,bio:bio||null,
+    profile_image:profileUrl,cover_image:coverUrl,
+    follower_count:0,is_verified:false
   }]).then(function(r){
     btn.textContent='등록하기';btn.disabled=false;
     if(r.error){showAl('등록 실패: '+r.error.message,'red');return;}
