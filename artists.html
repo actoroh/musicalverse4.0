@@ -518,6 +518,11 @@ async function openDetail(id){
   }
 
   // 본인 글쓰기 박스 + 수정 버튼
+  console.log('[DEBUG] user:', user&&user.id);
+  console.log('[DEBUG] myArtist:', myArtist);
+  console.log('[DEBUG] openDetail id:', id, typeof id);
+  console.log('[DEBUG] myArtist.id:', myArtist&&myArtist.id, typeof (myArtist&&myArtist.id));
+  console.log('[DEBUG] id 비교 결과:', myArtist&&myArtist.id===id);
   var isMyArtist=user&&myArtist&&myArtist.id===id;
   document.getElementById('my-write-box').style.display=isMyArtist?'block':'none';
   document.getElementById('d-edit-wrap').style.display=isMyArtist?'block':'none';
