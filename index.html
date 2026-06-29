@@ -22,7 +22,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .field{margin-bottom:14px}
 .lbl{font-size:12px;font-weight:700;color:#555;margin-bottom:5px;display:flex;justify-content:space-between}
 .inp{width:100%;padding:11px 13px;font-size:14px;border:1.5px solid #ddd;
-  border-radius:8px;outline:none;transition:border-color .15s;background:#fff;color:#1a1a1a}
+  border-radius:8px;outline:none;background:#fff;color:#1a1a1a;transition:border-color .15s}
 .inp:focus{border-color:#534AB7}
 select.inp{appearance:auto}
 .alert{border-radius:8px;padding:11px 13px;font-size:13px;margin-bottom:14px;display:none}
@@ -36,7 +36,7 @@ select.inp{appearance:auto}
 .chk.on{background:#534AB7;border-color:#534AB7;color:#fff}
 .chk-txt{font-size:12px;color:#555;line-height:1.5}
 .btn{width:100%;padding:13px;background:#534AB7;color:#fff;border:none;
-  border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;transition:opacity .15s}
+  border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-ghost{width:100%;padding:11px;background:#fff;border:1.5px solid #ddd;
   border-radius:8px;font-size:14px;cursor:pointer;color:#555;margin-top:8px}
@@ -54,15 +54,16 @@ select.inp{appearance:auto}
 .r-team{background:#E1F5EE;color:#0F6E56}
 .r-admin{background:#FAEEDA;color:#854F0B}
 .menu{border:1px solid #eee;border-radius:12px;overflow:hidden;margin-bottom:16px;text-align:left}
-.mi{display:flex;align-items:center;gap:10px;padding:13px 16px;
-  font-size:14px;border-bottom:0.5px solid #eee;cursor:pointer;text-decoration:none;color:#1a1a1a}
+.mi{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;
+  font-size:14px;border-bottom:0.5px solid #eee;cursor:pointer;text-decoration:none;
+  color:#1a1a1a;background:#fff}
 .mi:last-child{border:none}
 .mi:hover{background:#f7f7f5}
-.mi-arrow{margin-left:auto;color:#ccc}
+.mi-arrow{color:#ccc;font-size:16px}
 .btn-out{width:100%;padding:12px;background:#FCEBEB;border:none;border-radius:8px;
   font-size:14px;font-weight:700;color:#D94040;cursor:pointer}
 
-/* 이메일 인증 대기 */
+/* 인증 대기 */
 .verify{display:none;text-align:center}
 .v-icon{font-size:48px;margin-bottom:14px}
 
@@ -125,7 +126,6 @@ select.inp{appearance:auto}
         <option value="team">아마추어 공연팀</option>
         <option value="actor">프로 배우</option>
       </select>
-      <div style="font-size:11px;color:#999;margin-top:4px">공연팀/배우는 가입 후 인증 절차가 있습니다</div>
     </div>
     <div class="chk-row" onclick="toggleChk()">
       <div class="chk" id="chk"></div>
@@ -151,43 +151,32 @@ select.inp{appearance:auto}
     <button class="btn-ghost" onclick="goTab('login')">← 로그인으로</button>
   </div>
 
-  <!-- 프로필 (로그인 완료) -->
+  <!-- 프로필 -->
   <div class="profile" id="f-profile">
     <div class="p-av" id="p-av"></div>
     <div class="p-name" id="p-name"></div>
     <div class="p-email" id="p-email"></div>
     <div class="p-role" id="p-role"></div>
     <div class="menu">
-      <a class="mi" href="shows.html">
-        🎫 내 예약 내역 <span class="mi-arrow">›</span>
-      </a>
-      <a class="mi" href="shows.html">
-        🌐 공연 둘러보기 <span class="mi-arrow">›</span>
-      </a>
-      <a class="mi" id="mi-admin" style="display:none;color:#854F0B;font-weight:700" href="admin.html">
-        🛠 관리자 대시보드 <span class="mi-arrow">›</span>
-      </a>
-      <a class="mi" id="mi-team" style="display:none;color:#0F6E56;font-weight:700" href="show_register.html">
-        🎭 공연 등록하기 <span class="mi-arrow">›</span>
-      </a>
-
-      <div class="mi" onclick="alert('준비 중입니다')">
-        ⚙️ 계정 설정 <span class="mi-arrow">›</span>
-      </div>
+      <a class="mi" href="my-bookings.html">🎫 내 예약 내역 <span class="mi-arrow">›</span></a>
+      <a class="mi" href="shows.html">🌐 공연 둘러보기 <span class="mi-arrow">›</span></a>
+      <a class="mi" href="booking.html">🎟 공연 예약하기 <span class="mi-arrow">›</span></a>
+      <a class="mi" href="show_register.html">➕ 공연 등록하기 <span class="mi-arrow">›</span></a>
+      <a class="mi" href="my-shows.html">🎭 내 공연 관리 <span class="mi-arrow">›</span></a>
+      <a class="mi" id="mi-admin" style="display:none;color:#854F0B;font-weight:700" href="admin.html">🛠 관리자 대시보드 <span class="mi-arrow">›</span></a>
+      <div class="mi" onclick="alert('준비 중입니다')">⚙️ 계정 설정 <span class="mi-arrow">›</span></div>
     </div>
     <button class="btn-out" onclick="doLogout()">로그아웃</button>
   </div>
 </div>
 
 <script>
-// ── Supabase 연결 ──
-var SUPA_URL = 'https://qyrgfjshsczdpxaeznkc.supabase.co';
-var SUPA_KEY = 'sb_publishable_A6MmsqE9y-ymBKNKOwR2EA_PuLX5mLB';
-var sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-var agreed = false;
+var SUPA_URL='https://qyrgfjshsczdpxaeznkc.supabase.co';
+var SUPA_KEY='sb_publishable_A6MmsqE9y-ymBKNKOwR2EA_PuLX5mLB';
+var sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+var agreed=false;
 
-// ── 화면 전환 ──
-function goTab(t) {
+function goTab(t){
   ['f-login','f-signup','f-verify','f-forgot','f-profile'].forEach(function(id){
     document.getElementById(id).style.display='none';
   });
@@ -198,19 +187,18 @@ function goTab(t) {
   });
   hideAl();
 }
+
 function goForgot(){
-  ['f-login','tabs'].forEach(function(id){document.getElementById(id).style.display='none';});
+  ['f-login','tabs'].forEach(function(id){document.getElementById(id).style.display='none'});
   document.getElementById('f-forgot').style.display='block';
 }
 
-// ── 알림 ──
 function showAl(msg,type){
   var a=document.getElementById('al');
-  a.textContent=msg; a.className='alert on '+(type||'blue'); a.style.display='block';
+  a.textContent=msg;a.className='alert on '+(type||'blue');a.style.display='block';
 }
 function hideAl(){document.getElementById('al').style.display='none';}
 
-// ── 체크박스 ──
 function toggleChk(){
   agreed=!agreed;
   var el=document.getElementById('chk');
@@ -218,21 +206,19 @@ function toggleChk(){
   el.textContent=agreed?'✓':'';
 }
 
-// ── 로그인 ──
 function doLogin(){
   var email=document.getElementById('li-email').value.trim();
   var pw=document.getElementById('li-pw').value;
   if(!email||!pw){showAl('이메일과 비밀번호를 입력하세요','red');return;}
   var btn=document.getElementById('btn-li');
-  btn.textContent='로그인 중...'; btn.disabled=true;
+  btn.textContent='로그인 중...';btn.disabled=true;
   sb.auth.signInWithPassword({email:email,password:pw}).then(function(r){
-    btn.textContent='로그인'; btn.disabled=false;
+    btn.textContent='로그인';btn.disabled=false;
     if(r.error){showAl(ko(r.error.message),'red');return;}
     showProfile(r.data.user);
   });
 }
 
-// ── 회원가입 ──
 function doSignup(){
   var name=document.getElementById('su-name').value.trim();
   var email=document.getElementById('su-email').value.trim();
@@ -245,24 +231,23 @@ function doSignup(){
   if(pw!==pw2){showAl('비밀번호가 일치하지 않습니다','red');return;}
   if(!agreed){showAl('이용약관에 동의해 주세요','red');return;}
   var btn=document.getElementById('btn-su');
-  btn.textContent='가입 중...'; btn.disabled=true;
+  btn.textContent='가입 중...';btn.disabled=true;
   sb.auth.signUp({
-    email:email, password:pw,
-    options:{data:{name:name, role:role}}
+    email:email,password:pw,
+    options:{data:{name:name,role:role}}
   }).then(function(r){
-    btn.textContent='회원가입'; btn.disabled=false;
+    btn.textContent='회원가입';btn.disabled=false;
     if(r.error){showAl(ko(r.error.message),'red');return;}
     if(r.data.session){
       showProfile(r.data.user);
     } else {
-      ['f-signup','tabs'].forEach(function(id){document.getElementById(id).style.display='none';});
+      ['f-signup','tabs'].forEach(function(id){document.getElementById(id).style.display='none'});
       document.getElementById('verify-msg').innerHTML='<b>'+email+'</b>로 인증 링크를 보냈습니다.<br>메일함을 확인해 주세요.';
       document.getElementById('f-verify').style.display='block';
     }
   });
 }
 
-// ── 비밀번호 찾기 ──
 function doForgot(){
   var email=document.getElementById('fg-email').value.trim();
   if(!email){showAl('이메일을 입력하세요','red');return;}
@@ -274,7 +259,6 @@ function doForgot(){
   });
 }
 
-// ── 프로필 표시 ──
 function showProfile(user){
   var meta=user.user_metadata||{};
   var name=meta.name||user.email.split('@')[0];
@@ -292,7 +276,6 @@ function showProfile(user){
   document.getElementById('p-role').textContent=r.l;
   document.getElementById('p-role').className='p-role '+r.c;
   document.getElementById('mi-admin').style.display=role==='admin'?'flex':'none';
-  document.getElementById('mi-team').style.display=(role==='team'||role==='actor')?'flex':'none';
   ['f-login','f-signup','f-verify','f-forgot','tabs'].forEach(function(id){
     document.getElementById(id).style.display='none';
   });
@@ -300,7 +283,6 @@ function showProfile(user){
   hideAl();
 }
 
-// ── 로그아웃 ──
 function doLogout(){
   sb.auth.signOut().then(function(){
     document.getElementById('f-profile').style.display='none';
@@ -311,7 +293,6 @@ function doLogout(){
   });
 }
 
-// ── 에러 한글화 ──
 function ko(msg){
   return {
     'Invalid login credentials':'이메일 또는 비밀번호가 올바르지 않습니다',
@@ -322,7 +303,6 @@ function ko(msg){
   }[msg]||msg;
 }
 
-// ── 세션 복원 ──
 sb.auth.getSession().then(function(r){
   if(r.data&&r.data.session) showProfile(r.data.session.user);
 });
