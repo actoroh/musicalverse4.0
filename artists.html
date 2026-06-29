@@ -389,7 +389,7 @@ async function init(){
     // myArtist를 await로 보장 — openDetail 전에 반드시 완료
     var ar=await sb.from('artists')
       .select('id,name,role,specialty,agency,debut_year,sns_instagram,bio,profile_image,cover_image')
-      .eq('user_id',user.id).single();
+      .eq('user_id',user.id).maybeSingle();
     if(ar.data) myArtist=ar.data;
   }
   loadArtists();
@@ -513,7 +513,7 @@ async function openDetail(id){
   if(user&&!myArtist){
     var ar=await sb.from('artists')
       .select('id,name,role,specialty,agency,debut_year,sns_instagram,bio,profile_image,cover_image')
-      .eq('user_id',user.id).single();
+      .eq('user_id',user.id).maybeSingle();
     if(ar.data) myArtist=ar.data;
   }
 
@@ -905,7 +905,7 @@ async function doRegister(){
     // 등록 후 myArtist 갱신
     sb.from('artists')
       .select('id,name,role,specialty,agency,debut_year,sns_instagram,bio,profile_image,cover_image')
-      .eq('user_id',user.id).single().then(function(res){
+      .eq('user_id',user.id).maybeSingle().then(function(res){
       if(res.data) myArtist=res.data;
     });
     closeRegister();
