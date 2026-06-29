@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MusicalVerse — 아티스트</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--purple:#534AB7;--purple-light:#EEEDFE;--purple-dark:#3C3489;
+  --teal:#0F6E56;--teal-light:#E1F5EE;
+  --pink:#D63384;--pink-light:#FCE4EF;
+  --amber:#854F0B;--amber-light:#FAEEDA;
+  --red:#D94040;--red-light:#FCEBEB;
+  --bg:#f7f7f5;--white:#fff;--text:#1a1a1a;--text2:#555;--text3:#999;
+  --border:#e0e0e0;--radius:10px;--radius-lg:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);min-height:100vh}
+nav{background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100}
+.nav-logo{font-size:18px;font-weight:800;color:var(--purple);cursor:pointer}
+.nav-logo span{color:var(--text)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-av{width:30px;height:30px;border-radius:50%;background:var(--purple-light);
+  color:var(--purple);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.nav-btn{padding:7px 16px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer}
+
+/* 페이지 탭 */
+.page-tabs{display:flex;background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 24px;position:sticky;top:56px;z-index:90}
+.ptab{padding:12px 16px;font-size:14px;font-weight:600;color:var(--text3);
+  cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.ptab.on{color:var(--purple);border-bottom-color:var(--purple)}
+
+.wrap{max-width:900px;margin:0 auto;padding:24px 20px}
+.pg{display:none}.pg.on{display:block}
+
+/* ── 아티스트 목록 ── */
+.search-bar{display:flex;gap:10px;margin-bottom:20px}
+.search-inp{flex:1;padding:11px 16px;font-size:14px;border:1px solid var(--border);
+  border-radius:var(--radius-lg);outline:none;background:var(--white)}
+.search-inp:focus{border-color:var(--purple)}
+.filter-row{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.fpill{padding:6px 14px;border-radius:20px;font-size:13px;border:1px solid var(--border);
+  cursor:pointer;background:var(--white);color:var(--text2);font-weight:500}
+.fpill.on{background:var(--purple);color:#fff;border-color:var(--purple)}
+
+.artist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+.artist-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
+  overflow:hidden;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.artist-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(83,74,183,.12)}
+.ac-cover{height:80px;background:linear-gradient(135deg,var(--purple),#7F77DD);position:relative}
+.ac-avatar{width:64px;height:64px;border-radius:50%;border:3px solid var(--white);
+  position:absolute;bottom:-28px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:800;background:var(--purple-light);color:var(--purple);overflow:hidden}
+.ac-avatar img{width:100%;height:100%;object-fit:cover}
+.ac-body{padding:36px 16px 16px;text-align:center}
+.ac-name{font-size:15px;font-weight:800;margin-bottom:3px}
+.ac-role{font-size:12px;color:var(--text3);margin-bottom:8px}
+.ac-specialty{font-size:12px;color:var(--purple);background:var(--purple-light);
+  padding:3px 10px;border-radius:10px;display:inline-block;margin-bottom:10px}
+.ac-stats{display:flex;justify-content:center;gap:16px;margin-bottom:12px;font-size:12px}
+.ac-stat .num{font-size:15px;font-weight:800;color:var(--purple);display:block}
+.ac-stat .lbl{color:var(--text3)}
+.ac-verified{display:inline-block;font-size:10px;background:var(--teal-light);color:var(--teal);
+  padding:2px 8px;border-radius:8px;font-weight:700;margin-bottom:8px}
+.btn-follow{width:100%;padding:8px;border-radius:var(--radius);font-size:13px;font-weight:700;
+  cursor:pointer;border:none;transition:all .15s}
+.bf-on{background:var(--purple-light);color:var(--purple)}
+.bf-off{background:var(--purple);color:#fff}
+
+/* ── 아티스트 상세 ── */
+.detail-pg{display:none}
+.detail-pg.on{display:block}
+.d-cover{height:200px;background:linear-gradient(135deg,var(--purple-dark),var(--purple),#7F77DD);
+  position:relative;overflow:hidden}
+.d-cover img{width:100%;height:100%;object-fit:cover}
+.d-cover-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.5))}
+.d-back{position:absolute;top:14px;left:16px;background:rgba(0,0,0,.4);border:none;
+  color:#fff;padding:7px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;
+  backdrop-filter:blur(8px)}
+.d-profile{max-width:700px;margin:-48px auto 0;padding:0 20px 24px}
+.d-profile-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:20px;position:relative}
+.d-av{width:80px;height:80px;border-radius:50%;border:4px solid var(--white);
+  margin:-56px auto 12px;display:flex;align-items:center;justify-content:center;
+  font-size:28px;font-weight:800;background:var(--purple-light);color:var(--purple);
+  box-shadow:0 4px 16px rgba(0,0,0,.15);overflow:hidden;position:relative}
+.d-av img{width:100%;height:100%;object-fit:cover}
+.d-name{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
+.d-role-badge{text-align:center;margin-bottom:8px}
+.role-badge{display:inline-block;font-size:12px;padding:4px 12px;border-radius:10px;font-weight:700}
+.rb-actor{background:var(--purple-light);color:var(--purple)}
+.rb-staff{background:var(--teal-light);color:var(--teal)}
+.rb-director{background:var(--amber-light);color:var(--amber)}
+.d-bio{font-size:14px;color:var(--text2);line-height:1.7;text-align:center;margin-bottom:14px}
+.d-stats{display:flex;justify-content:center;gap:28px;margin-bottom:16px}
+.d-stat .n{font-size:18px;font-weight:800;color:var(--purple);text-align:center}
+.d-stat .l{font-size:11px;color:var(--text3);text-align:center;margin-top:2px}
+.d-actions{display:flex;gap:10px;margin-bottom:16px}
+.btn-follow-lg{flex:1;padding:11px;border-radius:var(--radius-lg);font-size:14px;font-weight:700;
+  cursor:pointer;border:none;transition:all .15s}
+.bfl-on{background:var(--purple-light);color:var(--purple);border:1.5px solid #AFA9EC}
+.bfl-off{background:var(--purple);color:#fff}
+.btn-msg{padding:11px 20px;border:1.5px solid var(--border);border-radius:var(--radius-lg);
+  background:var(--white);cursor:pointer;color:var(--text2);font-size:14px;font-weight:600}
+.d-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px}
+.d-info-item{background:var(--bg);border-radius:var(--radius);padding:10px 12px}
+.d-info-label{color:var(--text3);font-size:11px;margin-bottom:3px}
+.d-info-val{font-weight:600}
+
+/* 피드 탭 */
+.feed-tabs{display:flex;border-bottom:1px solid var(--border);margin:20px 0 16px;
+  max-width:700px;margin-left:auto;margin-right:auto}
+.ftab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:600;
+  color:var(--text3);cursor:pointer;border-bottom:2px solid transparent}
+.ftab.on{color:var(--purple);border-bottom-color:var(--purple)}
+
+/* 피드 */
+.feed-wrap{max-width:700px;margin:0 auto}
+.feed-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
+  margin-bottom:14px;overflow:hidden}
+.fc-header{display:flex;align-items:center;gap:10px;padding:14px 16px 10px}
+.fc-av{width:40px;height:40px;border-radius:50%;background:var(--purple-light);
+  color:var(--purple);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;overflow:hidden}
+.fc-av img{width:100%;height:100%;object-fit:cover}
+.fc-name{font-size:14px;font-weight:700}
+.fc-meta{font-size:11px;color:var(--text3);margin-top:1px}
+.fc-type{margin-left:auto;font-size:10px;padding:2px 8px;border-radius:8px;font-weight:700}
+.ft-notice{background:var(--red-light);color:var(--red)}
+.ft-photo{background:var(--amber-light);color:var(--amber)}
+.ft-general{background:var(--purple-light);color:var(--purple)}
+.fc-content{padding:0 16px 12px;font-size:14px;color:var(--text2);line-height:1.7}
+.fc-footer{display:flex;gap:14px;padding:10px 16px;border-top:1px solid var(--border)}
+.fc-act{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text3);
+  cursor:pointer;padding:5px 10px;border-radius:var(--radius);transition:background .15s;border:none;background:transparent}
+.fc-act:hover{background:var(--bg)}
+.fc-act.liked{color:var(--red)}
+
+/* 글쓰기 (아티스트용) */
+.write-box{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:16px;margin-bottom:16px}
+.write-box textarea{width:100%;border:none;outline:none;font-size:14px;
+  color:var(--text);resize:none;min-height:80px;line-height:1.6;background:transparent}
+.write-box textarea::placeholder{color:var(--text3)}
+.write-box-footer{display:flex;align-items:center;justify-content:space-between;
+  padding-top:10px;border-top:1px solid var(--border)}
+.wtype-sel{font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--white);outline:none;cursor:pointer}
+.btn-post{padding:8px 20px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer}
+.btn-post:disabled{opacity:.4;cursor:not-allowed}
+
+/* 아티스트 등록 모달 */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;
+  display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.modal-bg.on{display:flex}
+.modal{background:var(--white);border-radius:20px;width:100%;max-width:520px;padding:28px;margin:auto}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:20px}
+.field{margin-bottom:14px}
+.lbl{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px;display:block}
+.inp{width:100%;padding:10px 13px;font-size:14px;border:1.5px solid var(--border);
+  border-radius:var(--radius);outline:none;background:var(--white);color:var(--text)}
+.inp:focus{border-color:var(--purple)}
+textarea.inp{resize:vertical;min-height:80px;line-height:1.6}
+select.inp{appearance:auto;background:var(--white)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-btns{display:flex;gap:10px;margin-top:16px}
+.btn-save{flex:1;padding:12px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius-lg);font-size:14px;font-weight:700;cursor:pointer}
+.btn-cancel{padding:12px 20px;border:1.5px solid var(--border);border-radius:var(--radius-lg);
+  background:var(--white);cursor:pointer;color:var(--text2);font-weight:600}
+
+/* 댓글 */
+.cmt-section{padding:12px 16px;border-top:1px solid var(--border);background:var(--bg)}
+.cmt-item{display:flex;gap:8px;margin-bottom:10px}
+.cmt-av{width:28px;height:28px;border-radius:50%;background:var(--purple-light);
+  color:var(--purple);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cmt-body .cmt-name{font-size:12px;font-weight:700}
+.cmt-body .cmt-text{font-size:13px;color:var(--text2);line-height:1.5}
+.cmt-inp-row{display:flex;gap:8px;margin-top:8px}
+.cmt-inp{flex:1;padding:8px 12px;font-size:13px;border:1px solid var(--border);
+  border-radius:20px;outline:none;background:var(--white)}
+.cmt-send{padding:8px 16px;background:var(--purple);color:#fff;border:none;
+  border-radius:20px;font-size:13px;font-weight:700;cursor:pointer}
+
+/* 로딩 */
+.loading{text-align:center;padding:40px;color:var(--text3)}
+.spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--purple);
+  border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px;color:var(--text3)}
+
+/* 알림 */
+.alert{position:fixed;top:70px;right:20px;border-radius:var(--radius);
+  padding:11px 16px;font-size:13px;display:none;z-index:300;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.alert.on{display:block}
+.alert.green{background:var(--teal-light);color:var(--teal)}
+.alert.red{background:var(--red-light);color:var(--red)}
+.alert.blue{background:var(--purple-light);color:var(--purple)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo" onclick="location.href='index.html'"><span>Musical</span>Verse</div>
+  <div class="nav-right" id="nav-right">
+    <button class="nav-btn" onclick="location.href='index.html'">로그인</button>
+  </div>
+</nav>
+
+<div class="page-tabs">
+  <div class="ptab on" onclick="goPageTab('list',this)">아티스트</div>
+  <div class="ptab" onclick="goPageTab('feed',this)">전체 피드</div>
+  <div class="ptab" onclick="openRegister()">+ 아티스트 등록</div>
+</div>
+
+<div class="alert" id="alert"></div>
+
+<!-- ── 목록 페이지 ── -->
+<div class="pg on" id="pg-list">
+  <div class="wrap">
+    <div class="search-bar">
+      <input class="search-inp" id="search-inp" placeholder="배우, 스태프 이름 검색..." oninput="filterArtists()">
+    </div>
+    <div class="filter-row">
+      <div class="fpill on" onclick="setRoleFilter('all',this)">전체</div>
+      <div class="fpill" onclick="setRoleFilter('actor',this)">🎭 배우</div>
+      <div class="fpill" onclick="setRoleFilter('staff',this)">🎬 스태프</div>
+      <div class="fpill" onclick="setRoleFilter('director',this)">🎼 연출/감독</div>
+    </div>
+    <div id="artist-grid">
+      <div class="loading"><div class="spinner"></div>아티스트를 불러오는 중</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 전체 피드 페이지 ── -->
+<div class="pg" id="pg-feed">
+  <div class="wrap" style="max-width:700px">
+    <div id="all-feed">
+      <div class="loading"><div class="spinner"></div>피드를 불러오는 중</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 아티스트 상세 페이지 ── -->
+<div class="detail-pg" id="pg-detail">
+  <div class="d-cover" id="d-cover">
+    <div class="d-cover-overlay"></div>
+    <button class="d-back" onclick="closeDetail()">← 뒤로</button>
+  </div>
+  <div class="d-profile">
+    <div class="d-profile-card">
+      <div class="d-av" id="d-av"></div>
+      <div class="d-name" id="d-name"></div>
+      <div class="d-role-badge"><span class="role-badge rb-actor" id="d-role-badge"></span></div>
+      <div class="d-bio" id="d-bio"></div>
+      <div class="d-stats">
+        <div class="d-stat"><div class="n" id="d-followers">0</div><div class="l">팔로워</div></div>
+        <div class="d-stat"><div class="n" id="d-posts">0</div><div class="l">포스트</div></div>
+      </div>
+      <div class="d-actions">
+        <button class="btn-follow-lg bfl-off" id="d-follow-btn" onclick="toggleFollow()">+ 팔로우</button>
+        <button class="btn-msg" onclick="showAl('팬 메시지 기능은 곧 출시됩니다','blue')">💌 메시지</button>
+      </div>
+      <div class="d-info" id="d-info"></div>
+    </div>
+  </div>
+
+  <!-- 피드 탭 -->
+  <div class="feed-tabs">
+    <div class="ftab on" onclick="setFeedTab('posts',this)">포스트</div>
+    <div class="ftab" onclick="setFeedTab('shows',this)">출연 공연</div>
+  </div>
+
+  <!-- 아티스트 글쓰기 (본인만) -->
+  <div class="feed-wrap" id="my-write-box" style="display:none">
+    <div class="write-box">
+      <textarea id="post-content" placeholder="팬들에게 소식을 전해주세요..."></textarea>
+      <div class="write-box-footer">
+        <select class="wtype-sel" id="post-type">
+          <option value="general">일반 포스트</option>
+          <option value="notice">공지</option>
+          <option value="photo">포토/영상</option>
+        </select>
+        <button class="btn-post" onclick="doPost()">게시하기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="feed-wrap" id="artist-feed">
+    <div class="loading"><div class="spinner"></div>포스트를 불러오는 중</div>
+  </div>
+</div>
+
+<!-- 아티스트 등록 모달 -->
+<div class="modal-bg" id="reg-modal" onclick="if(event.target===this) closeRegister()">
+  <div class="modal">
+    <div class="modal-title">아티스트 프로필 등록</div>
+    <div class="field"><label class="lbl">이름 *</label><input class="inp" id="r-name" placeholder="본명 또는 예명"></div>
+    <div class="field"><label class="lbl">구분 *</label>
+      <select class="inp" id="r-role">
+        <option value="actor">🎭 배우</option>
+        <option value="staff">🎬 스태프</option>
+        <option value="director">🎼 연출/음악감독</option>
+      </select>
+    </div>
+    <div class="field"><label class="lbl">전문 분야</label><input class="inp" id="r-specialty" placeholder="예: 소프라노, 음악감독, 안무가"></div>
+    <div class="field"><label class="lbl">소속사/단체</label><input class="inp" id="r-agency" placeholder="소속 기획사 또는 단체"></div>
+    <div class="grid2">
+      <div class="field"><label class="lbl">데뷔 연도</label><input class="inp" id="r-debut" placeholder="예: 2015"></div>
+      <div class="field"><label class="lbl">Instagram</label><input class="inp" id="r-insta" placeholder="@계정명"></div>
+    </div>
+    <div class="field"><label class="lbl">소개</label><textarea class="inp" id="r-bio" rows="3" placeholder="자신을 소개해 주세요"></textarea></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeRegister()">취소</button>
+      <button class="btn-save" onclick="doRegister()">등록하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var SUPA_URL='https://qyrgfjshsczdpxaeznkc.supabase.co';
+var SUPA_KEY='sb_publishable_A6MmsqE9y-ymBKNKOwR2EA_PuLX5mLB';
+var sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+
+var user=null, myArtist=null;
+var allArtists=[], currentArtist=null, roleFilter='all';
+var isFollowing=false;
+
+var ROLE_MAP={actor:{l:'배우',cls:'rb-actor'},staff:{l:'스태프',cls:'rb-staff'},director:{l:'연출/감독',cls:'rb-director'}};
+var EMOJIS=['🎭','🎶','🎵','🎤','🎪','🌟'];
+
+// ── 초기화 ──
+sb.auth.getSession().then(function(r){
+  if(r.data&&r.data.session){
+    user=r.data.session.user;
+    var meta=user.user_metadata||{};
+    var name=meta.name||user.email.split('@')[0];
+    document.getElementById('nav-right').innerHTML=
+      '<div class="nav-av">'+name[0].toUpperCase()+'</div><span style="font-size:13px;color:#555">'+name+'</span>';
+    // 내 아티스트 프로필 확인
+    sb.from('artists').select('id').eq('user_id',user.id).single().then(function(r){
+      if(r.data) myArtist=r.data;
+    });
+  }
+  loadArtists();
+  loadAllFeed();
+});
+
+// ── 페이지 탭 ──
+function goPageTab(id,el){
+  document.querySelectorAll('.ptab').forEach(function(t){t.classList.remove('on')});
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on')});
+  document.getElementById('pg-detail').classList.remove('on');
+  if(el) el.classList.add('on');
+  document.getElementById('pg-'+id).classList.add('on');
+}
+
+// ── 아티스트 목록 ──
+async function loadArtists(){
+  try{
+    var res=await sb.from('artists')
+      .select('id,name,role,specialty,agency,debut_year,bio,profile_image,follower_count,is_verified,created_at')
+      .order('follower_count',{ascending:false});
+    if(res.error) throw new Error(res.error.message);
+    allArtists=(res.data||[]).map(function(a){return Object.assign({},a);});
+    renderArtists();
+  } catch(e){
+    document.getElementById('artist-grid').innerHTML='<div class="empty">'+e.message+'</div>';
+  }
+}
+
+function setRoleFilter(role,el){
+  roleFilter=role;
+  document.querySelectorAll('.fpill').forEach(function(p){p.classList.remove('on')});
+  el.classList.add('on');
+  renderArtists();
+}
+
+function filterArtists(){renderArtists();}
+
+function renderArtists(){
+  var kw=document.getElementById('search-inp').value.trim().toLowerCase();
+  var list=allArtists.filter(function(a){
+    var matchRole=roleFilter==='all'||a.role===roleFilter;
+    var matchKw=!kw||(a.name&&a.name.toLowerCase().indexOf(kw)>-1)||
+      (a.specialty&&a.specialty.toLowerCase().indexOf(kw)>-1);
+    return matchRole&&matchKw;
+  });
+  if(!list.length){
+    document.getElementById('artist-grid').innerHTML=
+      '<div class="empty"><div style="font-size:40px;margin-bottom:10px">🎭</div>'
+      +'<div style="font-size:15px;font-weight:700;margin-bottom:6px">아티스트가 없습니다</div>'
+      +'<div style="font-size:13px">+ 아티스트 등록 버튼으로 프로필을 만들어보세요</div></div>';
+    return;
+  }
+  document.getElementById('artist-grid').innerHTML=
+    '<div class="artist-grid">'+list.map(function(a,i){
+      var rm=ROLE_MAP[a.role]||ROLE_MAP.actor;
+      var emoji=EMOJIS[i%EMOJIS.length];
+      return '<div class="artist-card" onclick="openDetail(\''+a.id+'\')">'
+        +'<div class="ac-cover" style="background:linear-gradient(135deg,'
+        +(a.role==='actor'?'#534AB7,#7F77DD':a.role==='staff'?'#0F6E56,#1D9E75':'#854F0B,#C47D1A')+')"></div>'
+        +'<div class="ac-avatar">'+(a.profile_image?'<img src="'+a.profile_image+'" alt="">':emoji)+'</div>'
+        +'<div class="ac-body">'
+        +(a.is_verified?'<div class="ac-verified">✓ 인증 아티스트</div>':'')
+        +'<div class="ac-name">'+esc(a.name)+'</div>'
+        +'<div class="ac-role">'+rm.l+'</div>'
+        +(a.specialty?'<div class="ac-specialty">'+esc(a.specialty)+'</div>':'')
+        +'<div class="ac-stats">'
+        +'<div class="ac-stat"><span class="num">'+(a.follower_count||0)+'</span><span class="lbl">팔로워</span></div>'
+        +'</div>'
+        +'<button class="btn-follow bf-off" onclick="event.stopPropagation();quickFollow(\''+a.id+'\',this)">+ 팔로우</button>'
+        +'</div></div>';
+    }).join('')+'</div>';
+}
+
+// ── 아티스트 상세 ──
+async function openDetail(id){
+  var a=allArtists.find(function(a){return a.id===id});
+  if(!a) return;
+  currentArtist=a;
+  var rm=ROLE_MAP[a.role]||ROLE_MAP.actor;
+  var emoji=EMOJIS[allArtists.indexOf(a)%EMOJIS.length];
+
+  // 커버/아바타
+  var coverEl=document.getElementById('d-cover');
+  if(a.cover_image){coverEl.style.backgroundImage='url('+a.cover_image+')';}
+  else{coverEl.style.background='linear-gradient(135deg,'+(a.role==='actor'?'#3C3489,#534AB7,#7F77DD':a.role==='staff'?'#0A4D3A,#0F6E56':'#5C3507,#854F0B')+')';}
+
+  var avEl=document.getElementById('d-av');
+  avEl.innerHTML=a.profile_image?'<img src="'+a.profile_image+'" alt="">':emoji;
+
+  document.getElementById('d-name').textContent=a.name;
+  var rb=document.getElementById('d-role-badge');
+  rb.textContent=rm.l+(a.is_verified?' ✓':'');
+  rb.className='role-badge '+rm.cls;
+  document.getElementById('d-bio').textContent=a.bio||'';
+
+  // 팔로워/포스트 수
+  var postsRes=await sb.from('artist_posts').select('id',{count:'exact'}).eq('artist_id',id);
+  document.getElementById('d-followers').textContent=a.follower_count||0;
+  document.getElementById('d-posts').textContent=postsRes.count||0;
+
+  // 팔로우 여부
+  if(user){
+    var fRes=await sb.from('artist_follows').select('id').eq('user_id',user.id).eq('artist_id',id).single();
+    isFollowing=!!(fRes.data);
+  }
+  var fbtn=document.getElementById('d-follow-btn');
+  fbtn.textContent=isFollowing?'팔로우 중':'+ 팔로우';
+  fbtn.className='btn-follow-lg '+(isFollowing?'bfl-on':'bfl-off');
+
+  // 정보
+  var infoHtml='';
+  if(a.agency) infoHtml+='<div class="d-info-item"><div class="d-info-label">소속</div><div class="d-info-val">'+esc(a.agency)+'</div></div>';
+  if(a.debut_year) infoHtml+='<div class="d-info-item"><div class="d-info-label">데뷔</div><div class="d-info-val">'+esc(a.debut_year)+'년</div></div>';
+  if(a.specialty) infoHtml+='<div class="d-info-item"><div class="d-info-label">전문 분야</div><div class="d-info-val">'+esc(a.specialty)+'</div></div>';
+  if(a.sns_instagram) infoHtml+='<div class="d-info-item"><div class="d-info-label">Instagram</div><div class="d-info-val">'+esc(a.sns_instagram)+'</div></div>';
+  document.getElementById('d-info').innerHTML=infoHtml;
+
+  // 본인 글쓰기 박스
+  var isMyArtist=user&&myArtist&&myArtist.id===id;
+  document.getElementById('my-write-box').style.display=isMyArtist?'block':'none';
+
+  // 상세 페이지 열기
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on')});
+  document.getElementById('pg-detail').classList.add('on');
+  document.querySelectorAll('.ptab').forEach(function(t){t.classList.remove('on')});
+  window.scrollTo(0,0);
+  loadArtistFeed(id);
+}
+
+function closeDetail(){
+  document.getElementById('pg-detail').classList.remove('on');
+  document.getElementById('pg-list').classList.add('on');
+  document.querySelectorAll('.ptab')[0].classList.add('on');
+  currentArtist=null;
+}
+
+// ── 피드 ──
+function setFeedTab(tab,el){
+  document.querySelectorAll('.ftab').forEach(function(t){t.classList.remove('on')});
+  el.classList.add('on');
+  if(tab==='posts') loadArtistFeed(currentArtist.id);
+  else renderShowsTab();
+}
+
+async function loadArtistFeed(artistId){
+  try{
+    var res=await sb.from('artist_posts')
+      .select('id,created_at,artist_id,content,post_type,likes,comments_count,images')
+      .eq('artist_id',artistId)
+      .order('created_at',{ascending:false});
+    if(res.error) throw new Error(res.error.message);
+    var posts=(res.data||[]).map(function(p){return Object.assign({},p);});
+    renderFeed(posts,'artist-feed',currentArtist);
+  } catch(e){
+    document.getElementById('artist-feed').innerHTML='<div class="empty">'+e.message+'</div>';
+  }
+}
+
+async function loadAllFeed(){
+  try{
+    var res=await sb.from('artist_posts')
+      .select('id,created_at,artist_id,content,post_type,likes,comments_count')
+      .order('created_at',{ascending:false}).limit(30);
+    if(res.error) throw new Error(res.error.message);
+    var posts=(res.data||[]).map(function(p){return Object.assign({},p);});
+    // 아티스트 정보 매핑
+    var artistMap={};
+    allArtists.forEach(function(a){artistMap[a.id]=a;});
+    renderFeed(posts,'all-feed',null,artistMap);
+  } catch(e){
+    document.getElementById('all-feed').innerHTML='<div class="empty">'+e.message+'</div>';
+  }
+}
+
+function renderFeed(posts,containerId,artist,artistMap){
+  if(!posts.length){
+    document.getElementById(containerId).innerHTML=
+      '<div class="empty"><div style="font-size:36px;margin-bottom:10px">📝</div>'
+      +'<div>아직 포스트가 없습니다</div></div>';
+    return;
+  }
+  var typeMap={notice:{l:'공지',cls:'ft-notice'},photo:{l:'포토',cls:'ft-photo'},general:{l:'포스트',cls:'ft-general'}};
+  document.getElementById(containerId).innerHTML=posts.map(function(p){
+    var a=artist||(artistMap&&artistMap[p.artist_id])||{name:'?',role:'actor'};
+    var emoji=EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+    var tm=typeMap[p.post_type]||typeMap.general;
+    return '<div class="feed-card">'
+      +'<div class="fc-header">'
+      +'<div class="fc-av" onclick="'+(artist?'':'openDetail(\''+p.artist_id+'\')')+'">'+emoji+'</div>'
+      +'<div><div class="fc-name">'+esc(a.name||'아티스트')+'</div>'
+      +'<div class="fc-meta">'+timeAgo(p.created_at)+'</div></div>'
+      +'<span class="fc-type '+tm.cls+'">'+tm.l+'</span>'
+      +'</div>'
+      +'<div class="fc-content">'+esc(p.content)+'</div>'
+      +'<div class="fc-footer">'
+      +'<button class="fc-act" data-pid="'+p.id+'" onclick="togglePostLike(this,\''+p.id+'\','+( p.likes||0)+')">♥ '+(p.likes||0)+'</button>'
+      +'<button class="fc-act" onclick="toggleCmt(\'cmt-'+p.id+'\')">💬 '+(p.comments_count||0)+'</button>'
+      +'</div>'
+      +'<div id="cmt-'+p.id+'" style="display:none">'
+      +'<div class="cmt-section" id="cmt-list-'+p.id+'"></div>'
+      +'<div class="cmt-section" style="padding-top:0">'
+      +'<div class="cmt-inp-row">'
+      +'<input class="cmt-inp" id="cmt-inp-'+p.id+'" placeholder="댓글을 입력하세요">'
+      +'<button class="cmt-send" onclick="doArtistCmt(\''+p.id+'\')">등록</button>'
+      +'</div></div></div>'
+      +'</div>';
+  }).join('');
+}
+
+function renderShowsTab(){
+  document.getElementById('artist-feed').innerHTML=
+    '<div class="empty"><div style="font-size:36px;margin-bottom:10px">🎭</div>'
+    +'<div>출연 공연 정보는 공연 등록 시 자동으로 연동됩니다</div></div>';
+}
+
+// ── 댓글 토글 ──
+async function toggleCmt(id){
+  var el=document.getElementById(id);
+  if(el.style.display==='none'){
+    el.style.display='block';
+    var postId=id.replace('cmt-','');
+    var res=await sb.from('artist_comments').select('*').eq('post_id',postId).order('created_at',{ascending:true});
+    var cmts=res.data||[];
+    document.getElementById('cmt-list-'+postId).innerHTML=cmts.map(function(c){
+      var n=c.author_name||'익명';
+      return '<div class="cmt-item"><div class="cmt-av">'+n[0].toUpperCase()+'</div>'
+        +'<div class="cmt-body"><div class="cmt-name">'+esc(n)+'</div>'
+        +'<div class="cmt-text">'+esc(c.content)+'</div></div></div>';
+    }).join('');
+  } else {
+    el.style.display='none';
+  }
+}
+
+// ── 아티스트 댓글 ──
+function doArtistCmt(postId){
+  if(!user){showAl('로그인이 필요합니다','red');return;}
+  var inp=document.getElementById('cmt-inp-'+postId);
+  var content=inp.value.trim();
+  if(!content) return;
+  var meta=user.user_metadata||{};
+  var name=meta.name||user.email.split('@')[0];
+  sb.from('artist_comments').insert([{user_id:user.id,post_id:postId,content:content,author_name:name}]).then(function(r){
+    if(r.error){showAl('댓글 등록 실패','red');return;}
+    inp.value='';
+    toggleCmt('cmt-'+postId);
+    setTimeout(function(){toggleCmt('cmt-'+postId);},100);
+  });
+}
+
+// ── 좋아요 ──
+function togglePostLike(btn,postId,currentLikes){
+  if(!user){showAl('로그인이 필요합니다','red');return;}
+  var liked=btn.classList.contains('liked');
+  if(liked){
+    sb.from('artist_post_likes').delete().eq('user_id',user.id).eq('post_id',postId).then(function(){
+      var nl=Math.max(0,currentLikes-1);
+      sb.from('artist_posts').update({likes:nl}).eq('id',postId).then(function(){
+        btn.textContent='♥ '+nl;btn.classList.remove('liked');
+      });
+    });
+  } else {
+    sb.from('artist_post_likes').insert([{user_id:user.id,post_id:postId}]).then(function(r){
+      if(r.error) return;
+      var nl=currentLikes+1;
+      sb.from('artist_posts').update({likes:nl}).eq('id',postId).then(function(){
+        btn.textContent='♥ '+nl;btn.classList.add('liked');
+      });
+    });
+  }
+}
+
+// ── 팔로우 ──
+async function toggleFollow(){
+  if(!user){showAl('로그인이 필요합니다','red');return;}
+  var btn=document.getElementById('d-follow-btn');
+  var a=currentArtist;
+  if(isFollowing){
+    await sb.from('artist_follows').delete().eq('user_id',user.id).eq('artist_id',a.id);
+    var nl=Math.max(0,(a.follower_count||0)-1);
+    await sb.from('artists').update({follower_count:nl}).eq('id',a.id);
+    a.follower_count=nl;
+    isFollowing=false;
+  } else {
+    await sb.from('artist_follows').insert([{user_id:user.id,artist_id:a.id}]);
+    var nl2=(a.follower_count||0)+1;
+    await sb.from('artists').update({follower_count:nl2}).eq('id',a.id);
+    a.follower_count=nl2;
+    isFollowing=true;
+  }
+  document.getElementById('d-followers').textContent=a.follower_count;
+  btn.textContent=isFollowing?'팔로우 중':'+ 팔로우';
+  btn.className='btn-follow-lg '+(isFollowing?'bfl-on':'bfl-off');
+}
+
+function quickFollow(artistId,btn){
+  if(!user){showAl('로그인이 필요합니다','red');return;}
+  sb.from('artist_follows').insert([{user_id:user.id,artist_id:artistId}]).then(function(r){
+    if(r.error) return;
+    btn.textContent='팔로우 중';btn.className='btn-follow bf-on';
+  });
+}
+
+// ── 포스트 작성 ──
+function doPost(){
+  if(!user||!myArtist){showAl('아티스트 계정이 필요합니다','red');return;}
+  var content=document.getElementById('post-content').value.trim();
+  var type=document.getElementById('post-type').value;
+  if(!content){showAl('내용을 입력하세요','red');return;}
+  sb.from('artist_posts').insert([{artist_id:myArtist.id,content:content,post_type:type,likes:0,comments_count:0}]).then(function(r){
+    if(r.error){showAl('등록 실패: '+r.error.message,'red');return;}
+    document.getElementById('post-content').value='';
+    showAl('포스트가 게시되었습니다','green');
+    loadArtistFeed(myArtist.id);
+  });
+}
+
+// ── 아티스트 등록 ──
+function openRegister(){
+  if(!user){showAl('로그인이 필요합니다','red');return;}
+  document.getElementById('reg-modal').classList.add('on');
+}
+function closeRegister(){document.getElementById('reg-modal').classList.remove('on');}
+
+function doRegister(){
+  var name=document.getElementById('r-name').value.trim();
+  var role=document.getElementById('r-role').value;
+  var specialty=document.getElementById('r-specialty').value.trim();
+  var agency=document.getElementById('r-agency').value.trim();
+  var debut=document.getElementById('r-debut').value.trim();
+  var insta=document.getElementById('r-insta').value.trim();
+  var bio=document.getElementById('r-bio').value.trim();
+  if(!name){showAl('이름을 입력하세요','red');return;}
+  if(!user){showAl('로그인이 필요합니다','red');return;}
+  var btn=document.querySelector('#reg-modal .btn-save');
+  btn.textContent='등록 중...';btn.disabled=true;
+  sb.from('artists').insert([{
+    user_id:user.id,name:name,role:role,specialty:specialty||null,
+    agency:agency||null,debut_year:debut||null,
+    sns_instagram:insta||null,bio:bio||null,follower_count:0,is_verified:false
+  }]).then(function(r){
+    btn.textContent='등록하기';btn.disabled=false;
+    if(r.error){showAl('등록 실패: '+r.error.message,'red');return;}
+    closeRegister();
+    showAl('아티스트 프로필이 등록되었습니다','green');
+    loadArtists();
+  });
+}
+
+// ── 유틸 ──
+function timeAgo(d){
+  var diff=(Date.now()-new Date(d))/1000;
+  if(diff<60) return '방금 전';
+  if(diff<3600) return Math.floor(diff/60)+'분 전';
+  if(diff<86400) return Math.floor(diff/3600)+'시간 전';
+  return Math.floor(diff/86400)+'일 전';
+}
+function showAl(msg,type){
+  var a=document.getElementById('alert');
+  a.textContent=msg;a.className='alert on '+(type||'green');
+  setTimeout(function(){a.className='alert'},3000);
+}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
