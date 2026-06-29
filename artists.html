@@ -378,23 +378,24 @@ var ROLE_MAP={actor:{l:'배우',cls:'rb-actor'},staff:{l:'스태프',cls:'rb-sta
 var EMOJIS=['🎭','🎶','🎵','🎤','🎪','🌟'];
 
 // ── 초기화 ──
-sb.auth.getSession().then(function(r){
+async function init(){
+  var r=await sb.auth.getSession();
   if(r.data&&r.data.session){
     user=r.data.session.user;
     var meta=user.user_metadata||{};
     var name=meta.name||user.email.split('@')[0];
     document.getElementById('nav-right').innerHTML=
       '<div class="nav-av">'+name[0].toUpperCase()+'</div><span style="font-size:13px;color:#555">'+name+'</span>';
-    // 내 아티스트 프로필 확인 (수정용 전체 데이터 로드)
-    sb.from('artists')
+    // myArtist를 await로 보장 — openDetail 전에 반드시 완료
+    var ar=await sb.from('artists')
       .select('id,name,role,specialty,agency,debut_year,sns_instagram,bio,profile_image,cover_image')
-      .eq('user_id',user.id).single().then(function(r){
-      if(r.data) myArtist=r.data;
-    });
+      .eq('user_id',user.id).single();
+    if(ar.data) myArtist=ar.data;
   }
   loadArtists();
   loadAllFeed();
-});
+}
+init();
 
 // ── 페이지 탭 ──
 function goPageTab(id,el){
@@ -507,6 +508,14 @@ async function openDetail(id){
   if(a.specialty) infoHtml+='<div class="d-info-item"><div class="d-info-label">전문 분야</div><div class="d-info-val">'+esc(a.specialty)+'</div></div>';
   if(a.sns_instagram) infoHtml+='<div class="d-info-item"><div class="d-info-label">Instagram</div><div class="d-info-val">'+esc(a.sns_instagram)+'</div></div>';
   document.getElementById('d-info').innerHTML=infoHtml;
+
+  // myArtist 미로드 시 재확인 (타이밍 안전장치)
+  if(user&&!myArtist){
+    var ar=await sb.from('artists')
+      .select('id,name,role,specialty,agency,debut_year,sns_instagram,bio,profile_image,cover_image')
+      .eq('user_id',user.id).single();
+    if(ar.data) myArtist=ar.data;
+  }
 
   // 본인 글쓰기 박스 + 수정 버튼
   var isMyArtist=user&&myArtist&&myArtist.id===id;
