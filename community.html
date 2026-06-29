@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MusicalVerse — 커뮤니티</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--purple:#534AB7;--purple-light:#EEEDFE;--purple-dark:#3C3489;
+  --teal:#0F6E56;--teal-light:#E1F5EE;
+  --amber:#854F0B;--amber-light:#FAEEDA;
+  --red:#D94040;--red-light:#FCEBEB;
+  --bg:#f7f7f5;--white:#fff;--text:#1a1a1a;--text2:#555;--text3:#999;
+  --border:#e0e0e0;--radius:10px;--radius-lg:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);min-height:100vh}
+nav{background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100}
+.nav-logo{font-size:18px;font-weight:800;color:var(--purple);cursor:pointer}
+.nav-logo span{color:var(--text)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-av{width:30px;height:30px;border-radius:50%;background:var(--purple-light);
+  color:var(--purple);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.nav-btn{padding:7px 16px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer}
+
+/* 헤더 */
+.hero{background:linear-gradient(135deg,var(--purple-dark),var(--purple));
+  padding:32px 24px;color:#fff;text-align:center}
+.hero h1{font-size:24px;font-weight:800;margin-bottom:6px}
+.hero p{font-size:14px;opacity:.8}
+
+/* 레이아웃 */
+.wrap{max-width:900px;margin:0 auto;padding:24px 20px}
+.layout{display:grid;grid-template-columns:1fr 280px;gap:20px}
+
+/* 카테고리 탭 */
+.cat-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.cat{padding:7px 16px;border-radius:20px;font-size:13px;border:1px solid var(--border);
+  cursor:pointer;background:var(--white);color:var(--text2);font-weight:500}
+.cat.on{background:var(--purple);color:#fff;border-color:var(--purple);font-weight:700}
+
+/* 게시글 목록 */
+.post-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:16px;margin-bottom:10px;cursor:pointer;transition:box-shadow .15s}
+.post-card:hover{box-shadow:0 4px 16px rgba(83,74,183,.1)}
+.pc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.pc-category{font-size:11px;padding:2px 8px;border-radius:8px;font-weight:700;margin-bottom:6px;display:inline-block}
+.cat-review{background:var(--teal-light);color:var(--teal)}
+.cat-free{background:var(--purple-light);color:var(--purple)}
+.cat-photo{background:var(--amber-light);color:var(--amber)}
+.cat-question{background:#E6F1FB;color:#185FA5}
+.cat-notice{background:var(--red-light);color:var(--red)}
+.pc-title{font-size:15px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.pc-preview{font-size:13px;color:var(--text3);line-height:1.5;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.pc-footer{display:flex;align-items:center;gap:12px;margin-top:10px;font-size:12px;color:var(--text3)}
+.pc-author{display:flex;align-items:center;gap:6px}
+.pc-av{width:22px;height:22px;border-radius:50%;background:var(--purple-light);
+  color:var(--purple);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.pc-stats{display:flex;gap:10px;margin-left:auto}
+.pc-stat{display:flex;align-items:center;gap:3px}
+
+/* 글쓰기 버튼 */
+.write-btn{width:100%;padding:12px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius-lg);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:16px;
+  display:flex;align-items:center;justify-content:center;gap:6px}
+
+/* 사이드바 */
+.sidebar-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:16px;margin-bottom:14px}
+.sb-title{font-size:14px;font-weight:700;margin-bottom:12px;padding-bottom:10px;
+  border-bottom:1px solid var(--border)}
+.hot-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;
+  border-bottom:0.5px solid var(--border);cursor:pointer}
+.hot-item:last-child{border:none}
+.hot-num{font-size:12px;font-weight:800;color:var(--purple);min-width:18px}
+.hot-title{font-size:13px;color:var(--text);line-height:1.4;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.hot-likes{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* 로딩 */
+.loading{text-align:center;padding:40px;color:var(--text3)}
+.spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--purple);
+  border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 빈 상태 */
+.empty{text-align:center;padding:40px;color:var(--text3)}
+.empty-icon{font-size:40px;margin-bottom:10px}
+
+/* 글쓰기 모달 */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;
+  display:none;align-items:center;justify-content:center;padding:20px}
+.modal-bg.on{display:flex}
+.modal{background:var(--white);border-radius:20px;width:100%;max-width:560px;padding:28px}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:20px}
+.field{margin-bottom:14px}
+.lbl{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px;display:block}
+.inp{width:100%;padding:10px 13px;font-size:14px;border:1.5px solid var(--border);
+  border-radius:var(--radius);outline:none;background:var(--white);color:var(--text)}
+.inp:focus{border-color:var(--purple)}
+textarea.inp{resize:vertical;min-height:120px;line-height:1.6}
+select.inp{appearance:auto;background:var(--white)}
+.modal-btns{display:flex;gap:10px;margin-top:16px}
+.btn-submit{flex:1;padding:12px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius-lg);font-size:14px;font-weight:700;cursor:pointer}
+.btn-cancel{padding:12px 20px;border:1.5px solid var(--border);border-radius:var(--radius-lg);
+  background:var(--white);cursor:pointer;color:var(--text2);font-weight:600}
+
+/* 상세 모달 */
+.detail-modal{background:var(--white);border-radius:20px;width:100%;max-width:640px;
+  max-height:90vh;overflow-y:auto;padding:28px}
+.dm-header{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.dm-cat{font-size:11px;padding:2px 8px;border-radius:8px;font-weight:700;margin-bottom:8px;display:inline-block}
+.dm-title{font-size:20px;font-weight:800;margin-bottom:8px}
+.dm-meta{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text3)}
+.dm-content{font-size:14px;color:var(--text2);line-height:1.8;margin:16px 0;
+  padding:16px;background:var(--bg);border-radius:var(--radius)}
+.dm-actions{display:flex;gap:10px;margin-bottom:20px}
+.like-btn{display:flex;align-items:center;gap:5px;padding:8px 16px;
+  border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:13px;
+  background:var(--white);font-weight:600;transition:all .15s}
+.like-btn.liked{background:var(--red-light);border-color:var(--red);color:var(--red)}
+.dm-comments{border-top:1px solid var(--border);padding-top:16px}
+.cmt-title{font-size:14px;font-weight:700;margin-bottom:12px}
+.comment{display:flex;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border)}
+.comment:last-child{border:none}
+.cmt-av{width:30px;height:30px;border-radius:50%;background:var(--purple-light);
+  color:var(--purple);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cmt-body .cmt-author{font-size:12px;font-weight:700;margin-bottom:2px}
+.cmt-body .cmt-text{font-size:13px;color:var(--text2);line-height:1.5}
+.cmt-body .cmt-time{font-size:11px;color:var(--text3);margin-top:3px}
+.cmt-input-wrap{display:flex;gap:8px;margin-top:14px}
+.cmt-inp{flex:1;padding:10px 13px;font-size:13px;border:1.5px solid var(--border);
+  border-radius:var(--radius);outline:none}
+.cmt-inp:focus{border-color:var(--purple)}
+.cmt-send{padding:10px 16px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer}
+.dm-close{width:100%;padding:11px;background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius-lg);cursor:pointer;font-size:14px;color:var(--text2);margin-top:14px}
+
+/* 알림 */
+.alert{border-radius:var(--radius);padding:10px 14px;font-size:13px;
+  margin-bottom:12px;display:none;position:fixed;top:70px;right:20px;
+  min-width:200px;z-index:300;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.alert.on{display:block}
+.alert.green{background:var(--teal-light);color:var(--teal)}
+.alert.red{background:var(--red-light);color:var(--red)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo" onclick="location.href='index.html'"><span>Musical</span>Verse</div>
+  <div class="nav-right" id="nav-right">
+    <button class="nav-btn" onclick="location.href='index.html'">로그인</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>팬 커뮤니티</h1>
+  <p>뮤지컬 팬들과 공연 이야기를 나눠보세요</p>
+</div>
+
+<div class="alert" id="alert"></div>
+
+<div class="wrap">
+  <div class="layout">
+    <!-- 메인 -->
+    <div>
+      <button class="write-btn" onclick="openWrite()">✏️ 글쓰기</button>
+
+      <div class="cat-tabs">
+        <div class="cat on" onclick="setCat('all',this)">전체</div>
+        <div class="cat" onclick="setCat('review',this)">공연 후기</div>
+        <div class="cat" onclick="setCat('free',this)">자유게시판</div>
+        <div class="cat" onclick="setCat('photo',this)">포토/직캠</div>
+        <div class="cat" onclick="setCat('question',this)">질문/정보</div>
+        <div class="cat" onclick="setCat('notice',this)">공지</div>
+      </div>
+
+      <div id="post-list">
+        <div class="loading"><div class="spinner"></div>게시글을 불러오는 중</div>
+      </div>
+    </div>
+
+    <!-- 사이드바 -->
+    <div>
+      <div class="sidebar-card">
+        <div class="sb-title">🔥 인기 게시글</div>
+        <div id="hot-list"><div class="loading" style="padding:20px"><div class="spinner"></div></div></div>
+      </div>
+      <div class="sidebar-card">
+        <div class="sb-title">📊 커뮤니티 현황</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="text-align:center;padding:10px;background:var(--bg);border-radius:var(--radius)">
+            <div style="font-size:18px;font-weight:800;color:var(--purple)" id="stat-posts">-</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">전체 게시글</div>
+          </div>
+          <div style="text-align:center;padding:10px;background:var(--bg);border-radius:var(--radius)">
+            <div style="font-size:18px;font-weight:800;color:var(--teal)" id="stat-today">-</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">오늘 게시글</div>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-card">
+        <div class="sb-title">🎭 카테고리</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;cursor:pointer" onclick="setCat('review',document.querySelectorAll('.cat')[1])">
+            <span>공연 후기</span><span id="cnt-review" style="color:var(--text3)">-</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;cursor:pointer" onclick="setCat('free',document.querySelectorAll('.cat')[2])">
+            <span>자유게시판</span><span id="cnt-free" style="color:var(--text3)">-</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;cursor:pointer" onclick="setCat('photo',document.querySelectorAll('.cat')[3])">
+            <span>포토/직캠</span><span id="cnt-photo" style="color:var(--text3)">-</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;cursor:pointer" onclick="setCat('question',document.querySelectorAll('.cat')[4])">
+            <span>질문/정보</span><span id="cnt-question" style="color:var(--text3)">-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 글쓰기 모달 -->
+<div class="modal-bg" id="write-modal" onclick="if(event.target===this) closeWrite()">
+  <div class="modal">
+    <div class="modal-title">✏️ 글쓰기</div>
+    <div class="field">
+      <label class="lbl">카테고리</label>
+      <select class="inp" id="w-cat">
+        <option value="review">공연 후기</option>
+        <option value="free">자유게시판</option>
+        <option value="photo">포토/직캠</option>
+        <option value="question">질문/정보</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="lbl">제목</label>
+      <input class="inp" id="w-title" placeholder="제목을 입력하세요">
+    </div>
+    <div class="field">
+      <label class="lbl">내용</label>
+      <textarea class="inp" id="w-content" rows="6" placeholder="내용을 입력하세요"></textarea>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeWrite()">취소</button>
+      <button class="btn-submit" onclick="doPost()">등록하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 상세 모달 -->
+<div class="modal-bg" id="detail-modal" onclick="if(event.target===this) closeDetail()">
+  <div class="detail-modal">
+    <div class="dm-header">
+      <div class="dm-cat" id="dm-cat"></div>
+      <div class="dm-title" id="dm-title"></div>
+      <div class="dm-meta">
+        <div style="display:flex;align-items:center;gap:5px">
+          <div class="cmt-av" id="dm-av" style="width:22px;height:22px;font-size:9px"></div>
+          <span id="dm-author"></span>
+        </div>
+        <span id="dm-date"></span>
+        <span>조회 <span id="dm-views"></span></span>
+      </div>
+    </div>
+    <div class="dm-content" id="dm-content"></div>
+    <div class="dm-actions">
+      <button class="like-btn" id="like-btn" onclick="toggleLike()">
+        ♥ <span id="like-count">0</span> 좋아요
+      </button>
+    </div>
+    <div class="dm-comments">
+      <div class="cmt-title">댓글 <span id="cmt-count">0</span>개</div>
+      <div id="cmt-list"></div>
+      <div class="cmt-input-wrap">
+        <input class="cmt-inp" id="cmt-inp" placeholder="댓글을 입력하세요">
+        <button class="cmt-send" onclick="doComment()">등록</button>
+      </div>
+    </div>
+    <button class="dm-close" onclick="closeDetail()">← 목록으로</button>
+  </div>
+</div>
+
+<script>
+var SUPA_URL='https://qyrgfjshsczdpxaeznkc.supabase.co';
+var SUPA_KEY='sb_publishable_A6MmsqE9y-ymBKNKOwR2EA_PuLX5mLB';
+var sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+
+var user=null, allPosts=[], currentCat='all', currentPost=null;
+
+var CAT_MAP={
+  review:{label:'공연 후기',cls:'cat-review'},
+  free:{label:'자유게시판',cls:'cat-free'},
+  photo:{label:'포토/직캠',cls:'cat-photo'},
+  question:{label:'질문/정보',cls:'cat-question'},
+  notice:{label:'공지',cls:'cat-notice'}
+};
+
+// ── 초기화 ──
+sb.auth.getSession().then(function(r){
+  if(r.data&&r.data.session){
+    user=r.data.session.user;
+    var meta=user.user_metadata||{};
+    var name=meta.name||user.email.split('@')[0];
+    document.getElementById('nav-right').innerHTML=
+      '<div class="nav-av">'+name[0].toUpperCase()+'</div>'
+      +'<span style="font-size:13px;color:#555">'+name+'</span>';
+  }
+  loadPosts();
+});
+
+// ── 게시글 불러오기 ──
+async function loadPosts(){
+  try{
+    var res=await sb.from('posts')
+      .select('id,created_at,user_id,title,content,category,author_name,likes,views')
+      .order('created_at',{ascending:false});
+    if(res.error) throw new Error(res.error.message);
+    allPosts=(res.data||[]).map(function(p){
+      return {
+        id:p.id, created_at:p.created_at, user_id:p.user_id,
+        title:p.title, content:p.content, category:p.category,
+        author_name:p.author_name, likes:p.likes||0, views:p.views||0
+      };
+    });
+    updateStats();
+    renderPosts();
+    renderHot();
+  } catch(e){
+    document.getElementById('post-list').innerHTML=
+      '<div class="empty"><div class="empty-icon">⚠️</div><div>'+e.message+'</div></div>';
+  }
+}
+
+// ── 통계 ──
+function updateStats(){
+  document.getElementById('stat-posts').textContent=allPosts.length;
+  var today=new Date().toDateString();
+  var todayCnt=allPosts.filter(function(p){
+    return new Date(p.created_at).toDateString()===today;
+  }).length;
+  document.getElementById('stat-today').textContent=todayCnt;
+  ['review','free','photo','question'].forEach(function(c){
+    var el=document.getElementById('cnt-'+c);
+    if(el) el.textContent=allPosts.filter(function(p){return p.category===c}).length+'개';
+  });
+}
+
+// ── 카테고리 필터 ──
+function setCat(cat,el){
+  currentCat=cat;
+  document.querySelectorAll('.cat').forEach(function(c){c.classList.remove('on')});
+  el.classList.add('on');
+  renderPosts();
+}
+
+// ── 게시글 렌더 ──
+function renderPosts(){
+  var list=currentCat==='all'?allPosts:allPosts.filter(function(p){return p.category===currentCat});
+  if(!list.length){
+    document.getElementById('post-list').innerHTML=
+      '<div class="empty"><div class="empty-icon">📝</div><div style="font-size:14px;font-weight:700;margin-bottom:6px">게시글이 없습니다</div><div style="font-size:13px;color:var(--text3)">첫 번째 글을 작성해 보세요</div></div>';
+    return;
+  }
+  document.getElementById('post-list').innerHTML=list.map(function(p){
+    var cm=CAT_MAP[p.category]||CAT_MAP.free;
+    var name=p.author_name||'익명';
+    return '<div class="post-card" onclick="openDetail(\''+p.id+'\')">'
+      +'<span class="pc-category '+cm.cls+'">'+cm.label+'</span>'
+      +'<div class="pc-title">'+esc(p.title)+'</div>'
+      +'<div class="pc-preview">'+esc(p.content)+'</div>'
+      +'<div class="pc-footer">'
+      +'<div class="pc-author"><div class="pc-av">'+name[0].toUpperCase()+'</div>'+esc(name)+'</div>'
+      +'<span>'+timeAgo(p.created_at)+'</span>'
+      +'<div class="pc-stats">'
+      +'<div class="pc-stat">♥ '+( p.likes||0)+'</div>'
+      +'<div class="pc-stat">👁 '+(p.views||0)+'</div>'
+      +'</div>'
+      +'</div></div>';
+  }).join('');
+}
+
+// ── 인기 게시글 ──
+function renderHot(){
+  var hot=allPosts.slice().sort(function(a,b){return (b.likes||0)-(a.likes||0)}).slice(0,5);
+  if(!hot.length){document.getElementById('hot-list').innerHTML='<div style="font-size:13px;color:var(--text3);text-align:center;padding:10px">게시글이 없습니다</div>';return;}
+  document.getElementById('hot-list').innerHTML=hot.map(function(p,i){
+    return '<div class="hot-item" onclick="openDetail(\''+p.id+'\')">'
+      +'<div class="hot-num">'+(i+1)+'</div>'
+      +'<div><div class="hot-title">'+esc(p.title)+'</div>'
+      +'<div class="hot-likes">♥ '+(p.likes||0)+'</div></div></div>';
+  }).join('');
+}
+
+// ── 상세 보기 ──
+async function openDetail(id){
+  var p=allPosts.find(function(p){return p.id===id});
+  if(!p) return;
+  currentPost=p;
+
+  // 조회수 증가
+  sb.from('posts').update({views:(p.views||0)+1}).eq('id',id).then(function(){
+    p.views=(p.views||0)+1;
+  });
+
+  var cm=CAT_MAP[p.category]||CAT_MAP.free;
+  var dmCat=document.getElementById('dm-cat');
+  dmCat.textContent=cm.label;
+  dmCat.className='dm-cat '+cm.cls;
+  document.getElementById('dm-title').textContent=p.title;
+  document.getElementById('dm-author').textContent=p.author_name||'익명';
+  document.getElementById('dm-av').textContent=(p.author_name||'익')[0].toUpperCase();
+  document.getElementById('dm-date').textContent=timeAgo(p.created_at);
+  document.getElementById('dm-views').textContent=(p.views||0);
+  document.getElementById('dm-content').textContent=p.content;
+  document.getElementById('like-count').textContent=p.likes||0;
+
+  // 좋아요 상태
+  if(user){
+    sb.from('post_likes').select('id').eq('user_id',user.id).eq('post_id',id).then(function(r){
+      var liked=r.data&&r.data.length>0;
+      document.getElementById('like-btn').classList.toggle('liked',liked);
+    });
+  }
+
+  // 댓글 로드
+  loadComments(id);
+  document.getElementById('detail-modal').classList.add('on');
+}
+
+async function loadComments(postId){
+  var res=await sb.from('comments').select('*').eq('post_id',postId).order('created_at',{ascending:true});
+  var cmts=res.data||[];
+  document.getElementById('cmt-count').textContent=cmts.length;
+  document.getElementById('cmt-list').innerHTML=cmts.length?cmts.map(function(c){
+    var name=c.author_name||'익명';
+    return '<div class="comment">'
+      +'<div class="cmt-av">'+name[0].toUpperCase()+'</div>'
+      +'<div class="cmt-body">'
+      +'<div class="cmt-author">'+esc(name)+'</div>'
+      +'<div class="cmt-text">'+esc(c.content)+'</div>'
+      +'<div class="cmt-time">'+timeAgo(c.created_at)+'</div>'
+      +'</div></div>';
+  }).join(''):'<div style="font-size:13px;color:var(--text3);padding:12px 0">첫 번째 댓글을 남겨보세요</div>';
+}
+
+// ── 좋아요 ──
+function toggleLike(){
+  if(!user){showAl('로그인이 필요합니다','red');return;}
+  var btn=document.getElementById('like-btn');
+  var liked=btn.classList.contains('liked');
+  var p=currentPost;
+  if(liked){
+    sb.from('post_likes').delete().eq('user_id',user.id).eq('post_id',p.id).then(function(r){
+      if(r.error) return;
+      var newLikes=Math.max(0,(p.likes||0)-1);
+      sb.from('posts').update({likes:newLikes}).eq('id',p.id).then(function(){
+        p.likes=newLikes;
+        document.getElementById('like-count').textContent=newLikes;
+        btn.classList.remove('liked');
+      });
+    });
+  } else {
+    sb.from('post_likes').insert([{user_id:user.id,post_id:p.id}]).then(function(r){
+      if(r.error) return;
+      var newLikes=(p.likes||0)+1;
+      sb.from('posts').update({likes:newLikes}).eq('id',p.id).then(function(){
+        p.likes=newLikes;
+        document.getElementById('like-count').textContent=newLikes;
+        btn.classList.add('liked');
+      });
+    });
+  }
+}
+
+// ── 댓글 등록 ──
+function doComment(){
+  if(!user){showAl('로그인이 필요합니다','red');return;}
+  var content=document.getElementById('cmt-inp').value.trim();
+  if(!content) return;
+  var meta=user.user_metadata||{};
+  var name=meta.name||user.email.split('@')[0];
+  sb.from('comments').insert([{
+    user_id:user.id,
+    post_id:currentPost.id,
+    content:content,
+    author_name:name
+  }]).then(function(r){
+    if(r.error){showAl('댓글 등록 실패','red');return;}
+    document.getElementById('cmt-inp').value='';
+    loadComments(currentPost.id);
+  });
+}
+
+// ── 글쓰기 ──
+function openWrite(){
+  if(!user){showAl('로그인이 필요합니다','red');return;}
+  document.getElementById('write-modal').classList.add('on');
+}
+function closeWrite(){
+  document.getElementById('write-modal').classList.remove('on');
+  document.getElementById('w-title').value='';
+  document.getElementById('w-content').value='';
+}
+function closeDetail(){document.getElementById('detail-modal').classList.remove('on');}
+
+function doPost(){
+  var title=document.getElementById('w-title').value.trim();
+  var content=document.getElementById('w-content').value.trim();
+  var cat=document.getElementById('w-cat').value;
+  if(!title){showAl('제목을 입력하세요','red');return;}
+  if(!content){showAl('내용을 입력하세요','red');return;}
+  var meta=user.user_metadata||{};
+  var name=meta.name||user.email.split('@')[0];
+  var btn=document.querySelector('.btn-submit');
+  btn.textContent='등록 중...';btn.disabled=true;
+  sb.from('posts').insert([{
+    user_id:user.id,
+    title:title,
+    content:content,
+    category:cat,
+    author_name:name,
+    likes:0,
+    views:0
+  }]).then(function(r){
+    btn.textContent='등록하기';btn.disabled=false;
+    if(r.error){showAl('등록 실패: '+r.error.message,'red');return;}
+    closeWrite();
+    showAl('게시글이 등록되었습니다','green');
+    loadPosts();
+  });
+}
+
+// ── 유틸 ──
+function timeAgo(d){
+  var diff=(Date.now()-new Date(d))/1000;
+  if(diff<60) return '방금 전';
+  if(diff<3600) return Math.floor(diff/60)+'분 전';
+  if(diff<86400) return Math.floor(diff/3600)+'시간 전';
+  return Math.floor(diff/86400)+'일 전';
+}
+function showAl(msg,type){
+  var a=document.getElementById('alert');
+  a.textContent=msg;a.className='alert on '+(type||'green');
+  setTimeout(function(){a.className='alert'},3000);
+}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
