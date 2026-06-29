@@ -202,6 +202,12 @@ select.inp{appearance:auto;background:var(--white)}
 .alert.green{background:var(--teal-light);color:var(--teal)}
 .alert.red{background:var(--red-light);color:var(--red)}
 .alert.blue{background:var(--purple-light);color:var(--purple)}
+
+/* 프로필 수정 버튼 */
+.btn-edit-profile{width:100%;padding:10px;border:1.5px dashed var(--purple);
+  border-radius:var(--radius);background:var(--purple-light);color:var(--purple);
+  font-size:13px;font-weight:700;cursor:pointer;transition:background .15s}
+.btn-edit-profile:hover{background:#CECBF6}
 </style>
 </head>
 <body>
@@ -268,6 +274,9 @@ select.inp{appearance:auto;background:var(--white)}
         <button class="btn-follow-lg bfl-off" id="d-follow-btn" onclick="toggleFollow()">+ 팔로우</button>
         <button class="btn-msg" onclick="showAl('팬 메시지 기능은 곧 출시됩니다','blue')">💌 메시지</button>
       </div>
+      <div id="d-edit-wrap" style="display:none;margin-bottom:12px">
+        <button class="btn-edit-profile" onclick="openEdit()">✏️ 프로필 수정</button>
+      </div>
       <div class="d-info" id="d-info"></div>
     </div>
   </div>
@@ -301,7 +310,7 @@ select.inp{appearance:auto;background:var(--white)}
 <!-- 아티스트 등록 모달 -->
 <div class="modal-bg" id="reg-modal" onclick="if(event.target===this) closeRegister()">
   <div class="modal">
-    <div class="modal-title">아티스트 프로필 등록</div>
+    <div class="modal-title" id="reg-modal-title">아티스트 프로필 등록</div>
     <!-- 프로필 사진 업로드 -->
     <div class="field">
       <label class="lbl">프로필 사진</label>
@@ -351,7 +360,7 @@ select.inp{appearance:auto;background:var(--white)}
     <div class="field"><label class="lbl">소개</label><textarea class="inp" id="r-bio" rows="3" placeholder="자신을 소개해 주세요"></textarea></div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeRegister()">취소</button>
-      <button class="btn-save" onclick="doRegister()">등록하기</button>
+      <button class="btn-save" id="reg-modal-save" onclick="doRegister()">등록하기</button>
     </div>
   </div>
 </div>
@@ -376,8 +385,10 @@ sb.auth.getSession().then(function(r){
     var name=meta.name||user.email.split('@')[0];
     document.getElementById('nav-right').innerHTML=
       '<div class="nav-av">'+name[0].toUpperCase()+'</div><span style="font-size:13px;color:#555">'+name+'</span>';
-    // 내 아티스트 프로필 확인
-    sb.from('artists').select('id').eq('user_id',user.id).single().then(function(r){
+    // 내 아티스트 프로필 확인 (수정용 전체 데이터 로드)
+    sb.from('artists')
+      .select('id,name,role,specialty,agency,debut_year,sns_instagram,bio,profile_image,cover_image')
+      .eq('user_id',user.id).single().then(function(r){
       if(r.data) myArtist=r.data;
     });
   }
@@ -497,9 +508,13 @@ async function openDetail(id){
   if(a.sns_instagram) infoHtml+='<div class="d-info-item"><div class="d-info-label">Instagram</div><div class="d-info-val">'+esc(a.sns_instagram)+'</div></div>';
   document.getElementById('d-info').innerHTML=infoHtml;
 
-  // 본인 글쓰기 박스
+  // 본인 글쓰기 박스 + 수정 버튼
   var isMyArtist=user&&myArtist&&myArtist.id===id;
   document.getElementById('my-write-box').style.display=isMyArtist?'block':'none';
+  document.getElementById('d-edit-wrap').style.display=isMyArtist?'block':'none';
+  // 본인이면 팔로우/메시지 버튼 숨김
+  document.getElementById('d-follow-btn').style.display=isMyArtist?'none':'';
+  document.querySelector('.btn-msg').style.display=isMyArtist?'none':'';
 
   // 상세 페이지 열기
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on')});
@@ -732,12 +747,119 @@ async function uploadImage(file, folder){
   return sb.storage.from('artist-images').getPublicUrl(path).data.publicUrl;
 }
 
-// ── 아티스트 등록 ──
+// ── 아티스트 등록 / 수정 ──
+var isEditMode=false;
+
 function openRegister(){
   if(!user){showAl('로그인이 필요합니다','red');return;}
+  if(myArtist){showAl('이미 등록된 아티스트 프로필이 있습니다. 수정 버튼을 이용하세요','blue');return;}
+  isEditMode=false;
+  // 모달 초기화
+  document.getElementById('reg-modal-title').textContent='아티스트 프로필 등록';
+  document.getElementById('reg-modal-save').textContent='등록하기';
+  document.getElementById('reg-modal-save').onclick=doRegister;
+  document.getElementById('r-name').value='';
+  document.getElementById('r-role').value='actor';
+  document.getElementById('r-specialty').value='';
+  document.getElementById('r-agency').value='';
+  document.getElementById('r-debut').value='';
+  document.getElementById('r-insta').value='';
+  document.getElementById('r-bio').value='';
+  document.getElementById('r-preview').innerHTML='🎭';
+  document.getElementById('r-cover-preview').style.backgroundImage='';
+  document.getElementById('r-cover-preview').style.background='linear-gradient(135deg,#534AB7,#7F77DD)';
+  document.getElementById('r-cover-preview').innerHTML=
+    '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:rgba(255,255,255,.7)">커버 미리보기</div>';
   document.getElementById('reg-modal').classList.add('on');
 }
+
+function openEdit(){
+  if(!myArtist){showAl('등록된 프로필이 없습니다','red');return;}
+  isEditMode=true;
+  var a=myArtist;
+  // 모달 수정 모드 전환
+  document.getElementById('reg-modal-title').textContent='프로필 수정';
+  document.getElementById('reg-modal-save').textContent='저장하기';
+  document.getElementById('reg-modal-save').onclick=doEdit;
+  // 기존 값 채우기
+  document.getElementById('r-name').value=a.name||'';
+  document.getElementById('r-role').value=a.role||'actor';
+  document.getElementById('r-specialty').value=a.specialty||'';
+  document.getElementById('r-agency').value=a.agency||'';
+  document.getElementById('r-debut').value=a.debut_year||'';
+  document.getElementById('r-insta').value=a.sns_instagram||'';
+  document.getElementById('r-bio').value=a.bio||'';
+  // 기존 프로필 사진 미리보기
+  var prev=document.getElementById('r-preview');
+  prev.innerHTML=a.profile_image
+    ?'<img src="'+a.profile_image+'" style="width:100%;height:100%;object-fit:cover">'
+    :'🎭';
+  // 기존 커버 사진 미리보기
+  var cprev=document.getElementById('r-cover-preview');
+  if(a.cover_image){
+    cprev.style.backgroundImage='url('+a.cover_image+')';
+    cprev.style.backgroundSize='cover';
+    cprev.style.backgroundPosition='center';
+    cprev.innerHTML='';
+  } else {
+    cprev.style.backgroundImage='';
+    cprev.style.background='linear-gradient(135deg,#534AB7,#7F77DD)';
+    cprev.innerHTML='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:rgba(255,255,255,.7)">커버 미리보기</div>';
+  }
+  // 파일 input 초기화 (새 파일 선택 안 하면 기존 유지)
+  document.getElementById('r-photo').value='';
+  document.getElementById('r-cover').value='';
+  document.getElementById('reg-modal').classList.add('on');
+}
+
 function closeRegister(){document.getElementById('reg-modal').classList.remove('on');}
+
+async function doEdit(){
+  var name=document.getElementById('r-name').value.trim();
+  var role=document.getElementById('r-role').value;
+  var specialty=document.getElementById('r-specialty').value.trim();
+  var agency=document.getElementById('r-agency').value.trim();
+  var debut=document.getElementById('r-debut').value.trim();
+  var insta=document.getElementById('r-insta').value.trim();
+  var bio=document.getElementById('r-bio').value.trim();
+  if(!name){showAl('이름을 입력하세요','red');return;}
+  var btn=document.getElementById('reg-modal-save');
+  btn.textContent='저장 중...';btn.disabled=true;
+
+  // 새 이미지 선택 시에만 업로드, 아니면 기존 URL 유지
+  var photoFile=document.getElementById('r-photo').files[0];
+  var coverFile=document.getElementById('r-cover').files[0];
+  var profileUrl=photoFile?await uploadImage(photoFile,'profiles'):myArtist.profile_image;
+  var coverUrl=coverFile?await uploadImage(coverFile,'covers'):myArtist.cover_image;
+
+  var updates={
+    name:name, role:role,
+    specialty:specialty||null,
+    agency:agency||null,
+    debut_year:debut||null,
+    sns_instagram:insta||null,
+    bio:bio||null,
+    profile_image:profileUrl,
+    cover_image:coverUrl
+  };
+
+  sb.from('artists').update(updates).eq('id',myArtist.id).then(function(r){
+    btn.textContent='저장하기';btn.disabled=false;
+    if(r.error){showAl('저장 실패: '+r.error.message,'red');return;}
+    // myArtist 로컬 갱신
+    Object.assign(myArtist, updates);
+    // allArtists 캐시 갱신
+    var idx=allArtists.findIndex(function(a){return a.id===myArtist.id;});
+    if(idx>-1) Object.assign(allArtists[idx], updates);
+    // 현재 상세 페이지 갱신
+    if(currentArtist&&currentArtist.id===myArtist.id){
+      Object.assign(currentArtist, updates);
+      openDetail(myArtist.id);
+    }
+    closeRegister();
+    showAl('프로필이 수정되었습니다','green');
+  });
+}
 
 async function doRegister(){
   var name=document.getElementById('r-name').value.trim();
@@ -749,10 +871,9 @@ async function doRegister(){
   var bio=document.getElementById('r-bio').value.trim();
   if(!name){showAl('이름을 입력하세요','red');return;}
   if(!user){showAl('로그인이 필요합니다','red');return;}
-  var btn=document.querySelector('#reg-modal .btn-save');
+  var btn=document.getElementById('reg-modal-save');
   btn.textContent='등록 중...';btn.disabled=true;
 
-  // 이미지 업로드
   var photoFile=document.getElementById('r-photo').files[0];
   var coverFile=document.getElementById('r-cover').files[0];
   var profileUrl=await uploadImage(photoFile,'profiles');
@@ -767,6 +888,12 @@ async function doRegister(){
   }]).then(function(r){
     btn.textContent='등록하기';btn.disabled=false;
     if(r.error){showAl('등록 실패: '+r.error.message,'red');return;}
+    // 등록 후 myArtist 갱신
+    sb.from('artists')
+      .select('id,name,role,specialty,agency,debut_year,sns_instagram,bio,profile_image,cover_image')
+      .eq('user_id',user.id).single().then(function(res){
+      if(res.data) myArtist=res.data;
+    });
     closeRegister();
     showAl('아티스트 프로필이 등록되었습니다','green');
     loadArtists();
