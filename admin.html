@@ -113,6 +113,55 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .stat-fill{height:100%;border-radius:4px;background:var(--purple);transition:width .6s}
 .stat-val{font-size:12px;color:var(--text3);min-width:40px;text-align:right}
 
+
+/* 극장 관리 */
+.venue-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
+.venue-card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+.venue-name{font-size:15px;font-weight:700}
+.venue-addr{font-size:12px;color:var(--text3);margin-top:2px}
+.venue-actions{display:flex;gap:6px}
+.venue-body{padding:14px 16px}
+.seat-preview{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.sp-row{display:flex;align-items:center;gap:3px}
+.sp-lbl{font-size:10px;color:var(--text3);width:20px;text-align:center;flex-shrink:0}
+.sp-seat{width:18px;height:18px;border-radius:3px;font-size:8px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.sp-vip{background:#EEEDFE;color:#534AB7}
+.sp-r{background:#E1F5EE;color:#0F6E56}
+.sp-s{background:#f7f7f5;color:#888}
+.sp-aisle{width:10px}
+
+/* 모달 */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.modal-overlay.on{display:flex}
+.modal-box{background:var(--white);border-radius:16px;width:100%;max-width:640px;padding:28px;margin:auto}
+.modal-box-title{font-size:18px;font-weight:800;margin-bottom:20px}
+.field{margin-bottom:14px}
+.lbl{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px;display:block}
+.inp{width:100%;padding:10px 13px;font-size:14px;border:1.5px solid var(--border);border-radius:var(--radius);outline:none;background:var(--white);color:var(--text)}
+.inp:focus{border-color:var(--purple)}
+.row-builder{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px}
+.rb-head{display:flex;gap:8px;padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--text3)}
+.rb-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border)}
+.rb-row:last-child{border:none}
+.rb-inp{padding:6px 8px;font-size:13px;border:1px solid var(--border);border-radius:6px;outline:none;background:var(--white)}
+.rb-inp:focus{border-color:var(--purple)}
+.rb-sel{padding:6px 8px;font-size:13px;border:1px solid var(--border);border-radius:6px;outline:none;background:var(--white);cursor:pointer}
+.rb-del{padding:4px 8px;background:var(--red-light);color:var(--red);border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700}
+.btn-add-row{width:100%;padding:9px;background:var(--bg);border:1px dashed var(--border);border-radius:var(--radius);font-size:13px;color:var(--text2);cursor:pointer;margin-bottom:14px}
+.btn-add-row:hover{border-color:var(--purple);color:var(--purple)}
+.preview-box{background:var(--bg);border-radius:var(--radius);padding:14px;margin-bottom:14px;text-align:center}
+.preview-title{font-size:11px;font-weight:700;color:var(--text3);margin-bottom:10px;letter-spacing:.04em}
+.preview-stage{background:var(--text3);color:#fff;font-size:10px;font-weight:700;padding:5px 30px;border-radius:4px;display:inline-block;margin-bottom:10px}
+.preview-seat-area{display:inline-flex;flex-direction:column;gap:4px;align-items:center}
+.preview-row{display:flex;align-items:center;gap:3px}
+.p-seat{width:20px;height:20px;border-radius:3px;font-size:8px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.p-vip{background:#EEEDFE;color:#534AB7}
+.p-r{background:#E1F5EE;color:#0F6E56}
+.p-s{background:#f7f7f5;border:1px solid #ddd;color:#888}
+.p-aisle{width:8px}
+.modal-btns{display:flex;gap:10px;margin-top:4px}
+.btn-save{flex:1;padding:12px;background:var(--purple);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:700;cursor:pointer}
+.btn-cancel-modal{padding:12px 20px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--white);cursor:pointer;color:var(--text2);font-weight:600}
 /* 빈 상태 */
 .empty{text-align:center;padding:40px;color:var(--text3);font-size:13px}
 </style>
@@ -144,6 +193,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
       </div>
       <div class="sb-item" onclick="goPage('users',this)">👥 회원 관리</div>
       <div class="sb-section">운영</div>
+      <div class="sb-item" onclick="goPage('venues',this)">🏛 극장 관리</div>
       <div class="sb-item" onclick="goPage('stats',this)">📈 통계</div>
       <div class="sb-item" onclick="location.href='shows.html'">🌐 공연 목록 보기</div>
     </div>
@@ -252,6 +302,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
       </div>
     </div>
 
+
+    <!-- 극장 관리 -->
+    <div class="pg" id="pg-venues">
+      <div class="page-header">
+        <div class="page-title">극장 관리</div>
+        <button onclick="openVenueModal()" style="padding:8px 18px;background:var(--purple);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer">+ 극장 등록</button>
+      </div>
+      <div id="venues-list">
+        <div class="loading"><div class="spinner"></div>불러오는 중</div>
+      </div>
+    </div>
+
     <!-- 통계 -->
     <div class="pg" id="pg-stats">
       <div class="page-header">
@@ -305,6 +367,7 @@ function goPage(id,el){
   if(id==='shows') loadShows();
   if(id==='users') loadUsers();
   if(id==='stats') loadStats();
+  if(id==='venues') loadVenues();
 }
 
 // ── 알림 ──
@@ -470,6 +533,257 @@ function doLogout(){
 // ── 유틸 ──
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 var var_amber='var(--amber)';
+</script>
+
+<!-- 극장 등록/수정 모달 -->
+<div class="modal-overlay" id="venue-modal" onclick="if(event.target===this) closeVenueModal()">
+  <div class="modal-box">
+    <div class="modal-box-title" id="venue-modal-title">극장 등록</div>
+    <div class="field">
+      <label class="lbl">극장명 *</label>
+      <input class="inp" id="v-name" placeholder="예: 예술의전당 오페라하우스">
+    </div>
+    <div class="field">
+      <label class="lbl">주소</label>
+      <input class="inp" id="v-addr" placeholder="예: 서울특별시 서초구 남부순환로 2406">
+    </div>
+    <div class="field">
+      <label class="lbl">좌석 행 구성</label>
+      <div class="row-builder">
+        <div class="rb-head">
+          <div style="width:36px">행</div>
+          <div style="width:60px">구분</div>
+          <div style="width:70px">좌측 수</div>
+          <div style="width:70px">우측 수</div>
+          <div style="flex:1">통로 위치 (쉼표 구분)</div>
+          <div style="width:36px"></div>
+        </div>
+        <div id="row-list"></div>
+      </div>
+      <button class="btn-add-row" onclick="addRowBuilder()">+ 행 추가</button>
+    </div>
+    <div class="preview-box">
+      <div class="preview-title">미리보기</div>
+      <div class="preview-stage">STAGE</div>
+      <div class="preview-seat-area" id="layout-preview"></div>
+    </div>
+    <div class="field" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div><label class="lbl">VIP 가격</label><input class="inp" id="v-price-vip" type="number" placeholder="0" oninput="updatePreview()"></div>
+      <div><label class="lbl">R석 가격</label><input class="inp" id="v-price-r" type="number" placeholder="0" oninput="updatePreview()"></div>
+      <div><label class="lbl">S석 가격</label><input class="inp" id="v-price-s" type="number" placeholder="0" oninput="updatePreview()"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel-modal" onclick="closeVenueModal()">취소</button>
+      <button class="btn-save" id="venue-save-btn" onclick="doSaveVenue()">등록하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 극장 관리 ──
+var allVenues = [];
+var editingVenueId = null;
+var rowCount = 0;
+
+async function loadVenues() {
+  var res = await sb.from('venues').select('*').order('created_at', {ascending: false});
+  allVenues = res.data || [];
+  renderVenues();
+}
+
+function renderVenues() {
+  if (!allVenues.length) {
+    document.getElementById('venues-list').innerHTML =
+      '<div class="empty">등록된 극장이 없습니다. 극장을 등록해 주세요.</div>';
+    return;
+  }
+  document.getElementById('venues-list').innerHTML = allVenues.map(function(v) {
+    var layout = v.layout || [];
+    var totalSeats = layout.reduce(function(sum, row) {
+      return sum + row.seats.filter(function(s) { return s !== 0; }).length;
+    }, 0);
+    return '<div class="venue-card">'
+      + '<div class="venue-card-header">'
+      + '<div><div class="venue-name">' + esc(v.name) + '</div>'
+      + '<div class="venue-addr">' + esc(v.address || '') + ' · 총 ' + totalSeats + '석</div></div>'
+      + '<div class="venue-actions">'
+      + '<button class="act-btn act-detail" onclick="openEditVenue('' + v.id + '')">수정</button>'
+      + '<button class="act-btn act-reject" onclick="deleteVenue('' + v.id + '')">삭제</button>'
+      + '</div></div>'
+      + '<div class="venue-body">'
+      + renderSeatPreview(layout)
+      + '</div></div>';
+  }).join('');
+}
+
+function renderSeatPreview(layout) {
+  if (!layout || !layout.length) return '<div style="color:var(--text3);font-size:12px">좌석 없음</div>';
+  return '<div class="seat-preview">'
+    + layout.map(function(row) {
+      return '<div class="sp-row"><div class="sp-lbl">' + row.row + '</div>'
+        + row.seats.map(function(s) {
+          if (s === 0) return '<div class="sp-aisle"></div>';
+          var cls = row.type === 'vip' ? 'sp-vip' : row.type === 'r' ? 'sp-r' : 'sp-s';
+          return '<div class="sp-seat ' + cls + '">' + s + '</div>';
+        }).join('') + '</div>';
+    }).join('') + '</div>';
+}
+
+function openVenueModal() {
+  editingVenueId = null;
+  rowCount = 0;
+  document.getElementById('venue-modal-title').textContent = '극장 등록';
+  document.getElementById('venue-save-btn').textContent = '등록하기';
+  document.getElementById('v-name').value = '';
+  document.getElementById('v-addr').value = '';
+  document.getElementById('v-price-vip').value = '';
+  document.getElementById('v-price-r').value = '';
+  document.getElementById('v-price-s').value = '';
+  document.getElementById('row-list').innerHTML = '';
+  updatePreview();
+  // 기본 행 3개
+  ['A','B','C'].forEach(function(r, i) {
+    addRowBuilder(r, i === 0 ? 'vip' : i === 1 ? 'r' : 's', 3, 3, '');
+  });
+  document.getElementById('venue-modal').classList.add('on');
+}
+
+function openEditVenue(id) {
+  var v = allVenues.find(function(v) { return v.id === id; });
+  if (!v) return;
+  editingVenueId = id;
+  rowCount = 0;
+  document.getElementById('venue-modal-title').textContent = '극장 수정';
+  document.getElementById('venue-save-btn').textContent = '저장하기';
+  document.getElementById('v-name').value = v.name || '';
+  document.getElementById('v-addr').value = v.address || '';
+  document.getElementById('v-price-vip').value = v.price_vip || '';
+  document.getElementById('v-price-r').value = v.price_r || '';
+  document.getElementById('v-price-s').value = v.price_s || '';
+  document.getElementById('row-list').innerHTML = '';
+  (v.layout || []).forEach(function(row) {
+    // 통로 위치 추출
+    var aisles = [];
+    row.seats.forEach(function(s, i) { if (s === 0) aisles.push(i + 1); });
+    var nonAisle = row.seats.filter(function(s) { return s !== 0; });
+    var half = Math.ceil(nonAisle.length / 2);
+    addRowBuilder(row.row, row.type, half, nonAisle.length - half, aisles.join(','));
+  });
+  updatePreview();
+  document.getElementById('venue-modal').classList.add('on');
+}
+
+function closeVenueModal() {
+  document.getElementById('venue-modal').classList.remove('on');
+}
+
+function addRowBuilder(rowName, type, left, right, aisles) {
+  rowCount++;
+  var id = 'rb-' + rowCount;
+  var row = rowName || String.fromCharCode(64 + rowCount);
+  var div = document.createElement('div');
+  div.className = 'rb-row';
+  div.id = id;
+  div.innerHTML =
+    '<input class="rb-inp" style="width:36px;text-align:center" value="' + row + '" placeholder="A" oninput="updatePreview()">'
+    + '<select class="rb-sel" style="width:60px" onchange="updatePreview()">'
+    + '<option value="vip"' + (type === 'vip' ? ' selected' : '') + '>VIP</option>'
+    + '<option value="r"' + (type === 'r' ? ' selected' : '') + '>R석</option>'
+    + '<option value="s"' + ((!type || type === 's') ? ' selected' : '') + '>S석</option>'
+    + '</select>'
+    + '<input class="rb-inp" style="width:60px;text-align:center" type="number" min="0" max="20" value="' + (left || 3) + '" placeholder="3" oninput="updatePreview()">'
+    + '<input class="rb-inp" style="width:60px;text-align:center" type="number" min="0" max="20" value="' + (right || 3) + '" placeholder="3" oninput="updatePreview()">'
+    + '<input class="rb-inp" style="flex:1" value="' + (aisles || '') + '" placeholder="예: 4,8 (없으면 공백)" oninput="updatePreview()">'
+    + '<button class="rb-del" onclick="removeRow('' + id + '')">✕</button>';
+  document.getElementById('row-list').appendChild(div);
+  updatePreview();
+}
+
+function removeRow(id) {
+  var el = document.getElementById(id);
+  if (el) el.remove();
+  updatePreview();
+}
+
+function buildLayout() {
+  var rows = document.getElementById('row-list').querySelectorAll('.rb-row');
+  var layout = [];
+  rows.forEach(function(row) {
+    var inputs = row.querySelectorAll('input');
+    var sel = row.querySelector('select');
+    var rowName = inputs[0].value.trim().toUpperCase() || 'A';
+    var type = sel.value;
+    var left = parseInt(inputs[1].value) || 0;
+    var right = parseInt(inputs[2].value) || 0;
+    var aisleStr = inputs[3].value.trim();
+    var aislePositions = aisleStr ? aisleStr.split(',').map(function(x) { return parseInt(x.trim()); }).filter(function(x) { return !isNaN(x); }) : [];
+    // 좌석 배열 생성 (0 = 통로)
+    var seats = [];
+    var seatNum = 0;
+    var total = left + right;
+    for (var i = 1; i <= total; i++) {
+      if (aislePositions.indexOf(i) > -1) { seats.push(0); }
+      seatNum++;
+      seats.push(seatNum);
+    }
+    layout.push({ row: rowName, type: type, seats: seats });
+  });
+  return layout;
+}
+
+function updatePreview() {
+  var layout = buildLayout();
+  var html = layout.map(function(row) {
+    return '<div class="preview-row">'
+      + '<div style="width:16px;font-size:9px;color:var(--text3);text-align:center">' + row.row + '</div>'
+      + row.seats.map(function(s) {
+        if (s === 0) return '<div class="p-aisle"></div>';
+        var cls = row.type === 'vip' ? 'p-vip' : row.type === 'r' ? 'p-r' : 'p-s';
+        return '<div class="p-seat ' + cls + '">' + s + '</div>';
+      }).join('') + '</div>';
+  }).join('');
+  document.getElementById('layout-preview').innerHTML = html || '<div style="color:var(--text3);font-size:12px">행을 추가하세요</div>';
+}
+
+async function doSaveVenue() {
+  var name = document.getElementById('v-name').value.trim();
+  if (!name) { showAl('극장명을 입력하세요', 'red'); return; }
+  var layout = buildLayout();
+  if (!layout.length) { showAl('좌석 행을 최소 1개 추가하세요', 'red'); return; }
+  var totalSeats = layout.reduce(function(sum, row) {
+    return sum + row.seats.filter(function(s) { return s !== 0; }).length;
+  }, 0);
+  var data = {
+    name: name,
+    address: document.getElementById('v-addr').value.trim() || null,
+    layout: layout,
+    total_seats: totalSeats,
+    price_vip: parseInt(document.getElementById('v-price-vip').value) || 0,
+    price_r: parseInt(document.getElementById('v-price-r').value) || 0,
+    price_s: parseInt(document.getElementById('v-price-s').value) || 0
+  };
+  var btn = document.getElementById('venue-save-btn');
+  btn.textContent = '저장 중...'; btn.disabled = true;
+  var res;
+  if (editingVenueId) {
+    res = await sb.from('venues').update(data).eq('id', editingVenueId);
+  } else {
+    res = await sb.from('venues').insert([data]);
+  }
+  btn.textContent = editingVenueId ? '저장하기' : '등록하기'; btn.disabled = false;
+  if (res.error) { showAl('저장 실패: ' + res.error.message, 'red'); return; }
+  showAl(editingVenueId ? '극장이 수정되었습니다' : '극장이 등록되었습니다', 'green');
+  closeVenueModal();
+  loadVenues();
+}
+
+async function deleteVenue(id) {
+  if (!confirm('이 극장을 삭제하시겠습니까?')) return;
+  var res = await sb.from('venues').delete().eq('id', id);
+  if (res.error) { showAl('삭제 실패: ' + res.error.message, 'red'); return; }
+  showAl('삭제되었습니다', 'green');
+  loadVenues();
+}
 </script>
 </body>
 </html>
