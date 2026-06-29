@@ -273,7 +273,8 @@ var EMOJIS=['🎭','🎶','🎵','🎤','🎪','🌟'];
 var ROLE_MAP={actor:'배우',staff:'스태프',director:'연출/감독'};
 
 // ── 초기화 ──
-sb.auth.getSession().then(function(r){
+async function init(){
+  var r=await sb.auth.getSession();
   if(!r.data||!r.data.session){
     document.getElementById('need-login').style.display='block';
     document.getElementById('pg-send').style.display='none';
@@ -286,18 +287,17 @@ sb.auth.getSession().then(function(r){
     '<div class="nav-av">'+name[0].toUpperCase()+'</div>'
     +'<span style="font-size:13px;color:#555">'+name+'</span>';
 
-  // 내 아티스트 프로필 확인
-  sb.from('artists').select('id,name,profile_image').eq('user_id',user.id).single().then(function(r){
-    if(r.data){
-      myArtist=r.data;
-      document.getElementById('tab-inbox').style.display='block';
-      loadInbox();
-    }
-  });
+  var ar=await sb.from('artists').select('id,name,profile_image').eq('user_id',user.id).limit(1);
+  if(ar.data&&ar.data[0]){
+    myArtist=ar.data[0];
+    document.getElementById('tab-inbox').style.display='block';
+    loadInbox();
+  }
 
   loadArtists();
   loadSent();
-});
+}
+init();
 
 // ── 탭 전환 ──
 function goTab(id,el){
@@ -503,7 +503,7 @@ function openSentDetail(id){
   var artistMap={};
   allArtists.forEach(function(a){artistMap[a.id]=a;});
   // DB에서 직접 가져오기
-  sb.from('fan_messages').select('*').eq('id',id).eq('sender_id',user.id).single().then(function(r){
+  sb.from('fan_messages').select('*').eq('id',id).eq('sender_id',user.id).maybeSingle().then(function(r){
     if(r.error||!r.data) return;
     var m=r.data;
     var a=artistMap[m.artist_id]||{name:'아티스트'};
@@ -528,7 +528,7 @@ function openSentDetail(id){
 
 // ── 상세 보기 (받은 메시지 - 아티스트) ──
 function openInboxDetail(id){
-  sb.from('fan_messages').select('*').eq('id',id).single().then(function(r){
+  sb.from('fan_messages').select('*').eq('id',id).maybeSingle().then(function(r){
     if(r.error||!r.data) return;
     currentMsg=r.data;
     var m=r.data;
