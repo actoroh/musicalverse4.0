@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MusicalVerse — 팬 메시지</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--purple:#534AB7;--purple-light:#EEEDFE;--purple-dark:#3C3489;
+  --teal:#0F6E56;--teal-light:#E1F5EE;
+  --pink:#D63384;--pink-light:#FCE4EF;
+  --amber:#854F0B;--amber-light:#FAEEDA;
+  --red:#D94040;--red-light:#FCEBEB;
+  --bg:#f7f7f5;--white:#fff;--text:#1a1a1a;--text2:#555;--text3:#999;
+  --border:#e0e0e0;--radius:10px;--radius-lg:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);min-height:100vh}
+nav{background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100}
+.nav-logo{font-size:18px;font-weight:800;color:var(--purple);cursor:pointer}
+.nav-logo span{color:var(--text)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.nav-av{width:30px;height:30px;border-radius:50%;background:var(--purple-light);
+  color:var(--purple);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+/* 페이지 탭 */
+.page-tabs{background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 24px;display:flex;position:sticky;top:56px;z-index:90}
+.ptab{padding:12px 16px;font-size:14px;font-weight:600;color:var(--text3);
+  cursor:pointer;border-bottom:2px solid transparent}
+.ptab.on{color:var(--purple);border-bottom-color:var(--purple)}
+
+.wrap{max-width:720px;margin:0 auto;padding:24px 20px}
+.pg{display:none}.pg.on{display:block}
+
+/* 아티스트 선택 */
+.artist-select-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.as-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius-lg);
+  padding:16px;text-align:center;cursor:pointer;transition:all .15s}
+.as-card:hover{border-color:var(--purple);box-shadow:0 4px 16px rgba(83,74,183,.1)}
+.as-card.selected{border-color:var(--purple);background:var(--purple-light)}
+.as-av{width:56px;height:56px;border-radius:50%;margin:0 auto 10px;
+  display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;
+  background:var(--purple-light);color:var(--purple);overflow:hidden}
+.as-av img{width:100%;height:100%;object-fit:cover}
+.as-name{font-size:14px;font-weight:700;margin-bottom:3px}
+.as-role{font-size:11px;color:var(--text3)}
+
+/* 메시지 작성 */
+.write-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;margin-bottom:16px}
+.write-to{display:flex;align-items:center;gap:12px;padding:12px 16px;
+  background:var(--purple-light);border-radius:var(--radius);margin-bottom:16px}
+.write-to-av{width:40px;height:40px;border-radius:50%;background:var(--purple);
+  color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+.write-to-av img{width:100%;height:100%;object-fit:cover}
+.write-to-name{font-size:14px;font-weight:700;color:var(--purple-dark)}
+.write-to-role{font-size:11px;color:var(--purple)}
+.field{margin-bottom:14px}
+.lbl{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px;display:block}
+.inp{width:100%;padding:11px 13px;font-size:14px;border:1.5px solid var(--border);
+  border-radius:var(--radius);outline:none;background:var(--white);color:var(--text);transition:border-color .15s}
+.inp:focus{border-color:var(--purple)}
+textarea.inp{resize:vertical;min-height:160px;line-height:1.7}
+.char-count{font-size:11px;color:var(--text3);text-align:right;margin-top:4px}
+.btn-send{width:100%;padding:13px;background:linear-gradient(135deg,var(--purple),var(--pink));
+  color:#fff;border:none;border-radius:var(--radius-lg);font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
+.btn-send:disabled{opacity:.4;cursor:not-allowed}
+
+/* 받은 메시지 목록 (아티스트) */
+.msg-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
+  margin-bottom:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s}
+.msg-card:hover{box-shadow:0 4px 16px rgba(83,74,183,.1)}
+.msg-card.unread{border-left:3px solid var(--purple)}
+.mc-top{display:flex;align-items:flex-start;gap:12px;padding:14px 16px}
+.mc-av{width:40px;height:40px;border-radius:50%;background:var(--purple-light);
+  color:var(--purple);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mc-info{flex:1}
+.mc-sender{font-size:14px;font-weight:700;margin-bottom:2px}
+.mc-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.mc-preview{font-size:12px;color:var(--text3);overflow:hidden;
+  white-space:nowrap;text-overflow:ellipsis}
+.mc-meta{text-align:right;flex-shrink:0}
+.mc-time{font-size:11px;color:var(--text3);margin-bottom:4px}
+.badge-unread{background:var(--purple);color:#fff;font-size:10px;
+  padding:2px 7px;border-radius:8px;font-weight:700}
+.badge-read{background:var(--teal-light);color:var(--teal);font-size:10px;
+  padding:2px 7px;border-radius:8px;font-weight:700}
+.badge-replied{background:var(--teal-light);color:var(--teal);font-size:10px;
+  padding:2px 7px;border-radius:8px;font-weight:700}
+
+/* 보낸 메시지 목록 (팬) */
+.sent-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
+  margin-bottom:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s}
+.sent-card:hover{box-shadow:0 4px 16px rgba(83,74,183,.1)}
+.sc-top{display:flex;gap:12px;padding:14px 16px;align-items:flex-start}
+.sc-artist-av{width:40px;height:40px;border-radius:50%;background:var(--purple-light);
+  color:var(--purple);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.sc-artist-av img{width:100%;height:100%;object-fit:cover}
+
+/* 상세 모달 */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;
+  display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.modal-bg.on{display:flex}
+.modal{background:var(--white);border-radius:20px;width:100%;max-width:540px;padding:28px;margin:auto}
+.modal-header{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.modal-from{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.modal-from-av{width:36px;height:36px;border-radius:50%;background:var(--purple-light);
+  color:var(--purple);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.modal-from-name{font-size:14px;font-weight:700}
+.modal-from-time{font-size:12px;color:var(--text3)}
+.modal-title-txt{font-size:18px;font-weight:800;margin-bottom:4px}
+.modal-content{font-size:14px;color:var(--text2);line-height:1.8;
+  background:var(--bg);border-radius:var(--radius);padding:16px;margin:14px 0}
+
+/* 답장 */
+.reply-section{margin-top:14px;border-top:1px solid var(--border);padding-top:14px}
+.reply-label{font-size:13px;font-weight:700;color:var(--purple);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.reply-box{background:var(--purple-light);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.reply-box .reply-from{font-size:12px;font-weight:700;color:var(--purple);margin-bottom:6px}
+.reply-box .reply-text{font-size:13px;color:var(--purple-dark);line-height:1.6}
+.reply-inp{width:100%;padding:11px 13px;font-size:14px;border:1.5px solid var(--border);
+  border-radius:var(--radius);outline:none;resize:none;min-height:100px;line-height:1.6;margin-bottom:8px}
+.reply-inp:focus{border-color:var(--purple)}
+.btn-reply{padding:10px 24px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius);font-size:14px;font-weight:700;cursor:pointer}
+.btn-close-modal{width:100%;padding:11px;background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius-lg);cursor:pointer;font-size:14px;color:var(--text2);margin-top:10px}
+
+/* 통계 */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px;text-align:center}
+.stat-num{font-size:22px;font-weight:800;color:var(--purple)}
+.stat-lbl{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* 로딩/빈상태 */
+.loading{text-align:center;padding:40px;color:var(--text3)}
+.spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--purple);
+  border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:50px 20px;color:var(--text3)}
+.empty-icon{font-size:44px;margin-bottom:12px}
+
+/* 알림 */
+.alert{position:fixed;top:70px;right:20px;border-radius:var(--radius);
+  padding:11px 16px;font-size:13px;display:none;z-index:300;
+  box-shadow:0 4px 16px rgba(0,0,0,.15);min-width:200px}
+.alert.on{display:block}
+.alert.green{background:var(--teal-light);color:var(--teal)}
+.alert.red{background:var(--red-light);color:var(--red)}
+.alert.blue{background:var(--purple-light);color:var(--purple)}
+
+/* 로그인 필요 */
+.need-login{text-align:center;padding:80px 20px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo" onclick="location.href='index.html'"><span>Musical</span>Verse</div>
+  <div class="nav-right" id="nav-right">
+    <button style="padding:7px 16px;background:var(--purple);color:#fff;border:none;
+      border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer"
+      onclick="location.href='index.html'">로그인</button>
+  </div>
+</nav>
+
+<div class="page-tabs">
+  <div class="ptab on" onclick="goTab('send',this)">💌 팬레터 보내기</div>
+  <div class="ptab" onclick="goTab('sent',this)">📬 보낸 메시지</div>
+  <div class="ptab" id="tab-inbox" style="display:none" onclick="goTab('inbox',this)">📩 받은 메시지 <span id="unread-badge" style="background:var(--red);color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px;display:none">0</span></div>
+</div>
+
+<div class="alert" id="alert"></div>
+
+<div class="wrap">
+
+  <!-- 로그인 필요 -->
+  <div id="need-login" style="display:none" class="need-login">
+    <div style="font-size:52px;margin-bottom:16px">💌</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:8px">로그인이 필요합니다</div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:20px">팬레터는 로그인 후 이용할 수 있습니다</div>
+    <button style="padding:12px 28px;background:var(--purple);color:#fff;border:none;
+      border-radius:var(--radius-lg);font-size:14px;font-weight:700;cursor:pointer"
+      onclick="location.href='index.html'">로그인 / 회원가입</button>
+  </div>
+
+  <!-- 팬레터 보내기 -->
+  <div class="pg on" id="pg-send">
+    <div style="font-size:20px;font-weight:800;margin-bottom:4px">팬레터 보내기</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:20px">좋아하는 배우/스태프에게 마음을 전해보세요</div>
+
+    <!-- 아티스트 선택 -->
+    <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px">아티스트 선택</div>
+    <div id="artist-list">
+      <div class="loading"><div class="spinner"></div>아티스트를 불러오는 중</div>
+    </div>
+
+    <!-- 메시지 작성 -->
+    <div id="write-section" style="display:none">
+      <div class="write-card">
+        <div class="write-to" id="write-to"></div>
+        <div class="field">
+          <label class="lbl">제목</label>
+          <input class="inp" id="msg-title" placeholder="팬레터 제목을 입력하세요" maxlength="100">
+        </div>
+        <div class="field">
+          <label class="lbl">내용</label>
+          <textarea class="inp" id="msg-content" placeholder="아티스트에게 전하고 싶은 말을 자유롭게 작성하세요.&#10;&#10;진심 어린 응원과 감사의 마음을 전해보세요 💜"
+            maxlength="2000" oninput="updateCount()"></textarea>
+          <div class="char-count"><span id="char-count">0</span>/2000</div>
+        </div>
+        <button class="btn-send" id="btn-send" onclick="doSend()">💌 팬레터 보내기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 보낸 메시지 -->
+  <div class="pg" id="pg-sent">
+    <div style="font-size:20px;font-weight:800;margin-bottom:20px">보낸 메시지</div>
+    <div id="sent-list">
+      <div class="loading"><div class="spinner"></div>불러오는 중</div>
+    </div>
+  </div>
+
+  <!-- 받은 메시지 (아티스트용) -->
+  <div class="pg" id="pg-inbox">
+    <div style="font-size:20px;font-weight:800;margin-bottom:16px">받은 팬레터</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="st-total">0</div><div class="stat-lbl">전체</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-unread" style="color:var(--red)">0</div><div class="stat-lbl">미읽음</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-replied" style="color:var(--teal)">0</div><div class="stat-lbl">답장 완료</div></div>
+    </div>
+    <div id="inbox-list">
+      <div class="loading"><div class="spinner"></div>불러오는 중</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 상세 모달 -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this) closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-from">
+        <div class="modal-from-av" id="modal-av"></div>
+        <div>
+          <div class="modal-from-name" id="modal-from"></div>
+          <div class="modal-from-time" id="modal-time"></div>
+        </div>
+      </div>
+      <div class="modal-title-txt" id="modal-title"></div>
+    </div>
+    <div class="modal-content" id="modal-content"></div>
+
+    <!-- 답장 섹션 -->
+    <div class="reply-section" id="reply-section"></div>
+
+    <button class="btn-close-modal" onclick="closeModal()">닫기</button>
+  </div>
+</div>
+
+<script>
+var SUPA_URL='https://qyrgfjshsczdpxaeznkc.supabase.co';
+var SUPA_KEY='sb_publishable_A6MmsqE9y-ymBKNKOwR2EA_PuLX5mLB';
+var sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+
+var user=null, myArtist=null, selectedArtist=null;
+var allArtists=[], currentMsg=null;
+var EMOJIS=['🎭','🎶','🎵','🎤','🎪','🌟'];
+var ROLE_MAP={actor:'배우',staff:'스태프',director:'연출/감독'};
+
+// ── 초기화 ──
+sb.auth.getSession().then(function(r){
+  if(!r.data||!r.data.session){
+    document.getElementById('need-login').style.display='block';
+    document.getElementById('pg-send').style.display='none';
+    return;
+  }
+  user=r.data.session.user;
+  var meta=user.user_metadata||{};
+  var name=meta.name||user.email.split('@')[0];
+  document.getElementById('nav-right').innerHTML=
+    '<div class="nav-av">'+name[0].toUpperCase()+'</div>'
+    +'<span style="font-size:13px;color:#555">'+name+'</span>';
+
+  // 내 아티스트 프로필 확인
+  sb.from('artists').select('id,name,profile_image').eq('user_id',user.id).single().then(function(r){
+    if(r.data){
+      myArtist=r.data;
+      document.getElementById('tab-inbox').style.display='block';
+      loadInbox();
+    }
+  });
+
+  loadArtists();
+  loadSent();
+});
+
+// ── 탭 전환 ──
+function goTab(id,el){
+  document.querySelectorAll('.ptab').forEach(function(t){t.classList.remove('on')});
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on')});
+  if(el) el.classList.add('on');
+  document.getElementById('pg-'+id).classList.add('on');
+}
+
+// ── 아티스트 목록 ──
+async function loadArtists(){
+  try{
+    var res=await sb.from('artists')
+      .select('id,name,role,specialty,profile_image,follower_count')
+      .order('follower_count',{ascending:false});
+    if(res.error) throw new Error(res.error.message);
+    allArtists=(res.data||[]).map(function(a){return Object.assign({},a);});
+    renderArtists();
+  } catch(e){
+    document.getElementById('artist-list').innerHTML='<div class="empty">'+e.message+'</div>';
+  }
+}
+
+function renderArtists(){
+  if(!allArtists.length){
+    document.getElementById('artist-list').innerHTML=
+      '<div class="empty"><div class="empty-icon">🎭</div>'
+      +'<div style="font-size:14px;font-weight:700;margin-bottom:6px">등록된 아티스트가 없습니다</div>'
+      +'<div style="font-size:13px">아티스트 페이지에서 프로필을 먼저 등록하세요</div></div>';
+    return;
+  }
+  document.getElementById('artist-list').innerHTML=
+    '<div class="artist-select-grid">'+allArtists.map(function(a,i){
+      var emoji=EMOJIS[i%EMOJIS.length];
+      var isSelected=selectedArtist&&selectedArtist.id===a.id;
+      return '<div class="as-card'+(isSelected?' selected':'')+'" onclick="selectArtist(\''+a.id+'\')">'
+        +'<div class="as-av">'+(a.profile_image?'<img src="'+a.profile_image+'" alt="">':emoji)+'</div>'
+        +'<div class="as-name">'+esc(a.name)+'</div>'
+        +'<div class="as-role">'+(ROLE_MAP[a.role]||'아티스트')+'</div>'
+        +(a.specialty?'<div style="font-size:11px;color:var(--purple);margin-top:4px">'+esc(a.specialty)+'</div>':'')
+        +'</div>';
+    }).join('')+'</div>';
+}
+
+function selectArtist(id){
+  selectedArtist=allArtists.find(function(a){return a.id===id});
+  if(!selectedArtist) return;
+  renderArtists();
+  var emoji=EMOJIS[allArtists.indexOf(selectedArtist)%EMOJIS.length];
+  document.getElementById('write-to').innerHTML=
+    '<div class="write-to-av">'+(selectedArtist.profile_image?'<img src="'+selectedArtist.profile_image+'" alt="">':emoji)+'</div>'
+    +'<div><div class="write-to-name">To. '+esc(selectedArtist.name)+'</div>'
+    +'<div class="write-to-role">'+(ROLE_MAP[selectedArtist.role]||'아티스트')+'에게 팬레터를 보냅니다</div></div>';
+  document.getElementById('write-section').style.display='block';
+  document.getElementById('write-section').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── 글자 수 카운트 ──
+function updateCount(){
+  var v=document.getElementById('msg-content').value;
+  document.getElementById('char-count').textContent=v.length;
+}
+
+// ── 팬레터 보내기 ──
+function doSend(){
+  if(!user){showAl('로그인이 필요합니다','red');return;}
+  if(!selectedArtist){showAl('아티스트를 선택하세요','red');return;}
+  var title=document.getElementById('msg-title').value.trim();
+  var content=document.getElementById('msg-content').value.trim();
+  if(!title){showAl('제목을 입력하세요','red');return;}
+  if(!content){showAl('내용을 입력하세요','red');return;}
+  var meta=user.user_metadata||{};
+  var senderName=meta.name||user.email.split('@')[0];
+  var btn=document.getElementById('btn-send');
+  btn.textContent='보내는 중...';btn.disabled=true;
+  sb.from('fan_messages').insert([{
+    sender_id:user.id,
+    artist_id:selectedArtist.id,
+    sender_name:senderName,
+    title:title,
+    content:content,
+    is_read:false,
+    is_replied:false
+  }]).then(function(r){
+    btn.textContent='💌 팬레터 보내기';btn.disabled=false;
+    if(r.error){showAl('전송 실패: '+r.error.message,'red');return;}
+    document.getElementById('msg-title').value='';
+    document.getElementById('msg-content').value='';
+    document.getElementById('char-count').textContent='0';
+    selectedArtist=null;
+    document.getElementById('write-section').style.display='none';
+    renderArtists();
+    showAl('💌 팬레터가 전송되었습니다!','green');
+    loadSent();
+  });
+}
+
+// ── 보낸 메시지 ──
+async function loadSent(){
+  try{
+    var res=await sb.from('fan_messages')
+      .select('id,created_at,artist_id,title,content,is_read,is_replied,reply_content,replied_at,sender_name')
+      .eq('sender_id',user.id)
+      .order('created_at',{ascending:false});
+    if(res.error) throw new Error(res.error.message);
+    var msgs=(res.data||[]).map(function(m){return Object.assign({},m);});
+    renderSent(msgs);
+  } catch(e){
+    document.getElementById('sent-list').innerHTML='<div class="empty">'+e.message+'</div>';
+  }
+}
+
+function renderSent(msgs){
+  if(!msgs.length){
+    document.getElementById('sent-list').innerHTML=
+      '<div class="empty"><div class="empty-icon">📬</div>'
+      +'<div style="font-size:14px;font-weight:700;margin-bottom:6px">보낸 팬레터가 없습니다</div>'
+      +'<div style="font-size:13px">좋아하는 아티스트에게 첫 팬레터를 보내보세요</div></div>';
+    return;
+  }
+  var artistMap={};
+  allArtists.forEach(function(a){artistMap[a.id]=a;});
+  document.getElementById('sent-list').innerHTML=msgs.map(function(m,i){
+    var a=artistMap[m.artist_id]||{name:'아티스트',role:'actor'};
+    var emoji=EMOJIS[i%EMOJIS.length];
+    var statusBadge=m.is_replied
+      ?'<span class="badge-replied">💬 답장 완료</span>'
+      :m.is_read?'<span class="badge-read">✓ 읽음</span>'
+      :'<span style="font-size:10px;color:var(--text3)">전송됨</span>';
+    return '<div class="sent-card" onclick="openSentDetail(\''+m.id+'\')">'
+      +'<div class="sc-top">'
+      +'<div class="sc-artist-av">'+(a.profile_image?'<img src="'+a.profile_image+'" alt="">':emoji)+'</div>'
+      +'<div style="flex:1">'
+      +'<div style="font-size:12px;color:var(--text3);margin-bottom:2px">To. '+esc(a.name)+'</div>'
+      +'<div style="font-size:14px;font-weight:700;margin-bottom:3px">'+esc(m.title)+'</div>'
+      +'<div style="font-size:12px;color:var(--text3);overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+esc(m.content)+'</div>'
+      +'</div>'
+      +'<div style="text-align:right;flex-shrink:0;padding-left:10px">'
+      +'<div style="font-size:11px;color:var(--text3);margin-bottom:4px">'+timeAgo(m.created_at)+'</div>'
+      +statusBadge+'</div></div></div>';
+  }).join('');
+}
+
+// ── 받은 메시지 (아티스트) ──
+async function loadInbox(){
+  if(!myArtist) return;
+  try{
+    var res=await sb.from('fan_messages')
+      .select('id,created_at,sender_id,sender_name,title,content,is_read,is_replied,reply_content,replied_at')
+      .eq('artist_id',myArtist.id)
+      .order('created_at',{ascending:false});
+    if(res.error) throw new Error(res.error.message);
+    var msgs=(res.data||[]).map(function(m){return Object.assign({},m);});
+
+    var total=msgs.length;
+    var unread=msgs.filter(function(m){return !m.is_read}).length;
+    var replied=msgs.filter(function(m){return m.is_replied}).length;
+    document.getElementById('st-total').textContent=total;
+    document.getElementById('st-unread').textContent=unread;
+    document.getElementById('st-replied').textContent=replied;
+
+    if(unread>0){
+      var badge=document.getElementById('unread-badge');
+      badge.style.display='inline';badge.textContent=unread;
+    }
+
+    renderInbox(msgs);
+  } catch(e){
+    document.getElementById('inbox-list').innerHTML='<div class="empty">'+e.message+'</div>';
+  }
+}
+
+function renderInbox(msgs){
+  if(!msgs.length){
+    document.getElementById('inbox-list').innerHTML=
+      '<div class="empty"><div class="empty-icon">💌</div>'
+      +'<div style="font-size:14px;font-weight:700;margin-bottom:6px">받은 팬레터가 없습니다</div>'
+      +'<div style="font-size:13px">팬들이 보낸 메시지가 여기에 표시됩니다</div></div>';
+    return;
+  }
+  document.getElementById('inbox-list').innerHTML=msgs.map(function(m){
+    var name=m.sender_name||'팬';
+    var statusBadge=m.is_replied
+      ?'<span class="badge-replied">💬 답장 완료</span>'
+      :m.is_read?'<span class="badge-read">읽음</span>'
+      :'<span class="badge-unread">NEW</span>';
+    return '<div class="msg-card'+(m.is_read?'':' unread')+'" onclick="openInboxDetail(\''+m.id+'\')">'
+      +'<div class="mc-top">'
+      +'<div class="mc-av">'+name[0].toUpperCase()+'</div>'
+      +'<div class="mc-info">'
+      +'<div class="mc-sender">'+esc(name)+'</div>'
+      +'<div class="mc-title">'+esc(m.title)+'</div>'
+      +'<div class="mc-preview">'+esc(m.content)+'</div>'
+      +'</div>'
+      +'<div class="mc-meta">'
+      +'<div class="mc-time">'+timeAgo(m.created_at)+'</div>'
+      +statusBadge+'</div></div></div>';
+  }).join('');
+}
+
+// ── 상세 보기 (보낸 메시지) ──
+function openSentDetail(id){
+  var artistMap={};
+  allArtists.forEach(function(a){artistMap[a.id]=a;});
+  // DB에서 직접 가져오기
+  sb.from('fan_messages').select('*').eq('id',id).eq('sender_id',user.id).single().then(function(r){
+    if(r.error||!r.data) return;
+    var m=r.data;
+    var a=artistMap[m.artist_id]||{name:'아티스트'};
+    document.getElementById('modal-av').textContent=(m.sender_name||'나')[0].toUpperCase();
+    document.getElementById('modal-from').textContent='나 → '+a.name;
+    document.getElementById('modal-time').textContent=timeAgo(m.created_at);
+    document.getElementById('modal-title').textContent=m.title;
+    document.getElementById('modal-content').textContent=m.content;
+
+    var replyHtml='';
+    if(m.is_replied&&m.reply_content){
+      replyHtml='<div class="reply-label">💬 '+esc(a.name)+'의 답장</div>'
+        +'<div class="reply-box"><div class="reply-from">'+esc(a.name)+'</div>'
+        +'<div class="reply-text">'+esc(m.reply_content)+'</div></div>';
+    } else {
+      replyHtml='<div style="font-size:13px;color:var(--text3);text-align:center;padding:12px">아직 답장이 없습니다</div>';
+    }
+    document.getElementById('reply-section').innerHTML=replyHtml;
+    document.getElementById('modal-bg').classList.add('on');
+  });
+}
+
+// ── 상세 보기 (받은 메시지 - 아티스트) ──
+function openInboxDetail(id){
+  sb.from('fan_messages').select('*').eq('id',id).single().then(function(r){
+    if(r.error||!r.data) return;
+    currentMsg=r.data;
+    var m=r.data;
+    var name=m.sender_name||'팬';
+    document.getElementById('modal-av').textContent=name[0].toUpperCase();
+    document.getElementById('modal-from').textContent=name+' → 나';
+    document.getElementById('modal-time').textContent=timeAgo(m.created_at);
+    document.getElementById('modal-title').textContent=m.title;
+    document.getElementById('modal-content').textContent=m.content;
+
+    // 읽음 처리
+    if(!m.is_read){
+      sb.from('fan_messages').update({is_read:true}).eq('id',id).then(function(){
+        loadInbox();
+      });
+    }
+
+    // 답장 섹션
+    var replyHtml='<div class="reply-label">💬 답장하기</div>';
+    if(m.is_replied&&m.reply_content){
+      replyHtml='<div class="reply-label">💬 내가 보낸 답장</div>'
+        +'<div class="reply-box"><div class="reply-from">나</div>'
+        +'<div class="reply-text">'+esc(m.reply_content)+'</div></div>'
+        +'<div style="font-size:12px;color:var(--text3);margin-top:6px">'+timeAgo(m.replied_at)+'에 답장함</div>';
+    } else {
+      replyHtml+='<textarea class="reply-inp" id="reply-inp" placeholder="팬에게 답장을 보내세요..."></textarea>'
+        +'<button class="btn-reply" onclick="doReply(\''+id+'\')">💌 답장 보내기</button>';
+    }
+    document.getElementById('reply-section').innerHTML=replyHtml;
+    document.getElementById('modal-bg').classList.add('on');
+  });
+}
+
+// ── 답장 ──
+function doReply(msgId){
+  var content=document.getElementById('reply-inp').value.trim();
+  if(!content){showAl('답장 내용을 입력하세요','red');return;}
+  var btn=document.querySelector('.btn-reply');
+  btn.textContent='보내는 중...';btn.disabled=true;
+  sb.from('fan_messages').update({
+    is_replied:true,
+    reply_content:content,
+    replied_at:new Date().toISOString()
+  }).eq('id',msgId).then(function(r){
+    btn.textContent='💌 답장 보내기';btn.disabled=false;
+    if(r.error){showAl('답장 실패: '+r.error.message,'red');return;}
+    showAl('답장이 전송되었습니다','green');
+    closeModal();
+    loadInbox();
+  });
+}
+
+function closeModal(){document.getElementById('modal-bg').classList.remove('on');}
+
+// ── 유틸 ──
+function timeAgo(d){
+  if(!d) return '';
+  var diff=(Date.now()-new Date(d))/1000;
+  if(diff<60) return '방금 전';
+  if(diff<3600) return Math.floor(diff/60)+'분 전';
+  if(diff<86400) return Math.floor(diff/3600)+'시간 전';
+  return Math.floor(diff/86400)+'일 전';
+}
+function showAl(msg,type){
+  var a=document.getElementById('alert');
+  a.textContent=msg;a.className='alert on '+(type||'green');
+  setTimeout(function(){a.className='alert'},3500);
+}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
