@@ -607,8 +607,8 @@ function renderVenues() {
       + '<div><div class="venue-name">' + esc(v.name) + '</div>'
       + '<div class="venue-addr">' + esc(v.address || '') + ' · 총 ' + totalSeats + '석</div></div>'
       + '<div class="venue-actions">'
-      + '<button class="act-btn act-detail" onclick="openEditVenue('' + v.id + '')">수정</button>'
-      + '<button class="act-btn act-reject" onclick="deleteVenue('' + v.id + '')">삭제</button>'
+      + '<button class="act-btn act-detail" onclick="openEditVenue(\'' + v.id + '\')">수정</button>'
+      + '<button class="act-btn act-reject" onclick="deleteVenue(\'' + v.id + '\')">삭제</button>'
       + '</div></div>'
       + '<div class="venue-body">'
       + renderSeatPreview(layout)
@@ -694,7 +694,7 @@ function addRowBuilder(rowName, type, left, right, aisles) {
     + '<input class="rb-inp" style="width:60px;text-align:center" type="number" min="0" max="20" value="' + (left || 3) + '" placeholder="3" oninput="updatePreview()">'
     + '<input class="rb-inp" style="width:60px;text-align:center" type="number" min="0" max="20" value="' + (right || 3) + '" placeholder="3" oninput="updatePreview()">'
     + '<input class="rb-inp" style="flex:1" value="' + (aisles || '') + '" placeholder="예: 4,8 (없으면 공백)" oninput="updatePreview()">'
-    + '<button class="rb-del" onclick="removeRow('' + id + '')">✕</button>';
+    + '<button class="rb-del" onclick="removeRow(\'' + id + '\')">✕</button>';
   document.getElementById('row-list').appendChild(div);
   updatePreview();
 }
