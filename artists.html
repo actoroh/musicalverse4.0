@@ -389,8 +389,8 @@ async function init(){
     // myArtist를 await로 보장 — openDetail 전에 반드시 완료
     var ar=await sb.from('artists')
       .select('id,name,role,specialty,agency,debut_year,sns_instagram,bio,profile_image,cover_image')
-      .eq('user_id',user.id).maybeSingle();
-    if(ar.data) myArtist=ar.data;
+      .eq('user_id',user.id).limit(1);
+    if(ar.data&&ar.data[0]) myArtist=ar.data[0];
   }
   loadArtists();
   loadAllFeed();
@@ -513,8 +513,8 @@ async function openDetail(id){
   if(user&&!myArtist){
     var ar=await sb.from('artists')
       .select('id,name,role,specialty,agency,debut_year,sns_instagram,bio,profile_image,cover_image')
-      .eq('user_id',user.id).maybeSingle();
-    if(ar.data) myArtist=ar.data;
+      .eq('user_id',user.id).limit(1);
+    if(ar.data&&ar.data[0]) myArtist=ar.data[0];
   }
 
   // 본인 글쓰기 박스 + 수정 버튼
@@ -905,8 +905,8 @@ async function doRegister(){
     // 등록 후 myArtist 갱신
     sb.from('artists')
       .select('id,name,role,specialty,agency,debut_year,sns_instagram,bio,profile_image,cover_image')
-      .eq('user_id',user.id).maybeSingle().then(function(res){
-      if(res.data) myArtist=res.data;
+      .eq('user_id',user.id).limit(1).then(function(res){
+      if(res.data&&res.data[0]) myArtist=res.data[0];
     });
     closeRegister();
     showAl('아티스트 프로필이 등록되었습니다','green');
