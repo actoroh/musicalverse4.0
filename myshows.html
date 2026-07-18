@@ -176,7 +176,15 @@ select.inp{appearance:auto;background:var(--white)}
       <div class="field"><label class="lbl">공연 시간</label><input class="inp" id="e-time" placeholder="예: 19:30"></div>
       <div class="field"><label class="lbl">총 좌석 수</label><input class="inp" id="e-seats" type="number"></div>
     </div>
-    <div class="field"><label class="lbl">공연 장소</label><input class="inp" id="e-venue"></div>
+    <div class="field">
+      <label class="lbl">공연 장소</label>
+      <select class="inp" id="e-venue-select" onchange="onEditVenueChange(this)" style="margin-bottom:6px">
+        <option value="">-- 등록된 극장 선택 --</option>
+        <option value="__direct__">직접 입력</option>
+      </select>
+      <input class="inp" id="e-venue" placeholder="공연장 이름 직접 입력" style="display:none">
+      <div id="e-venue-info" style="font-size:12px;color:#666;margin-top:4px"></div>
+    </div>
     <div class="field"><label class="lbl">팀명</label><input class="inp" id="e-team"></div>
     <div class="field"><label class="lbl">장르</label><input class="inp" id="e-genre" placeholder="예: 창작 뮤지컬, 가족"></div>
     <div class="grid2">
@@ -217,6 +225,52 @@ var myShows=[];
 var EMOJIS=['🎭','🎶','🎵','🎤','🎪','🌟'];
 
 // ── 초기화 ──
+// ── 극장 목록 ──
+var allVenues = [];
+async function loadVenuesForEdit(){
+  var res = await sb.from('venues').select('id,name,address,total_seats,price_vip,price_r,price_s').order('name');
+  allVenues = res.data || [];
+  var sel = document.getElementById('e-venue-select');
+  if(!sel) return;
+  // 기존 옵션 유지하고 극장 목록 삽입
+  var opts = '<option value="">-- 등록된 극장 선택 --</option>'
+    + allVenues.map(function(v){
+        return '<option value="'+v.id+'">'+v.name+(v.address?' ('+v.address+')':'')+'</option>';
+      }).join('')
+    + '<option value="__direct__">✏️ 직접 입력</option>';
+  sel.innerHTML = opts;
+}
+
+function onEditVenueChange(sel){
+  var directInp = document.getElementById('e-venue');
+  var info = document.getElementById('e-venue-info');
+  if(sel.value === '__direct__'){
+    directInp.style.display = 'block';
+    directInp.value = '';
+    info.innerHTML = '';
+  } else if(sel.value){
+    directInp.style.display = 'none';
+    var v = allVenues.find(function(v){ return v.id === sel.value; });
+    if(v){
+      directInp.value = v.name;
+      info.innerHTML = '📍 '+(v.address||'')
+        +' · 총 '+v.total_seats+'석'
+        +(v.price_vip?' · VIP '+v.price_vip.toLocaleString()+'원':'')
+        +(v.price_r?' · R '+v.price_r.toLocaleString()+'원':'')
+        +(v.price_s?' · S '+v.price_s.toLocaleString()+'원':'');
+      // 가격 자동 채우기
+      if(v.price_vip) document.getElementById('e-vip').value = v.price_vip;
+      if(v.price_r) document.getElementById('e-gen').value = v.price_r;
+      if(v.price_s) document.getElementById('e-stu').value = v.price_s;
+      if(v.total_seats) document.getElementById('e-seats').value = v.total_seats;
+    }
+  } else {
+    directInp.style.display = 'none';
+    directInp.value = '';
+    info.innerHTML = '';
+  }
+}
+
 sb.auth.getSession().then(function(r){
   if(!r.data||!r.data.session){
     document.getElementById('need-login').style.display='block';
@@ -230,6 +284,7 @@ sb.auth.getSession().then(function(r){
     +'<span style="font-size:13px;color:#555">'+name+'</span>';
   document.getElementById('main').style.display='block';
   loadMyShows();
+    loadVenuesForEdit();
 });
 
 // ── 내 공연 불러오기 ──
@@ -327,7 +382,31 @@ function openEdit(id){
   document.getElementById('e-de').value=s.date_end||'';
   document.getElementById('e-time').value=s.time||'';
   document.getElementById('e-seats').value=s.total_seats||'';
-  document.getElementById('e-venue').value=s.venue||'';
+  // venue 복원 — venue_id 있으면 드롭다운, 없으면 직접입력
+  var vSel = document.getElementById('e-venue-select');
+  var vInp = document.getElementById('e-venue');
+  var vInfo = document.getElementById('e-venue-info');
+  var matchedVenue = s.venue_id ? allVenues.find(function(v){ return v.id === s.venue_id; }) : null;
+  if(!matchedVenue && s.venue){
+    // venue 이름으로 매칭 시도
+    matchedVenue = allVenues.find(function(v){ return v.name === s.venue; });
+  }
+  if(matchedVenue){
+    vSel.value = matchedVenue.id;
+    vInp.style.display = 'none';
+    vInp.value = matchedVenue.name;
+    vInfo.innerHTML = '📍 '+(matchedVenue.address||'')+' · 총 '+matchedVenue.total_seats+'석';
+  } else if(s.venue){
+    vSel.value = '__direct__';
+    vInp.style.display = 'block';
+    vInp.value = s.venue||'';
+    vInfo.innerHTML = '';
+  } else {
+    vSel.value = '';
+    vInp.style.display = 'none';
+    vInp.value = '';
+    vInfo.innerHTML = '';
+  }
   document.getElementById('e-team').value=s.team_name||'';
   document.getElementById('e-genre').value=s.genre||'';
   document.getElementById('e-vip').value=s.price_vip||'';
@@ -355,7 +434,12 @@ function doSave(){
     date_end:document.getElementById('e-de').value||null,
     time:document.getElementById('e-time').value.trim(),
     total_seats:parseInt(document.getElementById('e-seats').value)||null,
-    venue:document.getElementById('e-venue').value.trim(),
+    venue:document.getElementById('e-venue').value.trim()||
+      (function(){ var sel=document.getElementById('e-venue-select');
+        var v=allVenues.find(function(v){ return v.id===sel.value; });
+        return v?v.name:''; })(),
+    venue_id:(function(){ var sel=document.getElementById('e-venue-select');
+      return (sel.value&&sel.value!=='__direct__')?sel.value:null; })(),
     team_name:document.getElementById('e-team').value.trim(),
     genre:document.getElementById('e-genre').value.trim(),
     price_vip:parseInt(document.getElementById('e-vip').value)||null,

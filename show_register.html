@@ -234,10 +234,19 @@ sb.auth.getSession().then(function(r){
 
 function onVenueChange(sel){
   var vid = sel.value;
+  var directWrap = document.getElementById('venue-direct-wrap');
+  var info = document.getElementById('venue-info');
+  if(vid === '__direct__'){
+    if(directWrap) directWrap.style.display = 'block';
+    fd.venue_id = null;
+    fd.venue = '';
+    info.innerHTML = '';
+    return;
+  }
+  if(directWrap) directWrap.style.display = 'none';
   var v = allVenues.find(function(v){ return v.id === vid; });
   fd.venue_id = vid || null;
   fd.venue = v ? v.name : '';
-  var info = document.getElementById('venue-info');
   if(v){
     // 극장 정보 표시
     info.innerHTML = '📍 '+esc(v.address||'')
@@ -517,7 +526,9 @@ function next(cur){
     if(!fd.title){showAl('공연명을 입력하세요','red');return;}
     if(!fd.date_start){showAl('공연 시작일을 입력하세요','red');return;}
     if(!fd.time){showAl('공연 시간을 입력하세요','red');return;}
-    if(!fd.venue_id&&!fd.venue){showAl('공연 장소를 선택하세요','red');return;}
+    var directInp = document.getElementById('f-venue-direct');
+    if(directInp && directInp.style.display!=='none') fd.venue = directInp.value.trim();
+    if(!fd.venue_id&&!fd.venue){showAl('공연 장소를 선택하거나 직접 입력하세요','red');return;}
     if(genres.length===0){showAl('장르를 하나 이상 선택하세요','red');return;}
   }
   if(cur===2){
