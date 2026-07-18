@@ -114,6 +114,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .stat-val{font-size:12px;color:var(--text3);min-width:40px;text-align:right}
 
 
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px;text-align:center}
+.stat-num{font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px}
+.stat-label{font-size:11px;color:var(--text3)}
+
 /* 극장 관리 */
 .venue-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
 .venue-card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
@@ -289,6 +294,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
     <div class="pg" id="pg-users">
       <div class="page-header">
         <div class="page-title">회원 관리</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="user-search" placeholder="이름/이메일 검색..." oninput="filterUsers()"
+            style="padding:7px 13px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);outline:none;width:200px">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+        <div class="stat-card"><div class="stat-num" id="u-total">-</div><div class="stat-label">전체 회원</div></div>
+        <div class="stat-card"><div class="stat-num" id="u-fan" style="color:var(--purple)">-</div><div class="stat-label">일반 팬</div></div>
+        <div class="stat-card"><div class="stat-num" id="u-team" style="color:var(--teal)">-</div><div class="stat-label">공연팀/배우</div></div>
+        <div class="stat-card"><div class="stat-num" id="u-admin" style="color:var(--amber)">-</div><div class="stat-label">관리자</div></div>
       </div>
       <div class="table-card">
         <div class="table-head">
@@ -512,25 +527,44 @@ function updateStatus(id,status,ctx){
 }
 
 // ── 회원 관리 ──
-function loadUsers(){
-  // Supabase auth.users는 service_role 키 필요 — shows 테이블 작성자 기반으로 표시
-  sb.from('shows').select('user_id, team_name, created_at').order('created_at',{ascending:false}).then(function(r){
-    if(r.error||!r.data.length){
-      document.getElementById('users-list').innerHTML='<div class="empty">데이터가 없습니다<br><span style="font-size:12px">회원 전체 목록은 Supabase 대시보드 Authentication > Users에서 확인하세요</span></div>';
-      return;
-    }
-    // 중복 제거
-    var seen={};
-    var unique=r.data.filter(function(u){if(seen[u.user_id]) return false;seen[u.user_id]=true;return true;});
-    document.getElementById('users-list').innerHTML=unique.map(function(u){
-      return '<div class="table-row">'
-        +'<div class="td" style="flex:2">'+esc(u.user_id.slice(0,8))+'...</div>'
-        +'<div class="td" style="flex:1">'+esc(u.team_name||'-')+'</div>'
-        +'<div class="td" style="flex:1"><span class="badge b-live">공연팀</span></div>'
-        +'<div class="td" style="flex:1">'+new Date(u.created_at).toLocaleDateString('ko-KR')+'</div>'
-        +'</div>';
-    }).join('');
+var allUsers = [];
+
+async function loadUsers(){
+  var res = await sb.from('profiles')
+    .select('id,email,name,role,created_at')
+    .order('created_at',{ascending:false});
+  if(res.error){
+    document.getElementById('users-list').innerHTML=
+      '<div class="empty">불러오기 실패: '+res.error.message+'</div>';
+    return;
+  }
+  allUsers = res.data || [];
+  document.getElementById('u-total').textContent = allUsers.length;
+  document.getElementById('u-fan').textContent = allUsers.filter(function(u){return u.role==='fan';}).length;
+  document.getElementById('u-team').textContent = allUsers.filter(function(u){return u.role==='team'||u.role==='actor';}).length;
+  document.getElementById('u-admin').textContent = allUsers.filter(function(u){return u.role==='admin';}).length;
+  renderUsers(allUsers);
+}
+
+function filterUsers(){
+  var q = document.getElementById('user-search').value.trim().toLowerCase();
+  var filtered = allUsers.filter(function(u){
+    return (u.email||'').toLowerCase().includes(q)||(u.name||'').toLowerCase().includes(q);
   });
+  renderUsers(filtered);
+}
+
+function renderUsers(list){
+  var roleMap={
+    fan:'<span class="badge b-pending">일반 팬</span>',
+    team:'<span class="badge b-live">공연팀</span>',
+    actor:'<span class="badge b-live">프로 배우</span>',
+    admin:'<span class="badge" style="background:var(--amber-light);color:var(--amber)">관리자</span>'
+  };
+  if(!list.length){document.getElementById('users-list').innerHTML='<div class="empty">검색 결과가 없습니다</div>';return;}
+  document.getElementById('users-list').innerHTML=list.map(function(u){
+    return '<div class="tr">'      +'<div class="td" style="flex:2">'+esc(u.email||'-')+'</div>'      +'<div class="td" style="flex:1">'+esc(u.name||'-')+'</div>'      +'<div class="td" style="flex:1">'+(roleMap[u.role]||roleMap.fan)+'</div>'      +'<div class="td" style="flex:1">'+new Date(u.created_at).toLocaleDateString('ko-KR')+'</div>'      +'</div>';
+  }).join('');
 }
 
 // ── 통계 ──
