@@ -144,6 +144,18 @@ select.inp{appearance:auto;background:var(--white)}
 
 
 
+
+/* 수정/삭제 버튼 */
+.post-owner-actions{display:flex;gap:6px;margin-left:auto}
+.btn-edit-post{padding:6px 12px;background:var(--purple-light);color:var(--purple);
+  border:none;border-radius:var(--radius);font-size:12px;font-weight:700;cursor:pointer}
+.btn-delete-post{padding:6px 12px;background:var(--red-light);color:var(--red);
+  border:none;border-radius:var(--radius);font-size:12px;font-weight:700;cursor:pointer}
+.btn-edit-cmt{padding:3px 8px;background:none;border:none;font-size:11px;color:var(--text3);cursor:pointer}
+.btn-delete-cmt{padding:3px 8px;background:none;border:none;font-size:11px;color:var(--red);cursor:pointer}
+/* 수정 모달 */
+.edit-post-modal{background:var(--white);border-radius:20px;width:100%;max-width:560px;padding:28px}
+
 /* 오디션 */
 .cat-audition{background:#FDE8F5;color:#A0277A}
 .audition-card{background:var(--white);border:1.5px solid #F0B8DF;border-radius:var(--radius-lg);
@@ -385,6 +397,26 @@ select.inp{appearance:auto;background:var(--white)}
   </div>
 </div>
 
+
+<!-- 게시글 수정 모달 -->
+<div class="modal-bg" id="edit-post-modal" onclick="if(event.target===this) closeEditPost()">
+  <div class="edit-post-modal">
+    <div class="modal-title">✏️ 게시글 수정</div>
+    <div class="field">
+      <label class="lbl">제목</label>
+      <input class="inp" id="ep-title" placeholder="제목을 입력하세요">
+    </div>
+    <div class="field">
+      <label class="lbl">내용</label>
+      <textarea class="inp" id="ep-content" rows="8" placeholder="내용을 입력하세요"></textarea>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeEditPost()">취소</button>
+      <button class="btn-submit" id="ep-submit-btn" onclick="doEditPost()">저장하기</button>
+    </div>
+  </div>
+</div>
+
 <!-- 글쓰기 모달 -->
 <div class="modal-bg" id="write-modal" onclick="if(event.target===this) closeWrite()">
   <div class="modal">
@@ -443,6 +475,10 @@ select.inp{appearance:auto;background:var(--white)}
       <button class="like-btn" id="like-btn" onclick="toggleLike()">
         ♥ <span id="like-count">0</span> 좋아요
       </button>
+      <div class="post-owner-actions" id="post-owner-actions" style="display:none">
+        <button class="btn-edit-post" onclick="openEditPost()">✏️ 수정</button>
+        <button class="btn-delete-post" onclick="deletePost()">🗑 삭제</button>
+      </div>
     </div>
     <div class="dm-comments">
       <div class="cmt-title">댓글 <span id="cmt-count">0</span>개</div>
@@ -603,6 +639,9 @@ async function openDetail(id){
     dmContent.insertAdjacentHTML('afterend', imgHtml);
   }
   document.getElementById('like-count').textContent=p.likes||0;
+  // 본인 글 수정/삭제 버튼
+  var ownerActions=document.getElementById('post-owner-actions');
+  ownerActions.style.display=(user&&user.id===p.user_id)?'flex':'none';
 
   // 좋아요 상태
   if(user){
@@ -631,6 +670,60 @@ async function loadComments(postId){
       +'<div class="cmt-time">'+timeAgo(c.created_at)+'</div>'
       +'</div></div>';
   }).join(''):'<div style="font-size:13px;color:var(--text3);padding:12px 0">첫 번째 댓글을 남겨보세요</div>';
+}
+
+
+// ── 게시글 수정 ──
+function openEditPost(){
+  if(!currentPost) return;
+  document.getElementById('ep-title').value = currentPost.title||'';
+  document.getElementById('ep-content').value = currentPost.content||'';
+  document.getElementById('edit-post-modal').classList.add('on');
+}
+function closeEditPost(){
+  document.getElementById('edit-post-modal').classList.remove('on');
+}
+async function doEditPost(){
+  var title = document.getElementById('ep-title').value.trim();
+  var content = document.getElementById('ep-content').value.trim();
+  if(!title){showAl('제목을 입력하세요','red');return;}
+  if(!content){showAl('내용을 입력하세요','red');return;}
+  var btn = document.getElementById('ep-submit-btn');
+  btn.textContent='저장 중...';btn.disabled=true;
+  var res = await sb.from('posts').update({title:title,content:content}).eq('id',currentPost.id);
+  btn.textContent='저장하기';btn.disabled=false;
+  if(res.error){showAl('수정 실패: '+res.error.message,'red');return;}
+  currentPost.title=title;
+  currentPost.content=content;
+  // 화면 즉시 갱신
+  document.getElementById('dm-title').textContent=title;
+  document.getElementById('dm-content').textContent=content;
+  // 목록 캐시 갱신
+  var idx=allPosts.findIndex(function(p){return p.id===currentPost.id;});
+  if(idx>-1){allPosts[idx].title=title;allPosts[idx].content=content;}
+  closeEditPost();
+  showAl('게시글이 수정되었습니다','green');
+  renderPosts();
+}
+
+async function deletePost(){
+  if(!confirm('게시글을 삭제하시겠습니까?')) return;
+  var res = await sb.from('posts').delete().eq('id',currentPost.id);
+  if(res.error){showAl('삭제 실패: '+res.error.message,'red');return;}
+  allPosts = allPosts.filter(function(p){return p.id!==currentPost.id;});
+  closeDetail();
+  showAl('게시글이 삭제되었습니다','green');
+  renderPosts();
+  renderHot();
+  updateStats();
+}
+
+// ── 댓글 수정/삭제 ──
+async function deleteComment(id, postId){
+  if(!confirm('댓글을 삭제하시겠습니까?')) return;
+  var res = await sb.from('comments').delete().eq('id',id);
+  if(res.error){showAl('삭제 실패','red');return;}
+  loadComments(postId);
 }
 
 // ── 좋아요 ──
