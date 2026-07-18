@@ -365,7 +365,12 @@ function showProfile(user){
     admin:{l:'관리자',c:'r-admin'}
   };
   var r=rm[role]||rm.fan;
-  document.getElementById('p-av').textContent=name[0].toUpperCase();
+  var pav=document.getElementById('p-av');
+  if(meta.avatar_url){
+    pav.innerHTML='<img src="'+meta.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+  } else {
+    pav.textContent=name[0].toUpperCase();
+  }
   document.getElementById('p-name').textContent=name;
   document.getElementById('p-email').textContent=user.email;
   document.getElementById('p-role').textContent=r.l;
