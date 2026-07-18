@@ -396,6 +396,7 @@ select.inp{appearance:auto;background:var(--white)}
         <option value="free">자유게시판</option>
         <option value="photo">포토/직캠</option>
         <option value="question">질문/정보</option>
+        <option value="notice">공지</option>
       </select>
     </div>
     <div class="field">
@@ -688,7 +689,7 @@ function openWrite(){
     document.getElementById('audition-write-modal').classList.add('on');
     return;
   }
-  var defaultCat = currentCat==='all' ? 'review' : currentCat;
+  var defaultCat = currentCat==='all'||currentCat==='audition' ? 'review' : currentCat;
   document.getElementById('w-cat').value = defaultCat;
   onCatChange(defaultCat);
   selectedPhotos = [];
