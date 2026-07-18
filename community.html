@@ -143,74 +143,28 @@ select.inp{appearance:auto;background:var(--white)}
   border-radius:var(--radius-lg);cursor:pointer;font-size:14px;color:var(--text2);margin-top:14px}
 
 
-/* 오디션 */
-.cat-audition{background:#FDE8F5;color:#A0277A}
-.audition-card{background:var(--white);border:1.5px solid #F0B8DF;border-radius:var(--radius-lg);
-  padding:16px;margin-bottom:10px;cursor:pointer;transition:box-shadow .15s}
-.audition-card:hover{box-shadow:0 4px 16px rgba(160,39,122,.12)}
-.ac-badge{font-size:11px;padding:2px 8px;border-radius:8px;font-weight:700;
-  background:#FDE8F5;color:#A0277A;display:inline-block;margin-bottom:8px}
-.ac-title{font-size:15px;font-weight:800;margin-bottom:6px}
-.ac-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--text3);margin-bottom:10px}
-.ac-meta span{display:flex;align-items:center;gap:3px}
-.ac-roles{font-size:13px;color:var(--text2);margin-bottom:10px;
-  background:var(--bg);padding:8px 10px;border-radius:8px;line-height:1.5}
-.ac-footer{display:flex;align-items:center;justify-content:space-between}
-.ac-deadline{font-size:12px;font-weight:700;color:var(--red)}
-.btn-apply{padding:8px 18px;background:#A0277A;color:#fff;border:none;
-  border-radius:20px;font-size:12px;font-weight:700;cursor:pointer}
-.btn-apply:hover{background:#8a1f69}
-.deadline-ok{color:var(--teal)}
-
-/* 오디션 작성 모달 추가 필드 */
-.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-
-/* 지원 모달 */
-.apply-modal{background:var(--white);border-radius:20px;width:100%;max-width:500px;
-  max-height:90vh;overflow-y:auto;padding:28px}
-.apply-title{font-size:18px;font-weight:800;margin-bottom:4px}
-.apply-sub{font-size:13px;color:var(--text3);margin-bottom:20px;
-  padding-bottom:14px;border-bottom:1px solid var(--border)}
-.profile-upload{border:2px dashed var(--border);border-radius:var(--radius);
-  padding:20px;text-align:center;cursor:pointer;margin-bottom:4px;transition:border-color .15s}
-.profile-upload:hover{border-color:#A0277A}
-.profile-upload input{display:none}
-.profile-upload-label{font-size:13px;color:var(--text3)}
-.profile-preview{width:80px;height:80px;border-radius:50%;object-fit:cover;
-  margin:0 auto 6px;display:block}
-.btn-submit-apply{width:100%;padding:13px;background:#A0277A;color:#fff;border:none;
-  border-radius:var(--radius-lg);font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
-.btn-submit-apply:disabled{opacity:.5;cursor:not-allowed}
-
-/* 오디션 상세 */
-.aud-detail{background:var(--white);border-radius:20px;width:100%;max-width:640px;
-  max-height:90vh;overflow-y:auto;padding:28px}
-.aud-header{padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:16px}
-.aud-badge{font-size:11px;padding:3px 10px;border-radius:8px;font-weight:700;
-  background:#FDE8F5;color:#A0277A;display:inline-block;margin-bottom:8px}
-.aud-title{font-size:22px;font-weight:800;margin-bottom:10px}
-.aud-info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.aud-info-item{background:var(--bg);padding:10px 14px;border-radius:var(--radius)}
-.aud-info-lbl{font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:600}
-.aud-info-val{font-size:13px;font-weight:700}
-.aud-content{font-size:14px;color:var(--text2);line-height:1.8;
-  padding:16px;background:var(--bg);border-radius:var(--radius);margin-bottom:16px}
-.btn-big-apply{width:100%;padding:14px;background:#A0277A;color:#fff;border:none;
-  border-radius:var(--radius-lg);font-size:15px;font-weight:800;cursor:pointer;margin-bottom:10px}
-.app-count{text-align:center;font-size:13px;color:var(--text3);margin-bottom:14px}
-
-/* 지원자 목록 (공고 작성자에게만) */
-.app-list-section{border-top:1px solid var(--border);padding-top:16px;margin-top:4px}
-.app-item{display:flex;align-items:center;gap:12px;padding:10px;
-  background:var(--bg);border-radius:var(--radius);margin-bottom:8px}
-.app-av{width:44px;height:44px;border-radius:50%;object-fit:cover;
-  background:#FDE8F5;display:flex;align-items:center;justify-content:center;
-  font-size:16px;font-weight:800;color:#A0277A;flex-shrink:0}
-.app-info{flex:1}
-.app-name{font-size:14px;font-weight:700}
-.app-meta{font-size:12px;color:var(--text3);margin-top:2px}
-.app-msg{font-size:13px;color:var(--text2);margin-top:4px;
-  background:var(--white);padding:6px 10px;border-radius:6px}
+/* 이미지 업로드 */
+.img-upload-area{border:2px dashed var(--border);border-radius:var(--radius);
+  padding:16px;text-align:center;cursor:pointer;margin-bottom:8px;transition:border-color .15s}
+.img-upload-area:hover{border-color:var(--purple)}
+.img-upload-area input{display:none}
+.img-upload-label{font-size:13px;color:var(--text3)}
+.img-preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.img-preview-item{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--bg)}
+.img-preview-item img{width:100%;height:100%;object-fit:cover}
+.img-preview-del{position:absolute;top:3px;right:3px;width:20px;height:20px;
+  background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;
+  font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.post-images{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
+.post-img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;cursor:pointer}
+.post-img-single{width:100%;max-height:300px;object-fit:cover;border-radius:var(--radius);
+  margin:10px 0;cursor:pointer}
+.img-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:999;
+  display:none;align-items:center;justify-content:center;padding:20px}
+.img-lightbox.on{display:flex}
+.img-lightbox img{max-width:100%;max-height:90vh;border-radius:8px;object-fit:contain}
+.img-lightbox-close{position:absolute;top:16px;right:20px;color:#fff;font-size:28px;
+  cursor:pointer;background:none;border:none;line-height:1}
 
 /* 알림 */
 .alert{border-radius:var(--radius);padding:10px 14px;font-size:13px;
@@ -241,7 +195,7 @@ select.inp{appearance:auto;background:var(--white)}
   <div class="layout">
     <!-- 메인 -->
     <div>
-      <button class="write-btn" id="write-main-btn" onclick="openWrite()">✏️ 글쓰기</button>
+      <button class="write-btn" onclick="openWrite()">✏️ 글쓰기</button>
 
       <div class="cat-tabs">
         <div class="cat on" onclick="setCat('all',this)">전체</div>
@@ -250,7 +204,6 @@ select.inp{appearance:auto;background:var(--white)}
         <div class="cat" onclick="setCat('photo',this)">포토/직캠</div>
         <div class="cat" onclick="setCat('question',this)">질문/정보</div>
         <div class="cat" onclick="setCat('notice',this)">공지</div>
-        <div class="cat" onclick="setCat('audition',this)">🎬 오디션</div>
       </div>
 
       <div id="post-list">
@@ -298,125 +251,13 @@ select.inp{appearance:auto;background:var(--white)}
   </div>
 </div>
 
-
-<!-- 오디션 공고 작성 모달 -->
-<div class="modal-bg" id="audition-write-modal" onclick="if(event.target===this) closeAuditionWrite()">
-  <div class="modal" style="max-width:580px">
-    <div class="modal-title">🎬 오디션 공고 등록</div>
-    <div class="field">
-      <label class="lbl">공고 제목 *</label>
-      <input class="inp" id="aw-title" placeholder="예: 뮤지컬 '레미제라블' 주연 오디션">
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label class="lbl">공연팀/단체명</label>
-        <input class="inp" id="aw-team" placeholder="예: 부산시립극단">
-      </div>
-      <div class="field">
-        <label class="lbl">장소</label>
-        <input class="inp" id="aw-location" placeholder="예: 부산 해운대구">
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label class="lbl">지원 마감일</label>
-        <input class="inp" id="aw-deadline" type="date">
-      </div>
-      <div class="field">
-        <label class="lbl">연락처</label>
-        <input class="inp" id="aw-contact" placeholder="예: 010-1234-5678">
-      </div>
-    </div>
-    <div class="field">
-      <label class="lbl">모집 역할/파트</label>
-      <input class="inp" id="aw-roles" placeholder="예: 장발장 역 1명, 팡틴 역 1명, 앙상블 5명">
-    </div>
-    <div class="field">
-      <label class="lbl">공고 내용 *</label>
-      <textarea class="inp" id="aw-content" rows="6" placeholder="오디션 일정, 준비 사항, 자격 요건 등을 상세히 작성해 주세요"></textarea>
-    </div>
-    <div class="modal-btns">
-      <button class="btn-cancel" onclick="closeAuditionWrite()">취소</button>
-      <button class="btn-submit" id="aw-submit-btn" onclick="doPostAudition()">등록하기</button>
-    </div>
-  </div>
-</div>
-
-<!-- 오디션 상세 모달 -->
-<div class="modal-bg" id="audition-detail-modal" onclick="if(event.target===this) closeAuditionDetail()">
-  <div class="aud-detail">
-    <div class="aud-header">
-      <div class="aud-badge">🎬 오디션 공고</div>
-      <div class="aud-title" id="ad-title"></div>
-      <div style="font-size:13px;color:var(--text3)">
-        <span id="ad-author"></span> · <span id="ad-date"></span> · 조회 <span id="ad-views"></span>
-      </div>
-    </div>
-    <div class="aud-info" id="ad-info"></div>
-    <div class="aud-content" id="ad-content"></div>
-    <div class="app-count" id="ad-app-count"></div>
-    <button class="btn-big-apply" id="ad-apply-btn" onclick="openApply()">✋ 지원하기</button>
-    <div class="app-list-section" id="ad-app-list" style="display:none">
-      <div style="font-size:14px;font-weight:700;margin-bottom:12px">지원자 목록</div>
-      <div id="ad-app-items"></div>
-    </div>
-    <button class="dm-close" onclick="closeAuditionDetail()">← 목록으로</button>
-  </div>
-</div>
-
-<!-- 지원하기 모달 -->
-<div class="modal-bg" id="apply-modal" onclick="if(event.target===this) closeApply()">
-  <div class="apply-modal">
-    <div class="apply-title">✋ 오디션 지원</div>
-    <div class="apply-sub" id="apply-sub"></div>
-    <div class="field">
-      <label class="lbl">이름 *</label>
-      <input class="inp" id="ap-name" placeholder="실명을 입력하세요">
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label class="lbl">연락처 *</label>
-        <input class="inp" id="ap-phone" placeholder="010-0000-0000">
-      </div>
-      <div class="field">
-        <label class="lbl">이메일</label>
-        <input class="inp" id="ap-email" type="email" placeholder="이메일 주소">
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label class="lbl">출생연도</label>
-        <input class="inp" id="ap-birth" placeholder="예: 1995">
-      </div>
-      <div class="field">
-        <label class="lbl">경력/전공</label>
-        <input class="inp" id="ap-career" placeholder="예: 뮤지컬 전공 3년">
-      </div>
-    </div>
-    <div class="field">
-      <label class="lbl">프로필 사진</label>
-      <div class="profile-upload" onclick="document.getElementById('ap-photo').click()">
-        <input type="file" id="ap-photo" accept="image/*" onchange="previewPhoto(this)">
-        <img id="ap-photo-preview" class="profile-preview" style="display:none">
-        <div class="profile-upload-label" id="ap-upload-label">📷 클릭하여 사진 업로드</div>
-      </div>
-    </div>
-    <div class="field">
-      <label class="lbl">지원 메시지</label>
-      <textarea class="inp" id="ap-message" rows="4" placeholder="자기소개 및 지원 동기를 간단히 작성해 주세요"></textarea>
-    </div>
-    <button class="btn-submit-apply" id="ap-submit-btn" onclick="doApply()">지원서 제출하기</button>
-    <button class="dm-close" onclick="closeApply()" style="margin-top:8px">취소</button>
-  </div>
-</div>
-
 <!-- 글쓰기 모달 -->
 <div class="modal-bg" id="write-modal" onclick="if(event.target===this) closeWrite()">
   <div class="modal">
     <div class="modal-title">✏️ 글쓰기</div>
     <div class="field">
       <label class="lbl">카테고리</label>
-      <select class="inp" id="w-cat">
+      <select class="inp" id="w-cat" onchange="onCatChange(this.value)">
         <option value="review">공연 후기</option>
         <option value="free">자유게시판</option>
         <option value="photo">포토/직캠</option>
@@ -429,11 +270,20 @@ select.inp{appearance:auto;background:var(--white)}
     </div>
     <div class="field">
       <label class="lbl">내용</label>
-      <textarea class="inp" id="w-content" rows="6" placeholder="내용을 입력하세요"></textarea>
+      <textarea class="inp" id="w-content" rows="5" placeholder="내용을 입력하세요"></textarea>
+    </div>
+    <!-- 이미지 업로드 (공연 후기 / 포토 직캠) -->
+    <div class="field" id="img-upload-wrap" style="display:none">
+      <label class="lbl">사진 첨부 <span style="font-weight:400;color:var(--text3)">(최대 5장)</span></label>
+      <div class="img-preview-grid" id="img-preview-grid"></div>
+      <div class="img-upload-area" onclick="document.getElementById('w-photos').click()">
+        <input type="file" id="w-photos" accept="image/*" multiple onchange="onPhotosSelected(this)">
+        <div class="img-upload-label">📷 클릭하여 사진 추가</div>
+      </div>
     </div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeWrite()">취소</button>
-      <button class="btn-submit" onclick="doPost()">등록하기</button>
+      <button class="btn-submit" id="w-submit-btn" onclick="doPost()">등록하기</button>
     </div>
   </div>
 </div>
@@ -483,8 +333,7 @@ var CAT_MAP={
   free:{label:'자유게시판',cls:'cat-free'},
   photo:{label:'포토/직캠',cls:'cat-photo'},
   question:{label:'질문/정보',cls:'cat-question'},
-  notice:{label:'공지',cls:'cat-notice'},
-  audition:{label:'🎬 오디션',cls:'cat-audition'}
+  notice:{label:'공지',cls:'cat-notice'}
 };
 
 // ── 초기화 ──
@@ -498,21 +347,21 @@ sb.auth.getSession().then(function(r){
       +'<span style="font-size:13px;color:#555">'+name+'</span>';
   }
   loadPosts();
-  loadAuditions();
 });
 
 // ── 게시글 불러오기 ──
 async function loadPosts(){
   try{
     var res=await sb.from('posts')
-      .select('id,created_at,user_id,title,content,category,author_name,likes,views')
+      .select('id,created_at,user_id,title,content,category,author_name,likes,views,images')
       .order('created_at',{ascending:false});
     if(res.error) throw new Error(res.error.message);
     allPosts=(res.data||[]).map(function(p){
       return {
         id:p.id, created_at:p.created_at, user_id:p.user_id,
         title:p.title, content:p.content, category:p.category,
-        author_name:p.author_name, likes:p.likes||0, views:p.views||0
+        author_name:p.author_name, likes:p.likes||0, views:p.views||0,
+        images:p.images||[]
       };
     });
     updateStats();
@@ -543,12 +392,7 @@ function setCat(cat,el){
   currentCat=cat;
   document.querySelectorAll('.cat').forEach(function(c){c.classList.remove('on')});
   el.classList.add('on');
-  if(cat==='audition'){
-    renderAuditions();
-  } else {
-    document.getElementById('post-list').innerHTML='<div class="loading"><div class="spinner"></div>게시글을 불러오는 중</div>';
-    renderPosts();
-  }
+  renderPosts();
 }
 
 // ── 게시글 렌더 ──
@@ -565,7 +409,7 @@ function renderPosts(){
     return '<div class="post-card" onclick="openDetail(\''+p.id+'\')">'
       +'<span class="pc-category '+cm.cls+'">'+cm.label+'</span>'
       +'<div class="pc-title">'+esc(p.title)+'</div>'
-      +'<div class="pc-preview">'+esc(p.content)+'</div>'
+      +'<div class="pc-preview">'+esc(p.content)+'</div>'      +(p.images&&p.images.length?'<div class="post-images">'        +p.images.slice(0,3).map(function(url){          return '<img class="post-img" src="'+url+'" onclick="event.stopPropagation();openLightbox(\''+url+'\')">';        }).join('')+'</div>':'')
       +'<div class="pc-footer">'
       +'<div class="pc-author"><div class="pc-av">'+name[0].toUpperCase()+'</div>'+esc(name)+'</div>'
       +'<span>'+timeAgo(p.created_at)+'</span>'
@@ -610,6 +454,12 @@ async function openDetail(id){
   document.getElementById('dm-date').textContent=timeAgo(p.created_at);
   document.getElementById('dm-views').textContent=(p.views||0);
   document.getElementById('dm-content').textContent=p.content;
+  // 이미지
+  var dmContent = document.getElementById('dm-content');
+  if(p.images&&p.images.length){
+    var imgHtml = '<div class="post-images" style="margin-top:12px">'      +p.images.map(function(url){        return '<img class="post-img" src="'+url+'" onclick="openLightbox(\''+url+'\')">';      }).join('')+'</div>';
+    dmContent.insertAdjacentHTML('afterend', imgHtml);
+  }
   document.getElementById('like-count').textContent=p.likes||0;
 
   // 좋아요 상태
@@ -692,20 +542,70 @@ function doComment(){
 // ── 글쓰기 ──
 function openWrite(){
   if(!user){showAl('로그인이 필요합니다','red');return;}
-  if(currentCat==='audition'){
-    document.getElementById('audition-write-modal').classList.add('on');
-  } else {
-    document.getElementById('write-modal').classList.add('on');
-  }
+  document.getElementById('write-modal').classList.add('on');
 }
 function closeWrite(){
   document.getElementById('write-modal').classList.remove('on');
   document.getElementById('w-title').value='';
   document.getElementById('w-content').value='';
+  selectedPhotos=[];
+  document.getElementById('img-preview-grid').innerHTML='';
+  document.getElementById('img-upload-wrap').style.display='none';
+  document.getElementById('w-cat').value='review';
 }
 function closeDetail(){document.getElementById('detail-modal').classList.remove('on');}
 
-function doPost(){
+var selectedPhotos = [];
+
+function onCatChange(cat){
+  var wrap = document.getElementById('img-upload-wrap');
+  wrap.style.display = (cat==='review'||cat==='photo') ? 'block' : 'none';
+}
+
+function onPhotosSelected(input){
+  var files = Array.from(input.files);
+  var remaining = 5 - selectedPhotos.length;
+  files.slice(0, remaining).forEach(function(f){
+    selectedPhotos.push(f);
+  });
+  renderPhotoPreviews();
+  input.value = '';
+}
+
+function renderPhotoPreviews(){
+  var grid = document.getElementById('img-preview-grid');
+  grid.innerHTML = selectedPhotos.map(function(f, i){
+    var url = URL.createObjectURL(f);
+    return '<div class="img-preview-item">'
+      +'<img src="'+url+'">'
+      +'<button class="img-preview-del" onclick="removePhoto('+i+')">✕</button>'
+      +'</div>';
+  }).join('');
+  var uploadArea = document.querySelector('.img-upload-area');
+  if(uploadArea) uploadArea.style.display = selectedPhotos.length >= 5 ? 'none' : 'block';
+}
+
+function removePhoto(i){
+  selectedPhotos.splice(i, 1);
+  renderPhotoPreviews();
+}
+
+async function uploadCommunityImages(files, postId){
+  var urls = [];
+  for(var i=0; i<files.length; i++){
+    var f = files[i];
+    var ext = f.name.split('.').pop();
+    var path = postId+'/'+Date.now()+'-'+i+'.'+ext;
+    var up = await sb.storage.from('community-images').upload(path, f, {upsert:true});
+    if(!up.error){
+      var pub = sb.storage.from('community-images').getPublicUrl(path);
+      urls.push(pub.data.publicUrl);
+    }
+  }
+  return urls;
+}
+
+async function doPost(){
   var title=document.getElementById('w-title').value.trim();
   var content=document.getElementById('w-content').value.trim();
   var cat=document.getElementById('w-cat').value;
@@ -713,278 +613,46 @@ function doPost(){
   if(!content){showAl('내용을 입력하세요','red');return;}
   var meta=user.user_metadata||{};
   var name=meta.name||user.email.split('@')[0];
-  var btn=document.querySelector('.btn-submit');
+  var btn=document.getElementById('w-submit-btn');
   btn.textContent='등록 중...';btn.disabled=true;
-  sb.from('posts').insert([{
-    user_id:user.id,
-    title:title,
-    content:content,
-    category:cat,
-    author_name:name,
-    likes:0,
-    views:0
-  }]).then(function(r){
+
+  // 먼저 게시글 insert
+  var res = await sb.from('posts').insert([{
+    user_id:user.id, title:title, content:content,
+    category:cat, author_name:name, likes:0, views:0, images:[]
+  }]).select();
+
+  if(res.error){
     btn.textContent='등록하기';btn.disabled=false;
-    if(r.error){showAl('등록 실패: '+r.error.message,'red');return;}
-    closeWrite();
-    showAl('게시글이 등록되었습니다','green');
-    loadPosts();
-  });
-}
-
-
-// ══════════════════════════
-//  오디션 게시판
-// ══════════════════════════
-var allAuditions = [];
-var currentAudition = null;
-
-async function loadAuditions() {
-  var res = await sb.from('auditions').select('*').order('created_at', {ascending: false});
-  allAuditions = res.data || [];
-}
-
-function renderAuditions() {
-  var list = document.getElementById('post-list');
-  if (!allAuditions.length) {
-    list.innerHTML = '<div class="empty"><div class="empty-icon">🎬</div>'
-      + '<div style="font-size:14px;font-weight:700;margin-bottom:6px">등록된 오디션 공고가 없습니다</div>'
-      + '<div style="font-size:13px;color:var(--text3)">첫 오디션 공고를 등록해 보세요</div></div>';
-    return;
+    showAl('등록 실패: '+res.error.message,'red');return;
   }
-  var today = new Date(); today.setHours(0,0,0,0);
-  list.innerHTML = allAuditions.map(function(a) {
-    var deadlineStr = '';
-    var deadlineCls = 'ac-deadline';
-    if (a.deadline) {
-      var d = new Date(a.deadline);
-      var diff = Math.ceil((d - today) / 86400000);
-      if (diff < 0) deadlineStr = '마감';
-      else if (diff === 0) deadlineStr = '오늘 마감';
-      else if (diff <= 3) deadlineStr = 'D-' + diff;
-      else { deadlineStr = 'D-' + diff; deadlineCls = 'ac-deadline deadline-ok'; }
-    }
-    return '<div class="audition-card" onclick="openAuditionDetail(\''+a.id+'\')">'
-      + '<span class="ac-badge">🎬 오디션 공고</span>'
-      + '<div class="ac-title">' + esc(a.title) + '</div>'
-      + '<div class="ac-meta">'
-      + (a.team_name ? '<span>🏛 ' + esc(a.team_name) + '</span>' : '')
-      + (a.location ? '<span>📍 ' + esc(a.location) + '</span>' : '')
-      + (a.contact ? '<span>📞 ' + esc(a.contact) + '</span>' : '')
-      + '</div>'
-      + (a.roles ? '<div class="ac-roles">모집: ' + esc(a.roles) + '</div>' : '')
-      + '<div class="ac-footer">'
-      + (deadlineStr ? '<span class="' + deadlineCls + '">⏰ 마감: ' + (a.deadline || '') + ' (' + deadlineStr + ')</span>' : '')
-      + '<button class="btn-apply" onclick="event.stopPropagation();openAuditionDetail(\''+a.id+'\')">지원하기 →</button>'
-      + '</div></div>';
-  }).join('');
-}
 
-async function openAuditionDetail(id) {
-  var a = allAuditions.find(function(x) { return x.id === id; });
-  if (!a) return;
-  currentAudition = a;
+  var postId = res.data[0].id;
 
-  // 조회수 증가
-  sb.from('auditions').update({views: (a.views || 0) + 1}).eq('id', id).then(function() {
-    a.views = (a.views || 0) + 1;
-  });
-
-  document.getElementById('ad-title').textContent = a.title;
-  document.getElementById('ad-author').textContent = a.author_name || '익명';
-  document.getElementById('ad-date').textContent = timeAgo(a.created_at);
-  document.getElementById('ad-views').textContent = a.views || 0;
-  document.getElementById('ad-content').textContent = a.content;
-
-  // 상세 정보 그리드
-  var infoItems = [
-    ['🏛 단체명', a.team_name],
-    ['📍 장소', a.location],
-    ['⏰ 마감일', a.deadline],
-    ['📞 연락처', a.contact],
-    ['🎭 모집 역할', a.roles],
-  ].filter(function(i) { return i[1]; });
-  document.getElementById('ad-info').innerHTML = infoItems.map(function(i) {
-    return '<div class="aud-info-item"><div class="aud-info-lbl">' + i[0] + '</div>'
-      + '<div class="aud-info-val">' + esc(i[1]) + '</div></div>';
-  }).join('');
-
-  // 지원자 수
-  var appRes = await sb.from('audition_applications').select('id', {count: 'exact'}).eq('audition_id', id);
-  var appCount = appRes.count || 0;
-  document.getElementById('ad-app-count').textContent = '현재 ' + appCount + '명 지원';
-
-  // 본인 공고이면 지원자 목록 표시
-  var isOwner = user && user.id === a.user_id;
-  var applyBtn = document.getElementById('ad-apply-btn');
-  var appListSection = document.getElementById('ad-app-list');
-  if (isOwner) {
-    applyBtn.style.display = 'none';
-    appListSection.style.display = 'block';
-    loadApplications(id);
-  } else {
-    applyBtn.style.display = 'block';
-    appListSection.style.display = 'none';
-    // 이미 지원했는지 확인
-    if (user) {
-      var myApp = await sb.from('audition_applications').select('id').eq('audition_id', id).eq('user_id', user.id).maybeSingle();
-      if (myApp.data) {
-        applyBtn.textContent = '✅ 지원 완료';
-        applyBtn.disabled = true;
-        applyBtn.style.background = 'var(--text3)';
-      } else {
-        applyBtn.textContent = '✋ 지원하기';
-        applyBtn.disabled = false;
-        applyBtn.style.background = '#A0277A';
-      }
+  // 이미지 업로드
+  if(selectedPhotos.length){
+    btn.textContent='사진 업로드 중...';
+    var imageUrls = await uploadCommunityImages(selectedPhotos, postId);
+    if(imageUrls.length){
+      await sb.from('posts').update({images: imageUrls}).eq('id', postId);
     }
   }
 
-  document.getElementById('audition-detail-modal').classList.add('on');
+  btn.textContent='등록하기';btn.disabled=false;
+  selectedPhotos=[];
+  closeWrite();
+  showAl('게시글이 등록되었습니다','green');
+  loadPosts();
 }
 
-async function loadApplications(auditionId) {
-  var res = await sb.from('audition_applications').select('*').eq('audition_id', auditionId).order('created_at', {ascending: false});
-  var apps = res.data || [];
-  var el = document.getElementById('ad-app-items');
-  if (!apps.length) {
-    el.innerHTML = '<div style="font-size:13px;color:var(--text3);padding:10px 0">아직 지원자가 없습니다</div>';
-    return;
-  }
-  el.innerHTML = apps.map(function(a) {
-    return '<div class="app-item">'
-      + (a.profile_url
-        ? '<img src="' + a.profile_url + '" class="app-av" style="width:44px;height:44px">'
-        : '<div class="app-av">' + (a.name || '?')[0] + '</div>')
-      + '<div class="app-info">'
-      + '<div class="app-name">' + esc(a.name) + (a.birth_year ? ' (' + a.birth_year + '년생)' : '') + '</div>'
-      + '<div class="app-meta">📞 ' + esc(a.phone) + (a.email ? ' · ✉️ ' + esc(a.email) : '') + (a.career ? ' · ' + esc(a.career) : '') + '</div>'
-      + (a.message ? '<div class="app-msg">' + esc(a.message) + '</div>' : '')
-      + '</div>'
-      + '<div style="font-size:11px;color:var(--text3)">' + timeAgo(a.created_at) + '</div>'
-      + '</div>';
-  }).join('');
+
+function openLightbox(url){
+  document.getElementById('lightbox-img').src = url;
+  document.getElementById('img-lightbox').classList.add('on');
 }
-
-function closeAuditionDetail() {
-  document.getElementById('audition-detail-modal').classList.remove('on');
+function closeLightbox(){
+  document.getElementById('img-lightbox').classList.remove('on');
 }
-
-// 오디션 공고 등록
-function closeAuditionWrite() {
-  document.getElementById('audition-write-modal').classList.remove('on');
-}
-
-async function doPostAudition() {
-  var title = document.getElementById('aw-title').value.trim();
-  var content = document.getElementById('aw-content').value.trim();
-  if (!title) { showAl('제목을 입력하세요', 'red'); return; }
-  if (!content) { showAl('내용을 입력하세요', 'red'); return; }
-  var meta = user.user_metadata || {};
-  var name = meta.name || user.email.split('@')[0];
-  var btn = document.getElementById('aw-submit-btn');
-  btn.textContent = '등록 중...'; btn.disabled = true;
-  var res = await sb.from('auditions').insert([{
-    user_id: user.id,
-    title: title,
-    content: content,
-    team_name: document.getElementById('aw-team').value.trim() || null,
-    location: document.getElementById('aw-location').value.trim() || null,
-    deadline: document.getElementById('aw-deadline').value || null,
-    contact: document.getElementById('aw-contact').value.trim() || null,
-    roles: document.getElementById('aw-roles').value.trim() || null,
-    author_name: name,
-    views: 0
-  }]);
-  btn.textContent = '등록하기'; btn.disabled = false;
-  if (res.error) { showAl('등록 실패: ' + res.error.message, 'red'); return; }
-  closeAuditionWrite();
-  showAl('오디션 공고가 등록되었습니다', 'green');
-  await loadAuditions();
-  renderAuditions();
-}
-
-// 지원하기
-function openApply() {
-  if (!user) { showAl('로그인이 필요합니다', 'red'); return; }
-  document.getElementById('apply-sub').textContent = currentAudition.title;
-  // 기존 사용자 정보 자동 입력
-  var meta = user.user_metadata || {};
-  document.getElementById('ap-name').value = meta.name || '';
-  document.getElementById('ap-email').value = user.email || '';
-  document.getElementById('ap-phone').value = '';
-  document.getElementById('ap-birth').value = '';
-  document.getElementById('ap-career').value = '';
-  document.getElementById('ap-message').value = '';
-  document.getElementById('ap-photo-preview').style.display = 'none';
-  document.getElementById('ap-upload-label').textContent = '📷 클릭하여 사진 업로드';
-  document.getElementById('apply-modal').classList.add('on');
-}
-
-function closeApply() {
-  document.getElementById('apply-modal').classList.remove('on');
-}
-
-function previewPhoto(input) {
-  var file = input.files[0];
-  if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var img = document.getElementById('ap-photo-preview');
-    img.src = e.target.result;
-    img.style.display = 'block';
-    document.getElementById('ap-upload-label').textContent = file.name;
-  };
-  reader.readAsDataURL(file);
-}
-
-async function doApply() {
-  var name = document.getElementById('ap-name').value.trim();
-  var phone = document.getElementById('ap-phone').value.trim();
-  if (!name) { showAl('이름을 입력하세요', 'red'); return; }
-  if (!phone) { showAl('연락처를 입력하세요', 'red'); return; }
-  var btn = document.getElementById('ap-submit-btn');
-  btn.textContent = '제출 중...'; btn.disabled = true;
-
-  // 프로필 사진 업로드
-  var photoFile = document.getElementById('ap-photo').files[0];
-  var profileUrl = null;
-  if (photoFile) {
-    var ext = photoFile.name.split('.').pop();
-    var path = 'profiles/' + user.id + '-' + Date.now() + '.' + ext;
-    var up = await sb.storage.from('audition-profiles').upload(path, photoFile, {upsert: true});
-    if (!up.error) {
-      var pub = sb.storage.from('audition-profiles').getPublicUrl(path);
-      profileUrl = pub.data.publicUrl;
-    }
-  }
-
-  var res = await sb.from('audition_applications').insert([{
-    audition_id: currentAudition.id,
-    user_id: user.id,
-    name: name,
-    phone: phone,
-    email: document.getElementById('ap-email').value.trim() || null,
-    birth_year: document.getElementById('ap-birth').value.trim() || null,
-    career: document.getElementById('ap-career').value.trim() || null,
-    profile_url: profileUrl,
-    message: document.getElementById('ap-message').value.trim() || null,
-    status: 'pending'
-  }]);
-  btn.textContent = '지원서 제출하기'; btn.disabled = false;
-  if (res.error) { showAl('제출 실패: ' + res.error.message, 'red'); return; }
-  closeApply();
-  showAl('지원서가 제출되었습니다!', 'green');
-  // 버튼 상태 변경
-  var applyBtn = document.getElementById('ad-apply-btn');
-  applyBtn.textContent = '✅ 지원 완료';
-  applyBtn.disabled = true;
-  applyBtn.style.background = 'var(--text3)';
-  // 지원자 수 갱신
-  var appRes = await sb.from('audition_applications').select('id', {count: 'exact'}).eq('audition_id', currentAudition.id);
-  document.getElementById('ad-app-count').textContent = '현재 ' + (appRes.count || 0) + '명 지원';
-}
-
 // ── 유틸 ──
 function timeAgo(d){
   var diff=(Date.now()-new Date(d))/1000;
@@ -1000,5 +668,11 @@ function showAl(msg,type){
 }
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 </script>
+
+<!-- 이미지 라이트박스 -->
+<div class="img-lightbox" id="img-lightbox" onclick="closeLightbox()">
+  <button class="img-lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="">
+</div>
 </body>
 </html>
