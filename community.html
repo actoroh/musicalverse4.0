@@ -542,6 +542,12 @@ function doComment(){
 // ── 글쓰기 ──
 function openWrite(){
   if(!user){showAl('로그인이 필요합니다','red');return;}
+  // 현재 탭 카테고리 기본 선택
+  var defaultCat = (currentCat==='audition'||currentCat==='all') ? 'review' : currentCat;
+  document.getElementById('w-cat').value = defaultCat;
+  onCatChange(defaultCat);
+  selectedPhotos = [];
+  document.getElementById('img-preview-grid').innerHTML = '';
   document.getElementById('write-modal').classList.add('on');
 }
 function closeWrite(){
