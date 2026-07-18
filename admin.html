@@ -194,13 +194,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
       <div class="sb-item" onclick="goPage('users',this)">👥 회원 관리</div>
       <div class="sb-section">운영</div>
       <div class="sb-item" onclick="goPage('venues',this)">🏛 극장 관리</div>
+      <div class="sb-item" onclick="goPage('admin-accounts',this)" style="display:none">👑 관리자 계정</div>
       <div class="sb-item" onclick="goPage('stats',this)">📈 통계</div>
       <div class="sb-item" onclick="location.href='shows.html'">🌐 공연 목록 보기</div>
     </div>
     <div class="sb-bottom">
       <div class="sb-user">
         <div class="sb-av" id="sb-av">A</div>
-        <div><div class="sb-uname" id="sb-name">관리자</div><div class="sb-urole">슈퍼 관리자</div></div>
+        <div><div class="sb-uname" id="sb-name">관리자</div><div class="sb-urole" id="sb-urole">관리자</div></div>
         <button class="sb-logout" onclick="doLogout()">로그아웃</button>
       </div>
     </div>
@@ -314,6 +315,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
       </div>
     </div>
 
+
+    <!-- 관리자 계정 관리 (superadmin 전용) -->
+    <div class="pg" id="pg-admin-accounts">
+      <div class="page-header">
+        <div class="page-title">관리자 계정 관리</div>
+        <button onclick="openAdminAddModal()" style="padding:8px 18px;background:var(--amber);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer">+ 관리자 추가</button>
+      </div>
+      <div class="table-card">
+        <div class="table-head">
+          <div class="th" style="flex:2">이메일</div>
+          <div class="th" style="flex:1">이름</div>
+          <div class="th" style="flex:1">권한 등급</div>
+          <div class="th" style="flex:1">등록일</div>
+          <div class="th c-action">처리</div>
+        </div>
+        <div id="admin-accounts-list">
+          <div class="loading"><div class="spinner"></div>불러오는 중</div>
+        </div>
+      </div>
+    </div>
+
     <!-- 통계 -->
     <div class="pg" id="pg-stats">
       <div class="page-header">
@@ -339,24 +361,52 @@ var SUPA_URL='https://qyrgfjshsczdpxaeznkc.supabase.co';
 var SUPA_KEY='sb_publishable_A6MmsqE9y-ymBKNKOwR2EA_PuLX5mLB';
 var sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
 var adminUser=null;
+var adminLevel=null;
 var allShows=[];
 
 // ── 초기화 ──
-sb.auth.getSession().then(function(r){
-  if(!r.data||!r.data.session){showBlocked();return;}
+async function init(){
+  var r=await sb.auth.getSession();
+  if(!r.data||!r.data.session){showBlocked('로그인이 필요합니다');return;}
   var user=r.data.session.user;
-  var meta=user.user_metadata||{};
-  if(meta.role!=='admin'){showBlocked();return;}
+
+  // DB에서 admins 테이블로 권한 검증 (서버사이드)
+  var ar=await sb.from('admins').select('level,name').eq('user_id',user.id).maybeSingle();
+  if(!ar.data){
+    // user_metadata fallback (하위호환)
+    var meta=user.user_metadata||{};
+    if(meta.role!=='admin'){showBlocked('관리자 권한이 없습니다');return;}
+  }
+
   adminUser=user;
-  var name=meta.name||user.email.split('@')[0];
+  adminLevel=ar.data?ar.data.level:'admin';
+  var meta=user.user_metadata||{};
+  var name=(ar.data&&ar.data.name)||meta.name||user.email.split('@')[0];
+
   document.getElementById('sb-av').textContent=name[0].toUpperCase();
   document.getElementById('sb-name').textContent=name;
+  document.getElementById('sb-urole').textContent=adminLevel==='superadmin'?'슈퍼 관리자':'관리자';
   document.getElementById('today-date').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
   document.getElementById('dashboard').style.display='flex';
-  loadOverview();
-});
 
-function showBlocked(){document.getElementById('blocked').style.display='flex';}
+  // superadmin만 회원 관리 메뉴 표시
+  if(adminLevel==='superadmin'){
+    var userMenu=document.querySelector('[onclick*="users"]');
+    if(userMenu) userMenu.style.display='flex';
+    var adminMenu=document.querySelector('[onclick*="admin-accounts"]');
+    if(adminMenu) adminMenu.style.display='flex';
+  }
+
+  loadOverview();
+}
+init();
+
+function showBlocked(msg){
+  var el=document.getElementById('blocked');
+  el.style.display='flex';
+  var h2=el.querySelector('h2');
+  if(h2&&msg) h2.textContent=msg;
+}
 
 // ── 페이지 전환 ──
 function goPage(id,el){
@@ -368,6 +418,7 @@ function goPage(id,el){
   if(id==='users') loadUsers();
   if(id==='stats') loadStats();
   if(id==='venues') loadVenues();
+  if(id==='admin-accounts') loadAdminAccounts();
 }
 
 // ── 알림 ──
@@ -534,6 +585,34 @@ function doLogout(){
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 var var_amber='var(--amber)';
 </script>
+
+
+<!-- 관리자 계정 추가 모달 -->
+<div class="modal-overlay" id="admin-add-modal" onclick="if(event.target===this) closeAdminAddModal()">
+  <div class="modal-box" style="max-width:440px">
+    <div class="modal-box-title">관리자 계정 추가</div>
+    <div class="field">
+      <label class="lbl">이메일 *</label>
+      <input class="inp" id="aa-email" placeholder="추가할 계정의 이메일">
+    </div>
+    <div class="field">
+      <label class="lbl">이름</label>
+      <input class="inp" id="aa-name" placeholder="관리자 이름">
+    </div>
+    <div class="field">
+      <label class="lbl">권한 등급</label>
+      <select class="inp" id="aa-level">
+        <option value="admin">관리자 (admin)</option>
+        <option value="superadmin">슈퍼 관리자 (superadmin)</option>
+      </select>
+    </div>
+    <div class="alert" id="aa-alert" style="display:none;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel-modal" onclick="closeAdminAddModal()">취소</button>
+      <button class="btn-save" id="aa-save-btn" onclick="doAddAdmin()">추가하기</button>
+    </div>
+  </div>
+</div>
 
 <!-- 극장 등록/수정 모달 -->
 <div class="modal-overlay" id="venue-modal" onclick="if(event.target===this) closeVenueModal()">
@@ -783,6 +862,102 @@ async function deleteVenue(id) {
   if (res.error) { showAl('삭제 실패: ' + res.error.message, 'red'); return; }
   showAl('삭제되었습니다', 'green');
   loadVenues();
+}
+
+
+// ══════════════════════════
+//  관리자 계정 관리
+// ══════════════════════════
+async function loadAdminAccounts(){
+  if(adminLevel!=='superadmin'){
+    document.getElementById('admin-accounts-list').innerHTML=
+      '<div class="empty">슈퍼 관리자만 접근 가능합니다</div>';
+    return;
+  }
+  var res=await sb.from('admins').select('*').order('created_at',{ascending:false});
+  var admins=res.data||[];
+  if(!admins.length){
+    document.getElementById('admin-accounts-list').innerHTML=
+      '<div class="empty">등록된 관리자가 없습니다</div>';
+    return;
+  }
+  document.getElementById('admin-accounts-list').innerHTML=admins.map(function(a){
+    var isSelf=a.user_id===adminUser.id;
+    var levelBadge=a.level==='superadmin'
+      ?'<span style="background:var(--amber-light);color:var(--amber);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">슈퍼 관리자</span>'
+      :'<span style="background:var(--purple-light);color:var(--purple);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">관리자</span>';
+    return '<div class="tr">'
+      +'<div class="td" style="flex:2">'+esc(a.email)+(isSelf?' <span style="font-size:10px;color:var(--teal)">(나)</span>':'')+'</div>'
+      +'<div class="td" style="flex:1">'+esc(a.name||'-')+'</div>'
+      +'<div class="td" style="flex:1">'+levelBadge+'</div>'
+      +'<div class="td" style="flex:1">'+new Date(a.created_at).toLocaleDateString('ko-KR')+'</div>'
+      +'<div class="td c-action">'
+      +(isSelf?'<span style="font-size:12px;color:var(--text3)">본인</span>'
+        :'<button class="act-btn act-reject" onclick="deleteAdmin(\''+a.id+'\',\''+a.user_id+'\')">'+'삭제</button>')
+      +'</div></div>';
+  }).join('');
+}
+
+function openAdminAddModal(){
+  document.getElementById('aa-email').value='';
+  document.getElementById('aa-name').value='';
+  document.getElementById('aa-level').value='admin';
+  document.getElementById('aa-alert').style.display='none';
+  document.getElementById('admin-add-modal').classList.add('on');
+}
+function closeAdminAddModal(){
+  document.getElementById('admin-add-modal').classList.remove('on');
+}
+
+async function doAddAdmin(){
+  var email=document.getElementById('aa-email').value.trim();
+  var name=document.getElementById('aa-name').value.trim();
+  var level=document.getElementById('aa-level').value;
+  if(!email){showAaAlert('이메일을 입력하세요','red');return;}
+
+  var btn=document.getElementById('aa-save-btn');
+  btn.textContent='처리 중...';btn.disabled=true;
+
+  // auth.users에서 이메일로 user_id 조회 (admins 테이블 경유)
+  // 먼저 해당 이메일이 이미 관리자인지 확인
+  var check=await sb.from('admins').select('id').eq('email',email).maybeSingle();
+  if(check.data){showAaAlert('이미 등록된 관리자입니다','red');btn.textContent='추가하기';btn.disabled=false;return;}
+
+  // auth.users에서 이메일로 user_id 찾기
+  var userRes=await sb.from('profiles').select('id').eq('email',email).maybeSingle();
+  var userId=userRes.data?userRes.data.id:null;
+
+  // profiles 테이블이 없으면 shows/artists 등에서 user_id 추정 불가 — 이메일로만 등록
+  var insertData={email:email,name:name||null,level:level};
+  if(userId) insertData.user_id=userId;
+
+  var res=await sb.from('admins').insert([insertData]);
+  btn.textContent='추가하기';btn.disabled=false;
+  if(res.error){showAaAlert('추가 실패: '+res.error.message,'red');return;}
+
+  // user_metadata role 업데이트 (user_id 알 경우에만)
+  if(userId){
+    await sb.rpc('set_user_admin_role',{target_user_id:userId});
+  }
+
+  showAaAlert('관리자가 추가되었습니다','green');
+  setTimeout(function(){closeAdminAddModal();loadAdminAccounts();},1200);
+}
+
+async function deleteAdmin(id,userId){
+  if(!confirm('이 관리자를 삭제하시겠습니까?')) return;
+  var res=await sb.from('admins').delete().eq('id',id);
+  if(res.error){showAl('삭제 실패: '+res.error.message,'red');return;}
+  showAl('관리자가 삭제되었습니다','green');
+  loadAdminAccounts();
+}
+
+function showAaAlert(msg,type){
+  var el=document.getElementById('aa-alert');
+  el.textContent=msg;
+  el.style.display='block';
+  el.style.background=type==='red'?'var(--red-light)':'var(--teal-light)';
+  el.style.color=type==='red'?'var(--red)':'var(--teal)';
 }
 </script>
 </body>
