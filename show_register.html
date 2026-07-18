@@ -200,12 +200,20 @@ var STEP_LABELS = ['기본 정보','좌석/티켓','포스터 업로드','최종
 var GENRES = ['창작 뮤지컬','라이선스 뮤지컬','소극장','가족','클래식','코미디','드라마'];
 
 var fd = {
-  title:'', date_start:'', date_end:'', time:'', venue:'',
+  title:'', date_start:'', date_end:'', time:'', venue:'', venue_id:null,
   description:'', age_limit:'12세 이상', total_seats:'',
   price_vip:'', price_general:'', price_student:'',
   open_date:'', close_date:'', refund_policy:'공연 7일 전까지 100% 환불',
   cast_info:'', team_name:'', duration:''
 };
+
+
+// ── 극장 목록 로드 ──
+var allVenues = [];
+async function loadVenues(){
+  var res = await sb.from('venues').select('id,name,address,total_seats,price_vip,price_r,price_s,layout').order('name');
+  allVenues = res.data || [];
+}
 
 // ── 초기화 ──
 sb.auth.getSession().then(function(r){
@@ -217,11 +225,35 @@ sb.auth.getSession().then(function(r){
     document.getElementById('nav-right').innerHTML =
       '<div class="nav-av">'+name[0].toUpperCase()+'</div><span>'+name+'</span>';
     document.getElementById('reg-wrap').style.display='block';
-    renderStep();
+    loadVenues().then(function(){ renderStep(); });
   } else {
     document.getElementById('need-login').style.display='block';
   }
 });
+
+
+function onVenueChange(sel){
+  var vid = sel.value;
+  var v = allVenues.find(function(v){ return v.id === vid; });
+  fd.venue_id = vid || null;
+  fd.venue = v ? v.name : '';
+  var info = document.getElementById('venue-info');
+  if(v){
+    // 극장 정보 표시
+    info.innerHTML = '📍 '+esc(v.address||'')
+      +' · 총 '+v.total_seats+'석'
+      +(v.price_vip?' · VIP '+v.price_vip.toLocaleString()+'원':'')
+      +(v.price_r?' · R '+v.price_r.toLocaleString()+'원':'')
+      +(v.price_s?' · S '+v.price_s.toLocaleString()+'원':'');
+    // 가격 자동 채우기
+    if(v.price_vip){ fd.price_vip=v.price_vip; }
+    if(v.price_r){ fd.price_general=v.price_r; }
+    if(v.price_s){ fd.price_student=v.price_s; }
+    if(v.total_seats){ fd.total_seats=v.total_seats; }
+  } else {
+    info.innerHTML = '';
+  }
+}
 
 // ── 스텝 렌더 ──
 function renderStepBar(){
@@ -260,8 +292,7 @@ function renderStep1(){
     +'<input class="inp" id="f-time" placeholder="예: 19:30" value="'+esc(fd.time)+'"></div>'
     +'<div class="field"><label class="lbl">러닝타임 (분)</label>'
     +'<input class="inp" id="f-dur" placeholder="예: 150" value="'+esc(fd.duration)+'"></div></div>'
-    +'<div class="field"><label class="lbl">공연 장소 <span class="req">*</span></label>'
-    +'<input class="inp" id="f-venue" placeholder="공연장 이름" value="'+esc(fd.venue)+'"></div>'
+    +'<div class="field"><label class="lbl">공연 장소 <span class="req">*</span></label>'    +'<select class="inp" id="f-venue" onchange="onVenueChange(this)">'    +'<option value="">극장을 선택하세요</option>'    +allVenues.map(function(v){      return '<option value="'+v.id+'"'+(fd.venue_id===v.id?' selected':'')+'>'+esc(v.name)+(v.address?' ('+esc(v.address)+')':'')+'</option>';    }).join('')    +'</select>'    +'<div id="venue-info" style="margin-top:6px;font-size:12px;color:#666"></div></div>'
     +'<div class="field"><label class="lbl">팀명</label>'
     +'<input class="inp" id="f-team" placeholder="공연팀 이름" value="'+esc(fd.team_name)+'"></div>'
     +'<div class="field"><label class="lbl">장르 <span class="req">*</span></label>'
@@ -471,14 +502,22 @@ function next(cur){
   hideAl();
   if(cur===1){
     fd.title=val('f-title');fd.date_start=val('f-ds');fd.date_end=val('f-de');
-    fd.time=val('f-time');fd.duration=val('f-dur');fd.venue=val('f-venue');
+    fd.time=val('f-time');fd.duration=val('f-dur');
+    var venueEl=document.getElementById('f-venue');
+    if(venueEl.tagName==='SELECT'){
+      fd.venue_id=venueEl.value||null;
+      var vobj=allVenues.find(function(v){return v.id===venueEl.value;});
+      fd.venue=vobj?vobj.name:'';
+    } else {
+      fd.venue=venueEl.value;
+    }
     fd.team_name=val('f-team');fd.description=val('f-desc');fd.cast_info=val('f-cast');
     var age=document.getElementById('f-age');if(age) fd.age_limit=age.value;
     fd.genre=genres.join(', ');
     if(!fd.title){showAl('공연명을 입력하세요','red');return;}
     if(!fd.date_start){showAl('공연 시작일을 입력하세요','red');return;}
     if(!fd.time){showAl('공연 시간을 입력하세요','red');return;}
-    if(!fd.venue){showAl('공연 장소를 입력하세요','red');return;}
+    if(!fd.venue_id&&!fd.venue){showAl('공연 장소를 선택하세요','red');return;}
     if(genres.length===0){showAl('장르를 하나 이상 선택하세요','red');return;}
   }
   if(cur===2){
@@ -510,7 +549,7 @@ function doSubmit(){
   uploadPoster().then(function(posterUrl){
     var payload={
       user_id:user.id, title:fd.title, date_start:fd.date_start,
-      date_end:fd.date_end||null, time:fd.time, venue:fd.venue,
+      date_end:fd.date_end||null, time:fd.time, venue:fd.venue, venue_id:fd.venue_id||null,
       genre:fd.genre, description:fd.description, age_limit:fd.age_limit,
       total_seats:parseInt(fd.total_seats)||null,
       price_vip:parseInt(fd.price_vip)||null,
@@ -544,12 +583,20 @@ function doSubmit(){
   });
 }
 
+
+// ── 극장 목록 로드 ──
+var allVenues = [];
+async function loadVenues(){
+  var res = await sb.from('venues').select('id,name,address,total_seats,price_vip,price_r,price_s,layout').order('name');
+  allVenues = res.data || [];
+}
+
 // ── 초기화 ──
 function resetForm(){
   step=1;genres=[];agreed={c1:false,c2:false};
   posterFile=null;posterPreviewUrl=null;uploadedPosterUrl=null;
   photoFiles=[];photoPreviews=[];
-  fd={title:'',date_start:'',date_end:'',time:'',venue:'',description:'',
+  fd={title:'',date_start:'',date_end:'',time:'',venue:'',venue_id:null,description:'',
     age_limit:'12세 이상',total_seats:'',price_vip:'',price_general:'',
     price_student:'',open_date:'',close_date:'',
     refund_policy:'공연 7일 전까지 100% 환불',cast_info:'',team_name:'',duration:''};
