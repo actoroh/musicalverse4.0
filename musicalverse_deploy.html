@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>MusicalVerse</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --purple:#534AB7;--purple-light:#EEEDFE;--purple-mid:#7F77DD;--purple-dark:#3C3489;
+  --teal:#0F6E56;--teal-light:#E1F5EE;--teal-mid:#1D9E75;
+  --coral:#993C1D;--coral-light:#FAECE7;
+  --amber:#854F0B;--amber-light:#FAEEDA;
+  --red:#A32D2D;--red-light:#FCEBEB;
+  --bg:#fff;--bg2:#f7f7f5;--bg3:#f0efe9;
+  --text:#1a1a1a;--text2:#666;--text3:#999;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.18);
+  --radius:8px;--radius-lg:14px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#e8e6f0;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:20px 0}
+.device{width:390px;min-height:844px;background:var(--bg);border-radius:44px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.2);display:flex;flex-direction:column;position:relative}
+.status{padding:14px 24px 4px;display:flex;justify-content:space-between;font-size:12px;color:var(--text2);background:var(--bg)}
+
+/* 공통 */
+.topbar{padding:10px 18px;display:flex;align-items:center;gap:10px;border-bottom:0.5px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:50}
+.topbar .back{font-size:22px;color:var(--text2);cursor:pointer;background:none;border:none}
+.topbar .ttl{font-size:15px;font-weight:600;color:var(--text);flex:1}
+.topbar .action{font-size:13px;color:var(--purple);font-weight:600;background:none;border:none;cursor:pointer}
+.tab-nav{display:flex;border-bottom:0.5px solid var(--border);background:var(--bg);position:sticky;top:52px;z-index:40}
+.tn{flex:1;padding:9px 4px;text-align:center;font-size:10px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent}
+.tn i{display:block;font-size:20px;margin-bottom:1px}
+.tn.on{color:var(--purple);border-bottom-color:var(--purple);font-weight:600}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.bottom-nav{display:flex;border-top:0.5px solid var(--border);background:var(--bg);padding:8px 0 20px}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:var(--text3);font-size:10px;background:none;border:none}
+.bn i{font-size:22px}
+.bn.on{color:var(--purple)}
+
+/* 배지 */
+.badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:10px}
+.b-pro{background:var(--purple-light);color:var(--purple)}
+.b-ama{background:var(--teal-light);color:var(--teal)}
+.b-pending{background:var(--amber-light);color:var(--amber)}
+.b-approved{background:var(--teal-light);color:var(--teal)}
+.b-live{background:var(--purple-light);color:var(--purple)}
+.b-end{background:var(--bg2);color:var(--text3)}
+
+/* 버튼 */
+.btn-primary{width:100%;background:var(--purple);color:#fff;border:none;padding:14px;border-radius:var(--radius-lg);font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px}
+.btn-ghost{width:100%;background:transparent;border:0.5px solid var(--border2);padding:12px;border-radius:var(--radius-lg);font-size:14px;cursor:pointer;color:var(--text2)}
+
+/* 섹션 타이틀 */
+.sec{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em}
+
+/* 아바타 */
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0}
+
+/* 카드 */
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg)}
+
+/* ───── HOME ───── */
+.banner{background:var(--purple);border-radius:var(--radius-lg);padding:20px;color:#fff;margin-bottom:16px;position:relative;overflow:hidden}
+.banner h2{font-size:16px;font-weight:600;margin-bottom:3px}
+.banner p{font-size:12px;opacity:.8;margin-bottom:12px}
+.banner-btn{background:#fff;color:var(--purple);border:none;padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer}
+.show-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;margin-bottom:18px;scrollbar-width:none}
+.show-scroll::-webkit-scrollbar{display:none}
+.show-card{min-width:130px;border-radius:var(--radius-lg);border:0.5px solid var(--border);overflow:hidden;cursor:pointer;flex-shrink:0}
+.show-img{height:80px;display:flex;align-items:center;justify-content:center;font-size:28px}
+.show-info{padding:8px;background:var(--bg)}
+.show-title{font-size:12px;font-weight:600;margin-bottom:1px}
+.show-meta{font-size:11px;color:var(--text2)}
+.actor-row{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;margin-bottom:18px}
+.actor-row::-webkit-scrollbar{display:none}
+.actor-item{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:60px;cursor:pointer}
+.actor-av{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;border:2px solid var(--purple-mid)}
+.actor-name{font-size:10px;color:var(--text2);text-align:center}
+.feed-item{display:flex;gap:10px;padding:11px 0;border-bottom:0.5px solid var(--border)}
+.feed-body .fn{font-size:13px;font-weight:600}
+.feed-body .fm{font-size:13px;color:var(--text2);line-height:1.5;margin-top:2px}
+.feed-body .ft{font-size:11px;color:var(--text3);margin-top:3px}
+.feed-acts{display:flex;gap:14px;margin-top:5px}
+.feed-acts span{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:3px;cursor:pointer}
+.ad-bar{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.ad-label{font-size:10px;color:var(--text3)}
+.ad-text{font-size:13px;color:var(--text)}
+
+/* ───── SHOWS ───── */
+.filter-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;margin-bottom:14px;scrollbar-width:none}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-pill{padding:5px 13px;border-radius:20px;font-size:12px;border:0.5px solid var(--border2);cursor:pointer;white-space:nowrap;background:var(--bg);color:var(--text2)}
+.filter-pill.on{background:var(--purple);color:#fff;border-color:var(--purple)}
+.ticket-card{border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px;display:flex;gap:12px;cursor:pointer}
+.t-date{min-width:42px;text-align:center}
+.t-day{font-size:20px;font-weight:700;color:var(--purple)}
+.t-month{font-size:10px;color:var(--text3)}
+.t-name{font-size:14px;font-weight:600}
+.t-venue{font-size:12px;color:var(--text2);margin-top:2px}
+.t-price{font-size:12px;color:var(--purple);margin-top:4px;font-weight:600}
+
+/* ───── ARTIST ───── */
+.type-sw{display:flex;margin:14px 0;border:0.5px solid var(--border2);border-radius:var(--radius);overflow:hidden}
+.tsb{flex:1;padding:8px;font-size:13px;border:none;background:transparent;cursor:pointer;color:var(--text2)}
+.tsb.on{background:var(--purple);color:#fff;font-weight:600}
+.a-card{border:0.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:10px;overflow:hidden;cursor:pointer}
+.a-card-top{display:flex;align-items:center;gap:12px;padding:12px}
+.a-card-tags{display:flex;gap:5px;padding:0 12px 10px;flex-wrap:wrap}
+.a-tag{font-size:11px;padding:2px 8px;border-radius:9px;background:var(--bg2);color:var(--text2)}
+.a-card-latest{padding:9px 12px;border-top:0.5px solid var(--border);font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px}
+.follow-btn{padding:5px 12px;border-radius:18px;font-size:11px;cursor:pointer;font-weight:600}
+.f-on{background:var(--purple-light);color:var(--purple);border:0.5px solid #AFA9EC}
+.f-off{background:var(--purple);color:#fff;border:none}
+.team-card{border:0.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:10px;overflow:hidden;cursor:pointer}
+.tc-head{display:flex;gap:12px;padding:12px;align-items:flex-start}
+.tc-badge{width:48px;height:48px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.tc-stats{display:flex;border-top:0.5px solid var(--border)}
+.tc-stat{flex:1;padding:9px;text-align:center;border-right:0.5px solid var(--border)}
+.tc-stat:last-child{border-right:none}
+.ts-num{font-size:14px;font-weight:700;color:var(--purple)}
+.ts-lbl{font-size:10px;color:var(--text3);margin-top:1px}
+.tc-next{padding:9px 12px;border-top:0.5px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:space-between;font-size:12px}
+
+/* ───── BOOKING ───── */
+.step-bar{display:flex;padding:12px 18px 8px;border-bottom:0.5px solid var(--border)}
+.sb-step{flex:1;text-align:center;font-size:10px;color:var(--text3);position:relative}
+.sb-step.on{color:var(--purple);font-weight:600}
+.sb-step.done{color:var(--teal)}
+.sb-dot{width:20px;height:20px;border-radius:50%;margin:0 auto 3px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;background:var(--bg)}
+.sb-step.on .sb-dot{border-color:var(--purple);background:var(--purple-light);color:var(--purple)}
+.sb-step.done .sb-dot{border-color:var(--teal);background:var(--teal-light);color:var(--teal)}
+.sb-line{position:absolute;top:10px;left:60%;width:80%;height:1px;background:var(--border)}
+.sb-step.done .sb-line{background:var(--teal)}
+.show-header{background:var(--purple-light);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:14px}
+.sh-name{font-size:15px;font-weight:700;color:var(--purple-dark)}
+.sh-meta{font-size:12px;color:var(--purple);margin-top:2px}
+.stage-box{background:var(--purple);color:#fff;text-align:center;padding:7px;border-radius:6px;font-size:12px;margin-bottom:14px}
+.legend{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)}
+.leg-dot{width:13px;height:13px;border-radius:3px}
+.seat-grid{display:flex;flex-direction:column;gap:4px;align-items:center;margin-bottom:14px}
+.seat-row{display:flex;align-items:center;gap:3px}
+.row-lbl{width:16px;font-size:10px;color:var(--text3);text-align:right}
+.seat{width:22px;height:22px;border-radius:4px;border:none;font-size:9px;cursor:pointer;transition:transform .1s}
+.seat:active{transform:scale(.9)}
+.s-vip{background:var(--purple-light);color:var(--purple)}
+.s-r{background:var(--teal-light);color:var(--teal)}
+.s-s{background:#E6F1FB;color:#185FA5}
+.s-taken{background:var(--bg2);color:var(--text3);cursor:not-allowed}
+.s-sel{background:var(--purple)!important;color:#fff!important;transform:scale(1.1)}
+.seat-gap{width:8px}
+.sel-summary{border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:12px;margin-bottom:12px}
+.pay-method{border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:6px}
+.pay-method.on{border-color:var(--purple);background:var(--purple-light)}
+.radio{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--border2);margin-left:auto;flex-shrink:0}
+.radio.on{border-color:var(--purple);background:var(--purple);box-shadow:inset 0 0 0 3px #fff}
+.order-sum{background:var(--bg2);border-radius:var(--radius-lg);padding:12px;margin-bottom:12px}
+.o-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0}
+.o-row.total{border-top:0.5px solid var(--border);margin-top:7px;padding-top:7px;font-weight:700;font-size:14px}
+.complete-wrap{text-align:center;padding:20px 0}
+.check-circle{width:64px;height:64px;border-radius:50%;background:var(--teal-light);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:28px;color:var(--teal)}
+.ticket-vis{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:14px;margin:16px 0;text-align:left}
+.tv-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:0.5px solid var(--border)}
+.tv-row:last-child{border:none}
+.barcode{background:var(--bg2);border-radius:6px;padding:10px;margin-top:10px;text-align:center;font-size:11px;color:var(--text3);letter-spacing:.15em}
+
+/* ───── REGISTER ───── */
+.field{margin-bottom:14px}
+.field-lbl{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px}
+.req{color:#E24B4A}
+.field input,.field textarea,.field select{width:100%;font-size:13px;padding:10px 12px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg);color:var(--text)}
+.field textarea{resize:none;line-height:1.6}
+.field-row{display:flex;gap:8px}
+.field-row .field{flex:1}
+.hint{font-size:11px;color:var(--text3);margin-top:3px}
+.grade-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;padding:9px 12px;border:0.5px solid var(--border);border-radius:var(--radius)}
+.grade-col{width:13px;height:13px;border-radius:3px;flex-shrink:0}
+.upload-box{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:20px;text-align:center;cursor:pointer;color:var(--text3);font-size:13px}
+.tag-sel{display:flex;flex-wrap:wrap;gap:6px}
+.t-opt{padding:5px 12px;border-radius:20px;font-size:12px;border:0.5px solid var(--border2);cursor:pointer;color:var(--text2)}
+.t-opt.on{background:var(--purple-light);color:var(--purple);border-color:#AFA9EC;font-weight:600}
+.sum-card{border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:12px}
+.sum-head{background:var(--purple-light);padding:12px 14px}
+.sum-body{padding:10px 14px}
+.sum-row{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:0.5px solid var(--border)}
+.sum-row:last-child{border:none}
+.check-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:9px;cursor:pointer}
+.chk{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:1px}
+.chk.on{background:var(--purple);border-color:var(--purple);color:#fff}
+.notice{background:var(--bg2);border-radius:var(--radius);padding:11px 13px;margin-bottom:12px;font-size:12px;color:var(--text2);line-height:1.7}
+
+/* ───── ARTIST DETAIL ───── */
+.hero{padding:20px 18px 14px;text-align:center}
+.hero-av{width:76px;height:76px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;border:3px solid var(--purple-mid)}
+.hero-name{font-size:20px;font-weight:700}
+.hero-sub{font-size:13px;color:var(--purple);margin-top:2px}
+.hero-stats{display:flex;justify-content:center;gap:28px;margin-top:12px}
+.hs-num{font-size:16px;font-weight:700;text-align:center}
+.hs-lbl{font-size:10px;color:var(--purple);text-align:center;margin-top:1px}
+.hero-acts{display:flex;gap:8px;margin:12px 0 0}
+.ha{flex:1;padding:9px;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;text-align:center}
+.ha-main{background:var(--purple);color:#fff;border:none}
+.ha-sub{background:var(--bg);color:var(--purple);border:1px solid var(--purple-mid)}
+.ha-more{background:var(--bg);color:var(--text2);border:0.5px solid var(--border2);flex:0;padding:9px 13px}
+.dtab{display:flex;border-bottom:0.5px solid var(--border);margin-top:12px}
+.dt{flex:1;text-align:center;padding:9px;font-size:12px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent}
+.dt.on{color:var(--purple);border-bottom-color:var(--purple);font-weight:600}
+.dc{display:none;padding:14px 0}.dc.on{display:block}
+.show-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border)}
+.sr-day{font-size:16px;font-weight:700;color:var(--purple);text-align:center}
+.sr-month{font-size:10px;color:var(--text3);text-align:center}
+.si-name{font-size:13px;font-weight:600}
+.si-role{font-size:11px;color:var(--text2);margin-top:1px}
+.media-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.mi{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.fan-post{display:flex;gap:9px;padding:9px 0;border-bottom:0.5px solid var(--border)}
+.fp-name{font-size:12px;font-weight:600}
+.fp-text{font-size:12px;color:var(--text2);margin-top:2px;line-height:1.5}
+.fp-time{font-size:10px;color:var(--text3);margin-top:3px}
+.info-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:13px}
+.ir-lbl{color:var(--text3)}
+.ir-val{font-weight:600}
+</style>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+
+<div class="device">
+  <div class="status"><span>9:41</span><span>●●●</span></div>
+
+  <!-- ═══ SCREEN ROUTER ═══ -->
+  <div id="app" style="display:flex;flex-direction:column;flex:1;overflow:hidden"></div>
+</div>
+
+<script>
+var state = {
+  screen: 'home',
+  homeTab: 'home',
+  detail: null,
+  artistType: 'actor',
+  bookStep: 1,
+  selectedSeats: {},
+  regStep: 1,
+  detailTab: 'info',
+  checks: {c1:true,c2:true,c3:false}
+};
+
+var PRICES = {vip:30000,r:20000,s:10000};
+var SEAT_LAYOUT = [
+  {type:'vip',row:'A',seats:[1,2,3,0,4,5,6],taken:[3]},
+  {type:'vip',row:'B',seats:[1,2,3,0,4,5,6],taken:[1,5]},
+  {type:'r',row:'C',seats:[1,2,3,4,0,5,6,7,8],taken:[2,6]},
+  {type:'r',row:'D',seats:[1,2,3,4,0,5,6,7,8],taken:[4,7]},
+  {type:'s',row:'E',seats:[1,2,3,4,5,0,6,7,8,9,10],taken:[3,9]},
+  {type:'s',row:'F',seats:[1,2,3,4,5,0,6,7,8,9,10],taken:[2,5,10]},
+];
+
+function r(){document.getElementById('app').innerHTML=render();bindEvents()}
+
+function render(){
+  var s=state.screen;
+  if(s==='home') return renderHome();
+  if(s==='booking') return renderBooking();
+  if(s==='register') return renderRegister();
+  if(s==='artist-detail') return renderArtistDetail();
+  return '';
+}
+
+/* ─── HOME ─── */
+function renderHome(){
+  var tabs=['home','shows','artists','community'];
+  var icons=['ti-home','ti-ticket','ti-star','ti-users'];
+  var labels=['홈','공연','아티스트','커뮤니티'];
+  return '<div class="topbar"><span class="ttl" style="font-size:17px;color:#534AB7">Musical<span style="color:#1a1a1a">Verse</span></span><i class="ti ti-search" style="font-size:20px;color:#999;margin-left:auto"></i><i class="ti ti-bell" style="font-size:20px;color:#999;margin-left:12px"></i></div>'
+    +'<div class="tab-nav">'
+    +tabs.map(function(t,i){return '<div class="tn'+(state.homeTab===t?' on':'')+'" data-tab="'+t+'"><i class="ti '+icons[i]+'"></i>'+labels[i]+'</div>'}).join('')
+    +'</div>'
+    +'<div class="scroll" style="padding:14px 16px">'+renderHomeContent()+'</div>'
+    +'<div class="bottom-nav">'
+    +tabs.map(function(t,i){return '<button class="bn'+(state.homeTab===t?' on':'')+'" data-tab="'+t+'"><i class="ti '+icons[i]+'"></i>'+labels[i]+'</button>'}).join('')
+    +'</div>';
+}
+
+function renderHomeContent(){
+  var t=state.homeTab;
+  if(t==='home') return renderFeed();
+  if(t==='shows') return renderShows();
+  if(t==='artists') return renderArtists();
+  if(t==='community') return renderCommunity();
+  return '';
+}
+
+function renderFeed(){
+  return '<div class="banner"><h2>레미제라블 내한공연</h2><p>2026.06.12 — 블루스퀘어 신한카드홀</p><button class="banner-btn" data-action="gobook">예약하기 →</button></div>'
+    +'<div class="sec">지금 공연 중</div>'
+    +'<div class="show-scroll">'
+    +[['🎭','지킬앤하이드','샤롯데씨어터','pro'],['🎶','명성황후','부산시민회관','ama'],['🎵','맘마미아','디큐브아트센터','pro'],['🎤','캣츠','동서대학교홀','ama']].map(function(s){
+      return '<div class="show-card" data-action="gobook"><div class="show-img" style="background:'+(s[3]==='pro'?'#EEEDFE':'#E1F5EE')+'">'+s[0]+'</div><div class="show-info"><div class="badge '+(s[3]==='pro'?'b-pro':'b-ama')+'">'+(s[3]==='pro'?'프로':'아마추어')+'</div><div class="show-title">'+s[1]+'</div><div class="show-meta">'+s[2]+'</div></div></div>'
+    }).join('')
+    +'</div>'
+    +'<div class="sec">팔로우 중인 아티스트</div>'
+    +'<div class="actor-row">'
+    +[['김민','김민준','#EEEDFE','#534AB7'],['이수','이수연','#E1F5EE','#0F6E56'],['박지','박지훈','#FAECE7','#993C1D'],['최아','최아름','#FBEAF0','#993556']].map(function(a){
+      return '<div class="actor-item" data-action="goartist" data-id="a1"><div class="actor-av" style="background:'+a[2]+';color:'+a[3]+'">'+a[0]+'</div><div class="actor-name">'+a[1]+'</div></div>'
+    }).join('')
+    +'</div>'
+    +'<div class="ad-bar"><div><div class="ad-label">후원 광고</div><div class="ad-text">뮤지컬 팬을 위한 공연 보험</div></div><i class="ti ti-chevron-right" style="color:#ccc"></i></div>'
+    +'<div class="sec">최신 피드</div>'
+    +[['김민','#FAEEDA','#854F0B','김민준 · 배우','300회 공연 소감을 남겼습니다. 함께해주신 팬 여러분께 감사드립니다.','2시간 전'],
+      ['부산','#E1F5EE','#0F6E56','부산뮤지컬단 · 아마추어팀','6월 정기공연 「명성황후」 티켓 오픈! 좌석이 빠르게 마감되고 있습니다.','5시간 전']].map(function(f){
+      return '<div class="feed-item"><div class="av" style="width:38px;height:38px;background:'+f[1]+';color:'+f[2]+';font-size:13px">'+f[0]+'</div><div class="feed-body"><div class="fn">'+f[3]+'</div><div class="fm">'+f[4]+'</div><div class="ft">'+f[5]+'</div><div class="feed-acts"><span><i class="ti ti-heart"></i> 1.2천</span><span><i class="ti ti-message"></i> 84</span></div></div></div>'
+    }).join('');
+}
+
+function renderShows(){
+  return '<div class="filter-row"><div class="filter-pill on">전체</div><div class="filter-pill">프로</div><div class="filter-pill">아마추어</div><div class="filter-pill">서울</div><div class="filter-pill">부산</div></div>'
+    +[['12','6월','레미제라블 내한공연','pro','블루스퀘어 신한카드홀, 서울','R석 165,000원~'],
+      ['21','6월','명성황후','ama','부산시민회관 대극장','일반석 20,000원'],
+      ['28','6월','지킬앤하이드','pro','샤롯데씨어터, 서울','S석 110,000원~'],
+      ['05','7월','캣츠 (동서대 뮤지컬팀)','ama','동서대학교 소석홀, 부산','전석 무료']].map(function(t){
+      return '<div class="ticket-card" data-action="gobook"><div class="t-date"><div class="t-day">'+t[0]+'</div><div class="t-month">'+t[1]+'</div></div><div><div class="badge '+(t[2]==='pro'?'b-pro':'b-ama')+'">'+(t[2]==='pro'?'프로':'아마추어')+'</div><div class="t-name">'+t[2]+'</div><div class="t-venue"><i class="ti ti-map-pin" style="font-size:11px"></i> '+t[4]+'</div><div class="t-price">'+t[5]+'</div></div></div>'
+    }).join('');
+}
+
+function renderArtists(){
+  return '<div class="type-sw"><button class="tsb'+(state.artistType==='actor'?' on':'')+'" data-atype="actor">배우</button><button class="tsb'+(state.artistType==='team'?' on':'')+'" data-atype="team">아마추어팀</button></div>'
+    +(state.artistType==='actor'?renderActorList():renderTeamList());
+}
+
+function renderActorList(){
+  return [['김민','#EEEDFE','#534AB7','김민준','뮤지컬 배우 · 남자 주연','12,400','지킬앤하이드,엘리자벳,레미제라블','on','a1'],
+          ['이수','#E1F5EE','#0F6E56','이수연','뮤지컬 배우 · 여자 주연','8,100','레미제라블,맘마미아,위키드','off','a2'],
+          ['박지','#FAECE7','#993C1D','박지훈','뮤지컬 배우 · 앙상블','3,200','캣츠,맘마미아','off','a3']].map(function(a){
+    return '<div class="a-card" data-action="goartist" data-id="'+a[8]+'"><div class="a-card-top"><div class="av" style="width:56px;height:56px;background:'+a[1]+';color:'+a[2]+';font-size:16px;border:2px solid '+a[2]+'">'+a[0]+'</div><div style="flex:1"><div style="font-size:14px;font-weight:700">'+a[3]+'</div><div style="font-size:11px;color:#999;margin-top:2px">'+a[4]+'</div><div style="font-size:11px;color:#ccc;margin-top:3px">팬 '+a[5]+'명</div></div><button class="follow-btn '+(a[7]==='on'?'f-on':'f-off')+'" data-stop>'+(a[7]==='on'?'팔로우 중':'+ 팔로우')+'</button></div><div class="a-card-tags">'+a[6].split(',').map(function(g){return '<span class="a-tag">'+g+'</span>'}).join('')+'</div><div class="a-card-latest"><i class="ti ti-message-circle" style="color:#534AB7"></i>최근 업데이트가 있습니다</div></div>'
+  }).join('');
+}
+
+function renderTeamList(){
+  return [['부뮤','#FAECE7','#993C1D','부산뮤지컬단','창단 8년 · 부산 연제구 · 단원 42명','16','2.3천','4.8','명성황후 — 06.21','t1'],
+          ['동서','#EEEDFE','#534AB7','동서대 뮤지컬팀','학생 공연팀 · 부산 사상구 · 단원 28명','9','890','4.5','캣츠 — 07.05','t2'],
+          ['기장','#E1F5EE','#0F6E56','기장군민뮤지컬단','창단 3년 · 부산 기장군 · 단원 20명','3','340','4.2','오즈의 마법사 — 09.14','t3']].map(function(t){
+    return '<div class="team-card" data-action="goartist" data-id="'+t[9]+'"><div class="tc-head"><div class="tc-badge" style="background:'+t[1]+';color:'+t[2]+'">'+t[0]+'</div><div><div style="font-size:14px;font-weight:700">'+t[3]+'</div><div style="font-size:11px;color:#999;margin-top:3px;line-height:1.5">'+t[4]+'</div></div></div><div class="tc-stats"><div class="tc-stat"><div class="ts-num">'+t[5]+'</div><div class="ts-lbl">총 공연</div></div><div class="tc-stat"><div class="ts-num">'+t[6]+'</div><div class="ts-lbl">팬</div></div><div class="tc-stat"><div class="ts-num">'+t[7]+'</div><div class="ts-lbl">평점</div></div></div><div class="tc-next"><div><div style="font-size:10px;color:#999">다음 공연</div><div style="font-size:12px;font-weight:600;margin-top:1px">'+t[8]+'</div></div><i class="ti ti-chevron-right" style="color:#ccc"></i></div></div>'
+  }).join('');
+}
+
+function renderCommunity(){
+  return '<div class="filter-row"><div class="filter-pill on">전체</div><div class="filter-pill">후기</div><div class="filter-pill">직캠</div><div class="filter-pill">팬아트</div></div>'
+    +[['유나','#FAEEDA','#854F0B','유나_뮤덕','어제 지킬앤하이드 봤는데... 김민준 배우 라이브 진짜 소름이었어요. 2막 커튼콜에서 울었습니다.','어제 · 지킬앤하이드 게시판','234','31'],
+      ['뮤뮤','#EAF3DE','#3B6D11','뮤지컬뮤지컬','부산뮤지컬단 명성황후 예매 성공! 앱으로 바로 결제되니까 너무 편하다 ㅠㅠ','3일 전 · 예약 후기','89','12'],
+      ['팬아','#EEEDFE','#534AB7','팬아트_세상','이수연 배우 레미제라블 팬아트 올려요. 첫 팬아트라 부끄럽지만...','4일 전 · 팬아트','512','67']].map(function(f){
+      return '<div class="feed-item"><div class="av" style="width:38px;height:38px;background:'+f[1]+';color:'+f[2]+';font-size:13px">'+f[0]+'</div><div class="feed-body"><div class="fn">'+f[3]+'</div><div class="fm">'+f[4]+'</div><div class="ft">'+f[5]+'</div><div class="feed-acts"><span><i class="ti ti-heart"></i> '+f[6]+'</span><span><i class="ti ti-message"></i> '+f[7]+'</span></div></div></div>'
+    }).join('')
+    +'<div style="margin-top:14px"><button class="btn-primary" data-action="goreg">공연 등록 신청하기</button></div>';
+}
+
+/* ─── BOOKING ─── */
+function renderBooking(){
+  var steps=['좌석 선택','결제','완료'];
+  var stepBar='<div class="step-bar">'+steps.map(function(s,i){
+    var cl=i+1===state.bookStep?'on':i+1<state.bookStep?'done':'';
+    return '<div class="sb-step '+cl+'"><div class="sb-dot">'+(i+1<state.bookStep?'✓':i+1)+'</div>'+s+(i<2?'<div class="sb-line"></div>':'')+'</div>'
+  }).join('')+'</div>';
+  return '<div class="topbar"><button class="back" data-action="back">←</button><span class="ttl">'+['좌석 선택','결제','예약 완료'][state.bookStep-1]+'</span></div>'
+    +stepBar
+    +'<div class="scroll" style="padding:14px 16px">'+renderBookContent()+'</div>';
+}
+
+function renderBookContent(){
+  if(state.bookStep===1) return renderSeatPick();
+  if(state.bookStep===2) return renderPayment();
+  return renderBookDone();
+}
+
+function renderSeatPick(){
+  var keys=Object.keys(state.selectedSeats);
+  var total=keys.reduce(function(a,k){return a+PRICES[state.selectedSeats[k].type]},0);
+  var grid=SEAT_LAYOUT.map(function(r){
+    return '<div class="seat-row"><div class="row-lbl">'+r.row+'</div>'+r.seats.map(function(s){
+      if(s===0) return '<div class="seat-gap"></div>';
+      var key=r.row+s,taken=r.taken.indexOf(s)>-1,sel=!!state.selectedSeats[key];
+      var cl='seat '+(taken?'s-taken':sel?'s-sel':r.type==='vip'?'s-vip':r.type==='r'?'s-r':'s-s');
+      return '<button class="'+cl+'" '+(taken?'disabled':'')+' data-seat="'+key+'" data-type="'+r.type+'" data-row="'+r.row+'" data-num="'+s+'">'+s+'</button>'
+    }).join('')+'</div>'
+  }).join('');
+  return '<div class="show-header"><div class="sh-name">레미제라블 내한공연</div><div class="sh-meta">2026.06.12 (금) 오후 7시 30분 · 블루스퀘어 신한카드홀</div></div>'
+    +'<div class="stage-box">STAGE</div>'
+    +'<div class="legend"><div class="leg-item"><div class="leg-dot" style="background:#EEEDFE;border:0.5px solid #AFA9EC"></div>VIP 30,000원</div><div class="leg-item"><div class="leg-dot" style="background:#E1F5EE;border:0.5px solid #5DCAA5"></div>일반 20,000원</div><div class="leg-item"><div class="leg-dot" style="background:#E6F1FB;border:0.5px solid #85B7EB"></div>학생 10,000원</div><div class="leg-item"><div class="leg-dot" style="background:#f0efe9"></div>매진</div></div>'
+    +'<div class="seat-grid">'+grid+'</div>'
+    +'<div class="sel-summary"><div style="font-size:12px;color:#999;margin-bottom:4px">선택한 좌석</div>'
+    +(keys.length?'<div style="font-size:13px;font-weight:600">'+keys.map(function(k){var s=state.selectedSeats[k];return s.row+s.num+'('+s.type.toUpperCase()+')'}).join(', ')+'</div><div style="font-size:15px;font-weight:700;color:#534AB7;margin-top:4px">합계 '+total.toLocaleString()+'원</div>':'<div style="font-size:13px;color:#ccc">좌석을 선택해 주세요</div>')
+    +'</div>'
+    +'<button class="btn-primary" '+(keys.length?'data-action="bookstep2"':'disabled')+' style="'+(keys.length?'':'opacity:.4')+'">다음 — 결제하기</button>';
+}
+
+function renderPayment(){
+  var keys=Object.keys(state.selectedSeats);
+  var total=keys.reduce(function(a,k){return a+PRICES[state.selectedSeats[k].type]},0);
+  var labels=keys.map(function(k){var s=state.selectedSeats[k];return s.row+s.num}).join(', ');
+  return '<div class="show-header"><div class="sh-name">레미제라블 내한공연</div><div class="sh-meta">좌석: '+labels+' · 결제 예정: '+(total+2000).toLocaleString()+'원</div></div>'
+    +['카카오페이','신용카드 / 체크카드','토스페이'].map(function(m,i){
+      return '<div class="pay-method'+(i===0?' on':'')+'"><i class="ti '+(i===0?'ti-brand-kakao':i===1?'ti-credit-card':'ti-brand-mastercard')+'" style="font-size:20px;color:#534AB7"></i><div><div style="font-size:13px;font-weight:600">'+m+'</div><div style="font-size:11px;color:#999">간편결제</div></div><div class="radio'+(i===0?' on':'')+'"></div></div>'
+    }).join('')
+    +'<div class="order-sum"><div class="o-row"><span style="color:#999">공연명</span><span>레미제라블</span></div><div class="o-row"><span style="color:#999">좌석</span><span>'+labels+'</span></div><div class="o-row"><span style="color:#999">티켓 금액</span><span>'+total.toLocaleString()+'원</span></div><div class="o-row"><span style="color:#999">예매 수수료</span><span>2,000원</span></div><div class="o-row total"><span>최종 결제</span><span style="color:#534AB7">'+(total+2000).toLocaleString()+'원</span></div></div>'
+    +'<button class="btn-primary" data-action="bookstep3">결제 완료</button>'
+    +'<button class="btn-ghost" data-action="bookstep1">좌석 다시 선택</button>';
+}
+
+function renderBookDone(){
+  var keys=Object.keys(state.selectedSeats);
+  var total=keys.reduce(function(a,k){return a+PRICES[state.selectedSeats[k].type]},0);
+  var labels=keys.map(function(k){var s=state.selectedSeats[k];return s.row+s.num+'('+s.type.toUpperCase()+')'}).join(', ');
+  return '<div class="complete-wrap"><div class="check-circle">✓</div><h2 style="font-size:18px;font-weight:700;margin-bottom:6px">예약이 완료되었습니다</h2><p style="font-size:13px;color:#999">마이페이지에서 언제든지 확인하실 수 있습니다.</p></div>'
+    +'<div class="ticket-vis"><div style="font-size:14px;font-weight:700;margin-bottom:10px">레미제라블 내한공연</div>'
+    +[['일시','2026.06.12 (금) 19:30'],['장소','블루스퀘어 신한카드홀'],['좌석',labels],['결제 금액',(total+2000).toLocaleString()+'원']].map(function(r){
+      return '<div class="tv-row"><span style="color:#999">'+r[0]+'</span><span style="font-weight:600'+(r[0]==='결제 금액'?';color:#534AB7':'')+'">'+r[1]+'</span></div>'
+    }).join('')
+    +'<div class="barcode">MV · 2026 · 8842-9120-3374</div></div>'
+    +'<button class="btn-primary" data-action="home">홈으로 돌아가기</button>';
+}
+
+/* ─── REGISTER ─── */
+function renderRegister(){
+  var steps=['기본 정보','좌석/티켓','미디어','최종 확인'];
+  var stepBar='<div class="step-bar">'+steps.map(function(s,i){
+    var cl=i+1===state.regStep?'on':i+1<state.regStep?'done':'';
+    return '<div class="sb-step '+cl+'"><div class="sb-dot">'+(i+1<state.regStep?'✓':i+1)+'</div>'+s+(i<3?'<div class="sb-line"></div>':'')+'</div>'
+  }).join('')+'</div>';
+  return '<div class="topbar"><button class="back" data-action="regback">←</button><span class="ttl">공연 등록</span><button class="action" data-action="savedraft">임시저장</button></div>'
+    +stepBar
+    +'<div class="scroll" style="padding:14px 16px">'+renderRegContent()+'</div>';
+}
+
+function renderRegContent(){
+  if(state.regStep===1) return renderReg1();
+  if(state.regStep===2) return renderReg2();
+  if(state.regStep===3) return renderReg3();
+  if(state.regStep===4) return renderReg4();
+  return renderRegDone();
+}
+
+function renderReg1(){
+  return '<div class="field"><div class="field-lbl">공연명 <span class="req">*</span></div><input value="명성황후"></div>'
+    +'<div class="field-row"><div class="field"><div class="field-lbl">시작일 <span class="req">*</span></div><input value="2026-06-21"></div><div class="field"><div class="field-lbl">종료일</div><input value="2026-06-22"></div></div>'
+    +'<div class="field"><div class="field-lbl">공연 시간 <span class="req">*</span></div><input value="오후 7시 30분"></div>'
+    +'<div class="field"><div class="field-lbl">공연 장소 <span class="req">*</span></div><input value="부산시민회관 대극장"><div class="hint">부산 · 중구 영주동 · 수용 1,300석</div></div>'
+    +'<div class="field"><div class="field-lbl">장르 <span class="req">*</span></div><div class="tag-sel"><span class="t-opt on">창작 뮤지컬</span><span class="t-opt">라이선스</span><span class="t-opt">소극장</span><span class="t-opt">가족</span><span class="t-opt">클래식</span></div></div>'
+    +'<div class="field"><div class="field-lbl">공연 소개</div><textarea rows="4">조선 왕조의 마지막 황후 명성황후의 삶과 사랑, 그리고 비극을 그린 대형 창작 뮤지컬입니다.</textarea></div>'
+    +'<div class="field"><div class="field-lbl">관람 등급</div><select><option>전체 관람가</option><option>7세 이상</option><option selected>12세 이상</option><option>15세 이상</option></select></div>'
+    +'<button class="btn-primary" data-action="reg2">다음 — 좌석 / 티켓 설정</button>';
+}
+
+function renderReg2(){
+  return '<div class="field"><div class="field-lbl">총 좌석 수 <span class="req">*</span></div><input value="300"><div class="hint">공연장 총 수용 인원 기준</div></div>'
+    +'<div class="field"><div class="field-lbl">좌석 등급 및 가격 <span class="req">*</span></div>'
+    +[['#EEEDFE','#AFA9EC','VIP석','30,000'],['#E1F5EE','#5DCAA5','일반석','20,000'],['#E6F1FB','#85B7EB','학생석','10,000']].map(function(g){
+      return '<div class="grade-row"><div class="grade-col" style="background:'+g[0]+';border:0.5px solid '+g[1]+'"></div><div style="flex:1;font-size:13px;font-weight:600">'+g[2]+'</div><input style="width:90px;text-align:right;font-size:13px;padding:4px 8px;border-radius:6px;border:0.5px solid #ddd" value="'+g[3]+'"><span style="font-size:11px;color:#999;margin-left:3px">원</span></div>'
+    }).join('')
+    +'</div>'
+    +'<div class="field"><div class="field-lbl">예매 오픈일 <span class="req">*</span></div><input value="2026-05-25"><div class="hint">설정일 오전 10시 자동 오픈</div></div>'
+    +'<div class="field"><div class="field-lbl">예매 마감일</div><input value="2026-06-20"></div>'
+    +'<div class="field"><div class="field-lbl">환불 정책</div><select><option selected>공연 7일 전까지 100% 환불</option><option>공연 3일 전까지 100% 환불</option><option>공연 당일 환불 불가</option></select></div>'
+    +'<button class="btn-primary" data-action="reg3">다음 — 미디어 등록</button>'
+    +'<button class="btn-ghost" data-action="reg1">이전으로</button>';
+}
+
+function renderReg3(){
+  return '<div class="field"><div class="field-lbl">대표 포스터 <span class="req">*</span></div><div class="upload-box">🎭<br>포스터 이미지 업로드<br><span style="font-size:11px">JPG, PNG · 최대 10MB</span></div></div>'
+    +'<div class="field"><div class="field-lbl">공연 사진 (선택)</div><div class="upload-box" style="padding:14px">📸 사진 추가 (최대 10장)</div></div>'
+    +'<div class="field"><div class="field-lbl">홍보 영상 URL (선택)</div><input placeholder="YouTube 또는 Vimeo URL"></div>'
+    +'<div class="field"><div class="field-lbl">출연진 정보 (선택)</div><textarea rows="3">김희정 (명성황후 역), 이준호 (고종 역), 박소미 (연출)</textarea></div>'
+    +'<button class="btn-primary" data-action="reg4">다음 — 최종 확인</button>'
+    +'<button class="btn-ghost" data-action="reg2">이전으로</button>';
+}
+
+function renderReg4(){
+  var cs=state.checks;
+  return '<div class="sum-card"><div class="sum-head"><div style="font-size:15px;font-weight:700;color:#3C3489">명성황후</div><div style="font-size:12px;color:#534AB7;margin-top:2px">부산뮤지컬단 · 정기공연</div></div><div class="sum-body">'
+    +[['일시','2026.06.21–22 · 오후 7시 30분'],['장소','부산시민회관 대극장'],['장르','창작 뮤지컬'],['관람 등급','12세 이상'],['총 좌석','300석'],['예매 오픈','2026.05.25 오전 10시'],['환불 정책','공연 7일 전까지 100% 환불']].map(function(r){
+      return '<div class="sum-row"><span style="color:#999">'+r[0]+'</span><span style="font-weight:600">'+r[1]+'</span></div>'
+    }).join('')+'</div></div>'
+    +'<div class="notice">등록 후 운영팀 검토(1–2 영업일)를 거쳐 공개됩니다.<br>수수료는 티켓 금액의 4%가 자동 정산됩니다.</div>'
+    +[['c1',true,'[필수] 공연 등록 및 티켓 판매 서비스 이용 약관에 동의합니다'],
+      ['c2',true,'[필수] 환불 정책 및 수수료 정산 기준에 동의합니다'],
+      ['c3',false,'[선택] MusicalVerse 공연 홍보 뉴스레터 발송에 동의합니다']].map(function(c){
+      return '<div class="check-row" data-chk="'+c[0]+'"><div class="chk'+(cs[c[0]]?' on':'')+'">'+( cs[c[0]]?'✓':'')+'</div><div style="font-size:12px;color:#666;line-height:1.5">'+c[2]+'</div></div>'
+    }).join('')
+    +'<button class="btn-primary" data-action="regdone" style="margin-top:12px">공연 등록 신청</button>'
+    +'<button class="btn-ghost" data-action="reg3">이전으로</button>';
+}
+
+function renderRegDone(){
+  return '<div class="complete-wrap"><div class="check-circle">✓</div><h2 style="font-size:18px;font-weight:700;margin-bottom:6px">공연 등록 신청 완료</h2><p style="font-size:13px;color:#999">운영팀 검토 후 1–2 영업일 내에<br>승인 결과를 알려드립니다.</p></div>'
+    +'<div class="ticket-vis">'
+    +[['공연명','명성황후'],['신청 번호','MV-2026-04821'],['신청 일시','2026.05.18'],['예매 오픈 예정','2026.05.25'],['현재 상태','검토 중']].map(function(r){
+      return '<div class="tv-row"><span style="color:#999">'+r[0]+'</span><span style="font-weight:600'+(r[0]==='현재 상태'?';color:#854F0B':'')+'">'+r[1]+'</span></div>'
+    }).join('')+'</div>'
+    +'<button class="btn-primary" data-action="home">홈으로 돌아가기</button>';
+}
+
+/* ─── ARTIST DETAIL ─── */
+function renderArtistDetail(){
+  var id=state.detail;
+  var isTeam=id&&id[0]==='t';
+  var bg=isTeam?'#FAECE7':'#EEEDFE';
+  var tc=isTeam?'#712B13':'#3C3489';
+  var sc=isTeam?'#993C1D':'#534AB7';
+  var av=isTeam?'부뮤':'김민';
+  var name=isTeam?'부산뮤지컬단':'김민준';
+  var sub=isTeam?'창단 8년 · 부산 연제구 · 단원 42명':'뮤지컬 배우 · 남자 주연';
+  var dtabs=isTeam?['소개','공연','단원','팬게시판']:['프로필','공연','미디어','팬게시판'];
+  var dtkeys=['info','shows','extra','fan'];
+  return '<div class="topbar"><button class="back" data-action="back">←</button><span class="ttl">'+name+'</span></div>'
+    +'<div class="scroll">'
+    +'<div class="hero" style="background:'+bg+'"><div class="hero-av" style="background:'+(isTeam?'#fff':'#EEEDFE')+';color:'+sc+';border-color:'+sc+(isTeam?';border-radius:12px':'')+'">'+av+'</div>'
+    +'<div class="hero-name" style="color:'+tc+'">'+name+'</div><div class="hero-sub" style="color:'+sc+'">'+sub+'</div>'
+    +'<div class="hero-stats"><div><div class="hs-num" style="color:'+tc+'">'+(isTeam?'16':'12,400')+'</div><div class="hs-lbl" style="color:'+sc+'">'+(isTeam?'총 공연':'팬')+'</div></div><div><div class="hs-num" style="color:'+tc+'">'+(isTeam?'2,300':'24')+'</div><div class="hs-lbl" style="color:'+sc+'">'+(isTeam?'팬':'공연')+'</div></div><div><div class="hs-num" style="color:'+tc+'">'+(isTeam?'4.8':'4.9')+'</div><div class="hs-lbl" style="color:'+sc+'">평점</div></div></div></div>'
+    +'<div style="display:flex;gap:8px;padding:12px 16px 0">'
+    +'<button class="ha ha-main" style="flex:1">'+(isTeam?'+ 팔로우':'팔로우 중 ✓')+'</button>'
+    +'<button class="ha ha-sub" style="flex:1">'+(isTeam?'공연 예약':'메시지')+'</button>'
+    +'<button class="ha ha-more">···</button></div>'
+    +'<div class="dtab">'+dtabs.map(function(t,i){return '<div class="dt'+(state.detailTab===dtkeys[i]?' on':'')+'" data-dtab="'+dtkeys[i]+'">'+t+'</div>'}).join('')+'</div>'
+    +'<div style="padding:14px 16px">'+renderDetailContent(isTeam)+'</div>'
+    +'</div>';
+}
+
+function renderDetailContent(isTeam){
+  var t=state.detailTab;
+  if(t==='info') return isTeam
+    ?'<div style="font-size:13px;color:#666;line-height:1.7;margin-bottom:14px">2018년 창단한 부산 대표 아마추어 뮤지컬단입니다. 전문 연출가와 음악감독의 지도 하에 연간 2회 정기공연을 진행하며, 지역 문화 활성화에 기여하고 있습니다.</div>'
+      +[['창단','2018년 3월'],['활동 지역','부산 연제구'],['정기공연','연 2회'],['단원 현황','42명 (단원 모집 중)']].map(function(r){return '<div class="info-row"><span class="ir-lbl">'+r[0]+'</span><span class="ir-val">'+r[1]+'</span></div>'}).join('')
+    :'<div style="font-size:13px;color:#666;line-height:1.7;margin-bottom:14px">2012년 뮤지컬 데뷔 이후 지킬앤하이드, 엘리자벳, 레미제라블 등 주요 작품의 주연을 맡아온 배우입니다.</div>'
+      +[['소속','에이치에이뮤지컬'],['데뷔','2012년'],['활동 지역','서울 · 부산'],['전문 장르','대형 뮤지컬, 창작 뮤지컬']].map(function(r){return '<div class="info-row"><span class="ir-lbl">'+r[0]+'</span><span class="ir-val">'+r[1]+'</span></div>'}).join('');
+  if(t==='shows') return [['12','6월','레미제라블','장발장 역','up'],['현재','','지킬앤하이드','지킬/하이드 역','on'],['03','1월','엘리자벳','죽음 역','end']].map(function(s){
+    return '<div class="show-row"><div style="min-width:38px;text-align:center"><div class="sr-day">'+s[0]+'</div><div class="sr-month">'+s[1]+'</div></div><div style="flex:1"><div class="si-name">'+s[2]+'</div><div class="si-role">'+s[3]+'</div></div><span class="badge '+(s[4]==='on'?'b-live':s[4]==='up'?'b-approved':'b-end')+'">'+(s[4]==='on'?'공연 중':s[4]==='up'?'예정':'종료')+'</span></div>'
+  }).join('');
+  if(t==='extra') return isTeam
+    ?'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+[['김희','#FAECE7','#993C1D','김희정','단장 · 소프라노'],['이준','#EEEDFE','#534AB7','이준호','부단장 · 테너'],['박소','#E1F5EE','#0F6E56','박소미','연출 · 메조소프라노'],['최민','#FAEEDA','#854F0B','최민석','음악감독 · 바리톤']].map(function(m){
+      return '<div style="display:flex;align-items:center;gap:8px;padding:8px;border:0.5px solid var(--border,#eee);border-radius:8px"><div class="av" style="width:32px;height:32px;background:'+m[1]+';color:'+m[2]+';font-size:11px">'+m[0]+'</div><div><div style="font-size:12px;font-weight:600">'+m[3]+'</div><div style="font-size:10px;color:#999">'+m[4]+'</div></div></div>'
+    }).join('')+'</div>'
+    :'<div class="media-grid">'+['#EEEDFE🎭','#E1F5EE🎤','#FAECE7📸','#FAEEDA🎬','#EEEDFE🎵','#E6F1FB🎶'].map(function(m){var p=m.split('#');return '<div class="mi" style="background:#'+p[1].slice(0,6)+'">'+p[1].slice(6)+'</div>'}).join('')+'</div>';
+  return [['유나_뮤덕','#FAEEDA','#854F0B','오늘 커튼콜 때 배우님이 울컥하시는 거 보고 저도 같이 눈물이...','2시간 전','234'],
+          ['초록불꽃','#EAF3DE','#3B6D11','300회 공연 축하드립니다! 앞으로도 건강하게 무대에 서주세요.','4시간 전','189']].map(function(f){
+    return '<div class="fan-post"><div class="av" style="width:34px;height:34px;background:'+f[1]+';color:'+f[2]+';font-size:11px">'+f[0].slice(0,2)+'</div><div><div class="fp-name">'+f[0]+'</div><div class="fp-text">'+f[3]+'</div><div style="display:flex;align-items:center;gap:10px;margin-top:3px"><span style="font-size:10px;color:#999">'+f[4]+'</span><span style="font-size:11px;color:#999">♡ '+f[5]+'</span></div></div></div>'
+  }).join('');
+}
+
+/* ─── EVENTS ─── */
+function bindEvents(){
+  var app=document.getElementById('app');
+  app.addEventListener('click',function(e){
+    var el=e.target.closest('[data-action]');
+    if(el){
+      e.stopPropagation();
+      if(el.dataset.stop!==undefined) return;
+      var a=el.dataset.action;
+      if(a==='gobook'){state.screen='booking';state.bookStep=1;state.selectedSeats={};r()}
+      else if(a==='bookstep2'){state.bookStep=2;r()}
+      else if(a==='bookstep3'){state.bookStep=3;r()}
+      else if(a==='bookstep1'){state.bookStep=1;r()}
+      else if(a==='goreg'){state.screen='register';state.regStep=1;r()}
+      else if(a==='reg2'){state.regStep=2;r()}
+      else if(a==='reg3'){state.regStep=3;r()}
+      else if(a==='reg4'){state.regStep=4;r()}
+      else if(a==='reg1'){state.regStep=1;r()}
+      else if(a==='regdone'){state.regStep=5;r()}
+      else if(a==='regback'){if(state.regStep>1&&state.regStep<5){state.regStep--;r()}else{state.screen='home';r()}}
+      else if(a==='home'){state.screen='home';state.homeTab='home';r()}
+      else if(a==='back'){if(state.screen==='booking'||state.screen==='register'){state.screen='home';r()}else if(state.screen==='artist-detail'){state.screen='home';r()}}
+      else if(a==='goartist'){state.screen='artist-detail';state.detail=el.dataset.id;state.detailTab='info';r()}
+      else if(a==='savedraft'){var btn=el;btn.textContent='저장됨 ✓';btn.style.color='#0F6E56';setTimeout(function(){btn.textContent='임시저장';btn.style.color='#534AB7'},1500)}
+    }
+    var tab=e.target.closest('[data-tab]');
+    if(tab&&!el){state.homeTab=tab.dataset.tab;r()}
+    var atype=e.target.closest('[data-atype]');
+    if(atype){state.artistType=atype.dataset.atype;r()}
+    var seat=e.target.closest('[data-seat]');
+    if(seat&&!seat.disabled){
+      var key=seat.dataset.seat,type=seat.dataset.type,row=seat.dataset.row,num=parseInt(seat.dataset.num);
+      if(state.selectedSeats[key]) delete state.selectedSeats[key];
+      else if(Object.keys(state.selectedSeats).length<4) state.selectedSeats[key]={type:type,row:row,num:num};
+      r();
+    }
+    var dtab=e.target.closest('[data-dtab]');
+    if(dtab){state.detailTab=dtab.dataset.dtab;r()}
+    var chk=e.target.closest('[data-chk]');
+    if(chk){var id=chk.dataset.chk;state.checks[id]=!state.checks[id];r()}
+    var topt=e.target.closest('.t-opt');
+    if(topt){topt.classList.toggle('on')}
+    var fp=e.target.closest('.filter-pill');
+    if(fp){document.querySelectorAll('.filter-pill').forEach(function(p){p.classList.remove('on')});fp.classList.add('on')}
+  });
+}
+
+r();
+</script>
+</html>
