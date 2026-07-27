@@ -255,9 +255,11 @@ var showId=params.get('id');
 async function init(){
   if(!showId){showNotFound();return;}
   var res=await sb.from('shows')
-    .select('id,title,team_name,venue,venue_id,date_start,date_end,time,duration,genre,price_vip,price_general,price_student,poster_url,status,description,story,age_limit,refund_policy,cast_info,cast_images,gallery_images,sns_instagram,sns_youtube,website,total_seats,open_date,close_date,created_at,user_id')
+    .select('*')
     .eq('id',showId).single();
-  if(res.error||!res.data){showNotFound();return;}
+  if(res.error||!res.data){
+    showNotFound(res.error?res.error.message:'데이터 없음');return;
+  }
   show=res.data;
   document.title='MusicalVerse — '+show.title;
   renderHero();
@@ -434,11 +436,12 @@ function openLightbox(url){
 }
 function closeLightbox(){document.getElementById('lightbox').classList.remove('on');}
 
-function showNotFound(){
+function showNotFound(msg){
   document.getElementById('hero-content').innerHTML=
     '<div class="not-found" style="color:#fff">'
     +'<div style="font-size:52px;margin-bottom:16px">🎭</div>'
     +'<div style="font-size:22px;font-weight:800;margin-bottom:8px">공연을 찾을 수 없습니다</div>'
+    +(msg?'<div style="font-size:13px;color:rgba(255,255,255,.6);margin-bottom:12px">'+esc(msg)+'</div>':'')
     +'<a href="shows.html" style="color:rgba(255,255,255,.7);font-size:14px">← 공연 목록으로</a>'
     +'</div>';
 }
