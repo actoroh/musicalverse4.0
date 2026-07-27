@@ -310,7 +310,12 @@ function renderShows(){
       +'<div class="sc-footer">'
       +'<div class="sc-price">'+priceStr+'</div>'
       +'<div class="sc-date">'+formatDate(s.date_start)+'</div>'
-      +'</div></div></div>';
+      +'</div>'
+      +'<a href="show-page.html?id='+s.id+'" onclick="event.stopPropagation()"'
+      +' style="display:block;margin-top:8px;padding:7px;text-align:center;'
+      +'background:var(--purple-light);color:var(--purple);border-radius:var(--radius);'
+      +'font-size:12px;font-weight:700;text-decoration:none">📄 공연 소개 페이지</a>'
+      +'</div></div>';
   });
   html+='</div>';
   document.getElementById('show-list').innerHTML=html;

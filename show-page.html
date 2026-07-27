@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MusicalVerse — 공연 소개</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --purple:#534AB7;--purple-light:#EEEDFE;--purple-dark:#3C3489;
+  --teal:#0F6E56;--teal-light:#E1F5EE;
+  --amber:#854F0B;--amber-light:#FAEEDA;
+  --red:#D94040;--red-light:#FCEBEB;
+  --bg:#f7f7f5;--white:#fff;--text:#1a1a1a;--text2:#555;--text3:#999;
+  --border:#e0e0e0;--radius:10px;--radius-lg:16px
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);min-height:100vh;color:var(--text)}
+
+/* 네비 */
+nav{background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100}
+.nav-logo{font-size:18px;font-weight:800;color:var(--purple);cursor:pointer;text-decoration:none}
+.nav-logo span{color:var(--text)}
+.nav-btns{display:flex;gap:8px}
+.nav-btn{padding:7px 16px;border-radius:var(--radius);font-size:13px;font-weight:600;
+  cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center}
+.nav-btn-primary{background:var(--purple);color:#fff}
+.nav-btn-ghost{background:var(--bg);color:var(--text2);border:1px solid var(--border)}
+
+/* 히어로 */
+.hero{position:relative;min-height:480px;display:flex;align-items:flex-end;
+  background:linear-gradient(135deg,#2D2680,#534AB7,#7F77DD);overflow:hidden}
+.hero-bg{position:absolute;inset:0;background-size:cover;background-position:center;
+  background-repeat:no-repeat;filter:brightness(.45)}
+.hero-gradient{position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(0,0,0,.85) 0%,rgba(0,0,0,.2) 60%,transparent 100%)}
+.hero-content{position:relative;z-index:2;padding:40px 40px 40px;width:100%;
+  display:flex;gap:32px;align-items:flex-end;max-width:960px;margin:0 auto}
+.hero-poster{width:160px;height:220px;border-radius:12px;object-fit:cover;
+  flex-shrink:0;box-shadow:0 8px 32px rgba(0,0,0,.5);border:3px solid rgba(255,255,255,.2)}
+.hero-poster-placeholder{width:160px;height:220px;border-radius:12px;flex-shrink:0;
+  background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;
+  font-size:48px;border:3px solid rgba(255,255,255,.2)}
+.hero-info{flex:1;color:#fff}
+.hero-badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.hero-badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:700;
+  background:rgba(255,255,255,.2);color:#fff;backdrop-filter:blur(4px)}
+.hero-badge-purple{background:rgba(83,74,183,.7)}
+.hero-title{font-size:32px;font-weight:900;line-height:1.2;margin-bottom:8px;
+  text-shadow:0 2px 8px rgba(0,0,0,.3)}
+.hero-team{font-size:15px;color:rgba(255,255,255,.8);margin-bottom:16px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:rgba(255,255,255,.7);margin-bottom:20px}
+.hero-meta span{display:flex;align-items:center;gap:5px}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn-reserve{padding:13px 28px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius-lg);font-size:15px;font-weight:800;cursor:pointer;
+  box-shadow:0 4px 16px rgba(83,74,183,.5);transition:transform .15s}
+.btn-reserve:hover{transform:translateY(-1px)}
+.btn-share{padding:13px 20px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);
+  border-radius:var(--radius-lg);font-size:14px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px)}
+
+/* 메인 레이아웃 */
+.main{max-width:960px;margin:0 auto;padding:32px 24px;display:grid;
+  grid-template-columns:1fr 300px;gap:28px}
+@media(max-width:720px){
+  .main{grid-template-columns:1fr;padding:20px 16px}
+  .hero-content{flex-direction:column;align-items:flex-start;gap:16px;padding:24px}
+  .hero-title{font-size:24px}
+}
+
+/* 섹션 */
+.section{background:var(--white);border-radius:var(--radius-lg);
+  padding:24px;margin-bottom:20px;border:1px solid var(--border)}
+.section-title{font-size:16px;font-weight:800;margin-bottom:16px;
+  padding-bottom:12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px}
+.section-title-icon{font-size:18px}
+
+/* 줄거리 */
+.story-text{font-size:14px;color:var(--text2);line-height:1.9;white-space:pre-wrap}
+
+/* 공연 정보 */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.info-item{background:var(--bg);padding:12px 14px;border-radius:var(--radius)}
+.info-lbl{font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px}
+.info-val{font-size:13px;font-weight:700;color:var(--text)}
+
+/* 출연진 */
+.cast-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:14px}
+.cast-item{text-align:center}
+.cast-av{width:64px;height:64px;border-radius:50%;margin:0 auto 6px;
+  object-fit:cover;border:2px solid var(--border);background:var(--purple-light);
+  display:flex;align-items:center;justify-content:center;font-size:22px}
+.cast-av img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.cast-name{font-size:12px;font-weight:700;margin-bottom:2px}
+.cast-role{font-size:11px;color:var(--text3)}
+.cast-text{font-size:14px;color:var(--text2);line-height:1.8;white-space:pre-wrap}
+
+/* 갤러리 */
+.gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.gallery-img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--radius);
+  cursor:pointer;transition:transform .15s}
+.gallery-img:hover{transform:scale(1.03)}
+
+/* 사이드바 */
+.sidebar{}
+.ticket-card{background:var(--white);border-radius:var(--radius-lg);
+  padding:20px;border:1px solid var(--border);position:sticky;top:72px}
+.ticket-title{font-size:15px;font-weight:800;margin-bottom:16px}
+.price-list{margin-bottom:16px}
+.price-row{display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;border-bottom:1px solid var(--border)}
+.price-row:last-child{border:none}
+.price-type{font-size:13px;color:var(--text2)}
+.price-badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:6px;
+  font-weight:700;margin-left:6px}
+.p-vip{background:#FAEEDA;color:var(--amber)}
+.p-r{background:var(--purple-light);color:var(--purple)}
+.p-s{background:var(--bg);color:var(--text3);border:1px solid var(--border)}
+.price-amt{font-size:15px;font-weight:800;color:var(--purple)}
+.btn-book{width:100%;padding:13px;background:var(--purple);color:#fff;border:none;
+  border-radius:var(--radius-lg);font-size:15px;font-weight:800;cursor:pointer;
+  margin-bottom:8px;transition:opacity .15s}
+.btn-book:hover{opacity:.9}
+.btn-book:disabled{opacity:.5;cursor:not-allowed}
+.ticket-meta{font-size:12px;color:var(--text3);text-align:center;line-height:1.6}
+
+/* SNS */
+.sns-row{display:flex;gap:10px;margin-top:4px}
+.sns-btn{padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;
+  cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.sns-insta{background:#F7E8F5;color:#C13584}
+.sns-youtube{background:#FDECEA;color:#FF0000}
+.sns-web{background:var(--purple-light);color:var(--purple)}
+
+/* 공유 버튼 성공 */
+.share-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--text);color:#fff;padding:10px 20px;border-radius:20px;
+  font-size:13px;display:none;z-index:999}
+.share-toast.on{display:block}
+
+/* 라이트박스 */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;
+  display:none;align-items:center;justify-content:center;padding:20px}
+.lightbox.on{display:flex}
+.lightbox img{max-width:100%;max-height:90vh;border-radius:8px;object-fit:contain}
+.lightbox-close{position:absolute;top:16px;right:20px;color:#fff;font-size:32px;
+  cursor:pointer;background:none;border:none;line-height:1}
+
+/* 로딩 */
+.page-loading{display:flex;flex-direction:column;align-items:center;
+  justify-content:center;min-height:60vh;gap:16px;color:var(--text3)}
+.spinner{width:36px;height:36px;border:3px solid var(--border);
+  border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 404 */
+.not-found{text-align:center;padding:80px 20px}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html"><span>Musical</span>Verse</a>
+  <div class="nav-btns">
+    <a class="nav-btn nav-btn-ghost" href="shows.html">← 공연 목록</a>
+    <a class="nav-btn nav-btn-primary" id="nav-reserve-btn" href="#" onclick="goReserve(event)">예매하기</a>
+  </div>
+</nav>
+
+<!-- 히어로 -->
+<div class="hero" id="hero">
+  <div class="hero-bg" id="hero-bg"></div>
+  <div class="hero-gradient"></div>
+  <div class="hero-content" id="hero-content">
+    <div class="page-loading"><div class="spinner"></div><span>불러오는 중...</span></div>
+  </div>
+</div>
+
+<!-- 메인 -->
+<div class="main" id="main-content" style="display:none">
+  <div class="content-col">
+
+    <!-- 줄거리 -->
+    <div class="section" id="sec-story" style="display:none">
+      <div class="section-title"><span class="section-title-icon">📖</span>작품 소개</div>
+      <div class="story-text" id="story-text"></div>
+    </div>
+
+    <!-- 공연 정보 -->
+    <div class="section">
+      <div class="section-title"><span class="section-title-icon">📋</span>공연 정보</div>
+      <div class="info-grid" id="info-grid"></div>
+    </div>
+
+    <!-- 출연진 -->
+    <div class="section" id="sec-cast" style="display:none">
+      <div class="section-title"><span class="section-title-icon">🎭</span>출연진</div>
+      <div id="cast-area"></div>
+    </div>
+
+    <!-- 갤러리 -->
+    <div class="section" id="sec-gallery" style="display:none">
+      <div class="section-title"><span class="section-title-icon">📷</span>갤러리</div>
+      <div class="gallery-grid" id="gallery-grid"></div>
+    </div>
+
+    <!-- SNS / 링크 -->
+    <div class="section" id="sec-sns" style="display:none">
+      <div class="section-title"><span class="section-title-icon">🔗</span>더 알아보기</div>
+      <div class="sns-row" id="sns-row"></div>
+    </div>
+
+    <!-- 환불 정책 -->
+    <div class="section" id="sec-refund" style="display:none">
+      <div class="section-title"><span class="section-title-icon">📜</span>환불 정책</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8" id="refund-text"></div>
+    </div>
+
+  </div>
+
+  <!-- 사이드바 -->
+  <div class="sidebar">
+    <div class="ticket-card">
+      <div class="ticket-title">🎟 티켓 예매</div>
+      <div class="price-list" id="price-list"></div>
+      <button class="btn-book" id="book-btn" onclick="goReserve(event)">예매하기</button>
+      <div class="ticket-meta" id="ticket-meta"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 라이트박스 -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close">✕</button>
+  <img id="lightbox-img" src="">
+</div>
+
+<!-- 공유 토스트 -->
+<div class="share-toast" id="share-toast">링크가 복사되었습니다!</div>
+
+<script>
+var SUPA_URL='https://qyrgfjshsczdpxaeznkc.supabase.co';
+var SUPA_KEY='sb_publishable_A6MmsqE9y-ymBKNKOwR2EA_PuLX5mLB';
+var sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+var show=null;
+
+// URL에서 show id 추출
+var params=new URLSearchParams(location.search);
+var showId=params.get('id');
+
+async function init(){
+  if(!showId){showNotFound();return;}
+  var res=await sb.from('shows')
+    .select('id,title,team_name,venue,venue_id,date_start,date_end,time,duration,genre,price_vip,price_general,price_student,poster_url,status,description,story,age_limit,refund_policy,cast_info,cast_images,gallery_images,sns_instagram,sns_youtube,website,total_seats,open_date,close_date,created_at,user_id')
+    .eq('id',showId).single();
+  if(res.error||!res.data){showNotFound();return;}
+  show=res.data;
+  document.title='MusicalVerse — '+show.title;
+  renderHero();
+  renderMain();
+}
+
+function renderHero(){
+  // 배경
+  if(show.poster_url){
+    document.getElementById('hero-bg').style.backgroundImage='url('+show.poster_url+')';
+  }
+  // 배지
+  var badges='';
+  if(show.genre){
+    (Array.isArray(show.genre)?show.genre:[show.genre]).forEach(function(g){
+      badges+='<span class="hero-badge">'+esc(g)+'</span>';
+    });
+  }
+  var statusMap={pending:'심사중',approved:'공연중',closed:'종료'};
+  if(show.status) badges+='<span class="hero-badge hero-badge-purple">'+(statusMap[show.status]||show.status)+'</span>';
+
+  // 날짜
+  var dateStr=show.date_start||'';
+  if(show.date_end&&show.date_end!==show.date_start) dateStr+=(' ~ '+show.date_end);
+
+  // 가격
+  var minPrice=Math.min(
+    show.price_vip||9999999,
+    show.price_general||9999999,
+    show.price_student||9999999
+  );
+  var priceStr=minPrice===9999999?'무료':(minPrice===0?'무료':'최저 '+minPrice.toLocaleString()+'원');
+
+  var posterHtml=show.poster_url
+    ?'<img class="hero-poster" src="'+show.poster_url+'" alt="'+esc(show.title)+'">'
+    :'<div class="hero-poster-placeholder">🎭</div>';
+
+  document.getElementById('hero-content').innerHTML=
+    posterHtml
+    +'<div class="hero-info">'
+    +(badges?'<div class="hero-badges">'+badges+'</div>':'')
+    +'<div class="hero-title">'+esc(show.title)+'</div>'
+    +(show.team_name?'<div class="hero-team">'+esc(show.team_name)+'</div>':'')
+    +'<div class="hero-meta">'
+    +(dateStr?'<span>📅 '+esc(dateStr)+'</span>':'')
+    +(show.time?'<span>⏰ '+esc(show.time)+'</span>':'')
+    +(show.venue?'<span>📍 '+esc(show.venue)+'</span>':'')
+    +(show.duration?'<span>⏱ '+show.duration+'분</span>':'')
+    +'</div>'
+    +'<div class="hero-actions">'
+    +'<button class="btn-reserve" onclick="goReserve(event)">🎟 예매하기</button>'
+    +'<button class="btn-share" onclick="shareShow()">🔗 공유하기</button>'
+    +'</div>'
+    +'</div>';
+}
+
+function renderMain(){
+  // 줄거리
+  if(show.story){
+    document.getElementById('story-text').textContent=show.story;
+    document.getElementById('sec-story').style.display='block';
+  } else if(show.description){
+    document.getElementById('story-text').textContent=show.description;
+    document.getElementById('sec-story').style.display='block';
+  }
+
+  // 공연 정보 그리드
+  var infoItems=[
+    ['📅 공연 기간',show.date_start?(show.date_start+(show.date_end&&show.date_end!==show.date_start?' ~ '+show.date_end:'')):null],
+    ['⏰ 공연 시간',show.time],
+    ['📍 공연 장소',show.venue],
+    ['⏱ 러닝타임',show.duration?show.duration+'분':null],
+    ['👤 관람 연령',show.age_limit],
+    ['🎭 장르',Array.isArray(show.genre)?show.genre.join(', '):show.genre],
+    ['🪑 총 좌석',show.total_seats?show.total_seats+'석':null],
+    ['📋 예매 오픈',show.open_date],
+    ['📋 예매 마감',show.close_date],
+  ].filter(function(i){return i[1];});
+  document.getElementById('info-grid').innerHTML=infoItems.map(function(i){
+    return '<div class="info-item"><div class="info-lbl">'+i[0]+'</div><div class="info-val">'+esc(i[1])+'</div></div>';
+  }).join('');
+
+  // 출연진
+  var castImages=show.cast_images||[];
+  if(castImages.length){
+    document.getElementById('cast-area').innerHTML='<div class="cast-grid">'+castImages.map(function(ci){
+      return '<div class="cast-item">'
+        +'<div class="cast-av"><img src="'+ci.url+'" onerror="this.parentElement.textContent=\'🎭\'"></div>'
+        +'<div class="cast-name">'+esc(ci.name||'')+'</div>'
+        +'<div class="cast-role">'+esc(ci.role||'')+'</div>'
+        +'</div>';
+    }).join('')+'</div>';
+    document.getElementById('sec-cast').style.display='block';
+  } else if(show.cast_info){
+    document.getElementById('cast-area').innerHTML='<div class="cast-text">'+esc(show.cast_info)+'</div>';
+    document.getElementById('sec-cast').style.display='block';
+  }
+
+  // 갤러리
+  var gallery=show.gallery_images||[];
+  if(gallery.length){
+    document.getElementById('gallery-grid').innerHTML=gallery.map(function(url){
+      return '<img class="gallery-img" src="'+url+'" onclick="openLightbox(\''+url+'\')" loading="lazy">';
+    }).join('');
+    document.getElementById('sec-gallery').style.display='block';
+  }
+
+  // SNS
+  var sns='';
+  if(show.sns_instagram) sns+='<a class="sns-btn sns-insta" href="'+show.sns_instagram+'" target="_blank">📷 Instagram</a>';
+  if(show.sns_youtube) sns+='<a class="sns-btn sns-youtube" href="'+show.sns_youtube+'" target="_blank">▶ YouTube</a>';
+  if(show.website) sns+='<a class="sns-btn sns-web" href="'+show.website+'" target="_blank">🌐 홈페이지</a>';
+  if(sns){
+    document.getElementById('sns-row').innerHTML=sns;
+    document.getElementById('sec-sns').style.display='block';
+  }
+
+  // 환불 정책
+  if(show.refund_policy){
+    document.getElementById('refund-text').textContent=show.refund_policy;
+    document.getElementById('sec-refund').style.display='block';
+  }
+
+  // 티켓 가격
+  var prices=[];
+  if(show.price_vip) prices.push({type:'VIP',cls:'p-vip',amt:show.price_vip});
+  if(show.price_general) prices.push({type:'R석',cls:'p-r',amt:show.price_general});
+  if(show.price_student) prices.push({type:'S석',cls:'p-s',amt:show.price_student});
+  document.getElementById('price-list').innerHTML=prices.length
+    ?prices.map(function(p){
+      return '<div class="price-row"><span class="price-type">'+p.type+'<span class="price-badge '+p.cls+'">'+p.type+'</span></span>'
+        +'<span class="price-amt">'+p.amt.toLocaleString()+'원</span></div>';
+    }).join('')
+    :'<div style="font-size:13px;color:var(--text3);padding:8px 0">가격 정보 없음</div>';
+
+  // 예매 상태
+  var isClosed=show.status==='closed';
+  var bookBtn=document.getElementById('book-btn');
+  bookBtn.disabled=isClosed;
+  bookBtn.textContent=isClosed?'공연 종료':'예매하기';
+  document.getElementById('ticket-meta').innerHTML=
+    (show.close_date?'예매 마감: '+show.close_date+'<br>':'')
+    +(show.age_limit?'관람 연령: '+show.age_limit:'');
+
+  document.getElementById('main-content').style.display='grid';
+}
+
+function goReserve(e){
+  e.preventDefault();
+  location.href='booking.html?id='+showId;
+}
+
+function shareShow(){
+  var url=location.href;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(function(){showToast();});
+  } else {
+    var el=document.createElement('input');
+    el.value=url;document.body.appendChild(el);
+    el.select();document.execCommand('copy');
+    document.body.removeChild(el);
+    showToast();
+  }
+}
+function showToast(){
+  var t=document.getElementById('share-toast');
+  t.classList.add('on');
+  setTimeout(function(){t.classList.remove('on');},2000);
+}
+
+function openLightbox(url){
+  document.getElementById('lightbox-img').src=url;
+  document.getElementById('lightbox').classList.add('on');
+}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('on');}
+
+function showNotFound(){
+  document.getElementById('hero-content').innerHTML=
+    '<div class="not-found" style="color:#fff">'
+    +'<div style="font-size:52px;margin-bottom:16px">🎭</div>'
+    +'<div style="font-size:22px;font-weight:800;margin-bottom:8px">공연을 찾을 수 없습니다</div>'
+    +'<a href="shows.html" style="color:rgba(255,255,255,.7);font-size:14px">← 공연 목록으로</a>'
+    +'</div>';
+}
+
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+init();
+</script>
+</body>
+</html>

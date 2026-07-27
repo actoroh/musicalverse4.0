@@ -209,6 +209,20 @@ select.inp{appearance:auto;background:var(--white)}
         <option>공연 당일 환불 불가</option>
       </select>
     </div>
+    <div style="margin:16px 0 8px;font-size:12px;font-weight:800;color:var(--purple);
+      letter-spacing:.04em;padding-top:14px;border-top:1px solid var(--border)">
+      📄 공연 소개 페이지 추가 정보
+    </div>
+    <div class="field"><label class="lbl">작품 스토리 / 시놉시스</label>
+      <textarea class="inp" id="e-story" rows="5" placeholder="작품의 줄거리, 배경, 주제 등을 자세히 소개해 주세요"></textarea></div>
+    <div class="field"><label class="lbl">Instagram URL</label>
+      <input class="inp" id="e-insta" placeholder="https://instagram.com/..."></div>
+    <div class="field"><label class="lbl">YouTube URL</label>
+      <input class="inp" id="e-youtube" placeholder="https://youtube.com/..."></div>
+    <div class="field"><label class="lbl">공식 홈페이지</label>
+      <input class="inp" id="e-website" placeholder="https://..."></div>
+    <div class="field"><label class="lbl">갤러리 이미지 URL <span style="font-weight:400;color:var(--text3)">(줄바꿈으로 구분, 최대 9장)</span></label>
+      <textarea class="inp" id="e-gallery" rows="3" placeholder="이미지 URL을 한 줄씩 입력하세요&#10;https://example.com/image1.jpg&#10;https://example.com/image2.jpg"></textarea></div>
     <div class="modal-btns">
       <button class="btn-cancel-modal" onclick="closeModal()">취소</button>
       <button class="btn-save" onclick="doSave()">저장하기</button>
@@ -422,6 +436,12 @@ function openEdit(id){
   for(var j=0;j<refEl.options.length;j++){
     if(refEl.options[j].value===(s.refund_policy||'')) refEl.selectedIndex=j;
   }
+  document.getElementById('e-story').value=s.story||'';
+  document.getElementById('e-insta').value=s.sns_instagram||'';
+  document.getElementById('e-youtube').value=s.sns_youtube||'';
+  document.getElementById('e-website').value=s.website||'';
+  var gallery=s.gallery_images||[];
+  document.getElementById('e-gallery').value=Array.isArray(gallery)?gallery.join('\n'):'';
   document.getElementById('modal-bg').classList.add('on');
 }
 
@@ -447,6 +467,15 @@ function doSave(){
     price_student:parseInt(document.getElementById('e-stu').value)||null,
     description:document.getElementById('e-desc').value.trim(),
     cast_info:document.getElementById('e-cast').value.trim(),
+    story:document.getElementById('e-story').value.trim()||null,
+    sns_instagram:document.getElementById('e-insta').value.trim()||null,
+    sns_youtube:document.getElementById('e-youtube').value.trim()||null,
+    website:document.getElementById('e-website').value.trim()||null,
+    gallery_images:(function(){
+      var raw=document.getElementById('e-gallery').value.trim();
+      if(!raw) return [];
+      return raw.split('\n').map(function(u){return u.trim();}).filter(function(u){return u;}).slice(0,9);
+    })(),
     age_limit:document.getElementById('e-age').value,
     refund_policy:document.getElementById('e-refund').value,
     status:'pending' // 수정 후 재검토
