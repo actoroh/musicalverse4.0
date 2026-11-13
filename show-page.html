@@ -358,11 +358,15 @@ function renderMain(){
     document.getElementById('sec-cast').style.display='block';
   }
 
-  // 갤러리
+  // 갤러리 — gallery_images 배열 또는 gallery_url 문자열 모두 처리
   var gallery=show.gallery_images||[];
+  if(!gallery.length && show.gallery_url){
+    // 줄바꿈/쉼표 구분 단일 필드 지원
+    gallery = show.gallery_url.split(/[\n,]/).map(function(u){return u.trim();}).filter(Boolean);
+  }
   if(gallery.length){
-    document.getElementById('gallery-grid').innerHTML=gallery.map(function(url){
-      return '<img class="gallery-img" src="'+url+'" onclick="openLightbox(\''+url+'\')" loading="lazy">';
+    document.getElementById('gallery-grid').innerHTML=gallery.map(function(url,idx){
+      return '<img class="gallery-img" src="'+url+'" onclick="openLightbox(\''+encodeURIComponent(url)+'\')" loading="lazy" onerror="this.style.display=\'none\'">';
     }).join('');
     document.getElementById('sec-gallery').style.display='block';
   }
@@ -431,7 +435,7 @@ function showToast(){
 }
 
 function openLightbox(url){
-  document.getElementById('lightbox-img').src=url;
+  document.getElementById('lightbox-img').src=decodeURIComponent(url);
   document.getElementById('lightbox').classList.add('on');
 }
 function closeLightbox(){document.getElementById('lightbox').classList.remove('on');}
